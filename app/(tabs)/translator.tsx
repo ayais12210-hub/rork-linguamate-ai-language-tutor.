@@ -1,0 +1,991 @@
+import React, { useState, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+  Animated,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { 
+  ArrowUpDown, 
+  Copy, 
+  Volume2, 
+  Star,
+  History,
+  ChevronDown,
+  X,
+  BookOpen,
+  Lightbulb,
+  MessageCircle,
+  Brain,
+  Globe,
+  Award,
+} from 'lucide-react-native';
+import { LANGUAGES } from '@/constants/languages';
+import { Language } from '@/types/user';
+import { useUser } from '@/hooks/user-store';
+import UpgradeModal from '@/components/UpgradeModal';
+
+interface Translation {
+  id: string;
+  sourceText: string;
+  translatedText: string;
+  fromLanguage: string;
+  toLanguage: string;
+  timestamp: string;
+  isFavorite?: boolean;
+  explanation?: string;
+  culturalContext?: string;
+  grammarInsights?: string;
+  alternativeTranslations?: string[];
+  difficulty?: 'beginner' | 'intermediate' | 'advanced';
+  confidence?: number;
+}
+
+export default function TranslatorScreen() {
+  const { user, upgradeToPremium } = useUser();
+  
+  const [sourceText, setSourceText] = useState<string>('');
+  const [translatedText, setTranslatedText] = useState<string>('');
+  const [fromLanguage, setFromLanguage] = useState<string>(user.nativeLanguage || 'en');
+  const [toLanguage, setToLanguage] = useState<string>(user.selectedLanguage || 'es');
+  const [isTranslating, setIsTranslating] = useState<boolean>(false);
+  const [showFromLanguages, setShowFromLanguages] = useState<boolean>(false);
+  const [showToLanguages, setShowToLanguages] = useState<boolean>(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
+  const [translations, setTranslations] = useState<Translation[]>([]);
+  const [translationCount, setTranslationCount] = useState<number>(0);
+  const [currentTranslation, setCurrentTranslation] = useState<Translation | null>(null);
+  const [showInsights, setShowInsights] = useState<boolean>(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  const fromLang = LANGUAGES.find(lang => lang.code === fromLanguage) || LANGUAGES[0];
+  const toLang = LANGUAGES.find(lang => lang.code === toLanguage) || LANGUAGES[1];
+
+  const canTranslate = () => {
+    if (user.isPremium) return true;
+    const today = new Date().toDateString();
+    const isNewDay = user.stats.lastMessageDate !== today;
+    const used = isNewDay ? 0 : translationCount;
+    return used < 3; // 3 free translations per day
+  };
+
+  const handleTranslate = async () => {
+    if (!sourceText.trim()) {
+      Alert.alert('Error', 'Please enter text to translate');
+      return;
+    }
+
+    if (!canTranslate()) {
+      setShowUpgradeModal(true);
+      return;
+    }
+
+    setIsTranslating(true);
+    
+    try {
+      // Call AI translation API
+      const response = await fetch('https://toolkit.rork.com/text/llm/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: 'system',
+              content: `You are an elite multilingual AI coach and professional translator with deep expertise in ${fromLang.name} and ${toLang.name}. 
+
+The user is a ${user.proficiencyLevel} level learner whose native language is ${fromLang.name} and is learning ${toLang.name}. They want to translate from their native language to their target language to practice and learn.
+
+Your task is to provide a comprehensive translation and learning analysis. Respond with a JSON object containing:
+
+{
+  "translation": "[accurate, natural translation that sounds native in ${toLang.name}]",
+  "explanation": "[detailed explanation of translation choices, why this specific translation works best, and what makes it natural in ${toLang.name}]",
+  "culturalContext": "[cultural context, idioms, cultural references, or social nuances that affect this translation between ${fromLang.name} and ${toLang.name}]",
+  "grammarInsights": "[key grammar patterns, structures, or linguistic differences between ${fromLang.name} and ${toLang.name} that learners should understand]",
+  "alternativeTranslations": ["[alternative 1]", "[alternative 2]", "[alternative 3]"],
+  "difficulty": "[beginner/intermediate/advanced based on language complexity for a ${user.proficiencyLevel} learner]",
+  "confidence": [0.0-1.0 confidence score],
+  "coachingTips": "[specific tips for ${user.proficiencyLevel} level learners transitioning from ${fromLang.name} to ${toLang.name}, including common mistakes to avoid]"
+}
+
+Focus on being an encouraging language coach who helps learners understand not just the translation, but the cultural and linguistic bridges between their native language and target language.`
+            },
+            {
+              role: 'user',
+              content: sourceText
+            }
+          ]
+        })
+      });
+
+      const data = await response.json();
+      let translationData;
+      
+      try {
+        // Try to parse as JSON first (enhanced mode)
+        translationData = JSON.parse(data.completion);
+        setTranslatedText(translationData.translation);
+      } catch {
+        // Fallback to simple translation
+        translationData = { translation: data.completion };
+        setTranslatedText(data.completion);
+      }
+      
+      setTranslationCount(prev => prev + 1);
+      
+      // Add to history with enhanced data
+      const newTranslation: Translation = {
+        id: Date.now().toString(),
+        sourceText,
+        translatedText: translationData.translation,
+        fromLanguage,
+        toLanguage,
+        timestamp: new Date().toISOString(),
+        explanation: translationData.explanation,
+        culturalContext: translationData.culturalContext,
+        grammarInsights: translationData.grammarInsights,
+        alternativeTranslations: translationData.alternativeTranslations,
+        difficulty: translationData.difficulty,
+        confidence: translationData.confidence,
+      };
+      
+      setCurrentTranslation(newTranslation);
+      setShowInsights(true);
+      
+      setTranslations(prev => [newTranslation, ...prev.slice(0, 19)]); // Keep last 20
+      
+      // Animate result
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+      
+    } catch (error) {
+      console.error('Translation error:', error);
+      Alert.alert('Error', 'Failed to translate. Please try again.');
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+  const handleSwapLanguages = () => {
+    const tempLang = fromLanguage;
+    setFromLanguage(toLanguage);
+    setToLanguage(tempLang);
+    
+    const tempText = sourceText;
+    setSourceText(translatedText);
+    setTranslatedText(tempText);
+  };
+
+  const handleCopyText = (text: string) => {
+    // In a real app, you'd use Clipboard API
+    Alert.alert('Copied!', 'Text copied to clipboard');
+  };
+
+  const handleSpeakText = (text: string, language: string) => {
+    if (!user.isPremium) {
+      setShowUpgradeModal(true);
+      return;
+    }
+    // In a real app, you'd use text-to-speech
+    Alert.alert('Speaking...', `Would speak: "${text}" in ${language}`);
+  };
+
+  const toggleFavorite = (translationId: string) => {
+    if (!user.isPremium) {
+      setShowUpgradeModal(true);
+      return;
+    }
+    
+    setTranslations(prev => 
+      prev.map(t => 
+        t.id === translationId 
+          ? { ...t, isFavorite: !t.isFavorite }
+          : t
+      )
+    );
+  };
+
+  const handleUpgrade = () => {
+    setShowUpgradeModal(false);
+    upgradeToPremium();
+    Alert.alert('Success!', 'You now have Premium access with unlimited translations!');
+  };
+
+  const getRemainingTranslations = () => {
+    if (user.isPremium) return null;
+    return 3 - translationCount;
+  };
+
+  const LanguageSelector = ({ 
+    languages, 
+    selectedCode, 
+    onSelect, 
+    visible, 
+    onClose 
+  }: {
+    languages: Language[];
+    selectedCode: string;
+    onSelect: (code: string) => void;
+    visible: boolean;
+    onClose: () => void;
+  }) => {
+    if (!visible) return null;
+    
+    return (
+      <View style={styles.languageSelectorOverlay}>
+        <View style={styles.languageSelectorModal}>
+          <View style={styles.languageSelectorHeader}>
+            <Text style={styles.languageSelectorTitle}>Select Language</Text>
+            <TouchableOpacity onPress={onClose}>
+              <X size={24} color="#6B7280" />
+            </TouchableOpacity>
+          </View>
+          <ScrollView style={styles.languageList}>
+            {languages.map((language) => (
+              <TouchableOpacity
+                key={language.code}
+                style={[
+                  styles.languageItem,
+                  selectedCode === language.code && styles.selectedLanguageItem,
+                ]}
+                onPress={() => {
+                  onSelect(language.code);
+                  onClose();
+                }}
+              >
+                <Text style={styles.languageFlag}>{language.flag}</Text>
+                <Text style={styles.languageName}>{language.name}</Text>
+                <Text style={styles.languageNative}>{language.nativeName}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      </View>
+    );
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Translator</Text>
+        <View style={styles.headerRight}>
+          {!user.isPremium && (
+            <Text style={styles.remainingText}>
+              {getRemainingTranslations()} left today
+            </Text>
+          )}
+
+        </View>
+      </View>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Language Selection */}
+        <View style={styles.languageSelector}>
+          <TouchableOpacity 
+            style={styles.languageButton}
+            onPress={() => setShowFromLanguages(true)}
+          >
+            <Text style={styles.languageFlag}>{fromLang.flag}</Text>
+            <Text style={styles.languageText}>{fromLang.name}</Text>
+            <ChevronDown size={16} color="#6B7280" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.swapButton}
+            onPress={handleSwapLanguages}
+          >
+            <ArrowUpDown size={20} color="#3B82F6" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.languageButton}
+            onPress={() => setShowToLanguages(true)}
+          >
+            <Text style={styles.languageFlag}>{toLang.flag}</Text>
+            <Text style={styles.languageText}>{toLang.name}</Text>
+            <ChevronDown size={16} color="#6B7280" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Input Section */}
+        <View style={styles.inputSection}>
+          <View style={styles.inputHeader}>
+            <Text style={styles.inputLabel}>Enter text</Text>
+            <TouchableOpacity 
+              onPress={() => handleSpeakText(sourceText, fromLanguage)}
+              disabled={!sourceText.trim()}
+            >
+              <Volume2 
+                size={20} 
+                color={sourceText.trim() ? '#3B82F6' : '#9CA3AF'} 
+              />
+            </TouchableOpacity>
+          </View>
+          <TextInput
+            style={styles.textInput}
+            value={sourceText}
+            onChangeText={setSourceText}
+            placeholder={fromLanguage === user.nativeLanguage ? `Type in your native language (${fromLang.name})...` : `Type in ${fromLang.name}...`}
+            placeholderTextColor="#9CA3AF"
+            multiline
+            maxLength={1000}
+          />
+          <View style={styles.inputFooter}>
+            <Text style={styles.characterCount}>
+              {sourceText.length}/1000
+            </Text>
+            <TouchableOpacity 
+              style={styles.translateButton}
+              onPress={handleTranslate}
+              disabled={isTranslating || !sourceText.trim()}
+            >
+              {isTranslating ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Text style={styles.translateButtonText}>Translate</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Language Display */}
+        <View style={styles.languageDisplay}>
+          <View style={styles.languageDisplayItem}>
+            <Text style={styles.languageDisplayLabel}>From</Text>
+            <View style={styles.languageDisplayContent}>
+              <Text style={styles.languageDisplayFlag}>{fromLang.flag}</Text>
+              <Text style={styles.languageDisplayName}>{fromLang.name}</Text>
+            </View>
+          </View>
+          <ArrowUpDown size={16} color="#6B7280" />
+          <View style={styles.languageDisplayItem}>
+            <Text style={styles.languageDisplayLabel}>To</Text>
+            <View style={styles.languageDisplayContent}>
+              <Text style={styles.languageDisplayFlag}>{toLang.flag}</Text>
+              <Text style={styles.languageDisplayName}>{toLang.name}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Output Section */}
+        {(translatedText || isTranslating) && (
+          <Animated.View style={[styles.outputSection, { opacity: fadeAnim }]}>
+            <View style={styles.outputHeader}>
+              <Text style={styles.outputLabel}>Professional Translation</Text>
+              <View style={styles.outputActions}>
+                <TouchableOpacity 
+                  onPress={() => handleSpeakText(translatedText, toLanguage)}
+                  disabled={!translatedText.trim()}
+                >
+                  <Volume2 
+                    size={20} 
+                    color={translatedText.trim() ? '#3B82F6' : '#9CA3AF'} 
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  onPress={() => handleCopyText(translatedText)}
+                  disabled={!translatedText.trim()}
+                  style={styles.actionButton}
+                >
+                  <Copy 
+                    size={20} 
+                    color={translatedText.trim() ? '#3B82F6' : '#9CA3AF'} 
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+            <View style={styles.outputText}>
+              {isTranslating ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="small" color="#3B82F6" />
+                  <Text style={styles.loadingText}>AI Coach analyzing...</Text>
+                </View>
+              ) : (
+                <Text style={styles.translatedText}>{translatedText}</Text>
+              )}
+            </View>
+            
+            {/* Confidence Score */}
+            {currentTranslation?.confidence && (
+              <View style={styles.confidenceSection}>
+                <View style={styles.confidenceHeader}>
+                  <Award size={16} color="#10B981" />
+                  <Text style={styles.confidenceLabel}>Translation Confidence</Text>
+                </View>
+                <View style={styles.confidenceBar}>
+                  <View 
+                    style={[styles.confidenceFill, { width: `${(currentTranslation.confidence * 100)}%` }]} 
+                  />
+                </View>
+                <Text style={styles.confidenceText}>
+                  {Math.round(currentTranslation.confidence * 100)}% confident
+                </Text>
+              </View>
+            )}
+          </Animated.View>
+        )}
+
+        {/* AI Coach Insights */}
+        {showInsights && currentTranslation && (
+          <View style={styles.insightsSection}>
+            <View style={styles.insightsHeader}>
+              <Brain size={20} color="#8B5CF6" />
+              <Text style={styles.insightsTitle}>AI Coach Insights</Text>
+            </View>
+            
+            {currentTranslation.explanation && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <Lightbulb size={16} color="#F59E0B" />
+                  <Text style={styles.insightCardTitle}>Translation Analysis</Text>
+                </View>
+                <Text style={styles.insightCardText}>{currentTranslation.explanation}</Text>
+              </View>
+            )}
+            
+            {currentTranslation.culturalContext && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <Globe size={16} color="#06B6D4" />
+                  <Text style={styles.insightCardTitle}>Cultural Context</Text>
+                </View>
+                <Text style={styles.insightCardText}>{currentTranslation.culturalContext}</Text>
+              </View>
+            )}
+            
+            {currentTranslation.grammarInsights && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <BookOpen size={16} color="#10B981" />
+                  <Text style={styles.insightCardTitle}>Grammar Insights</Text>
+                </View>
+                <Text style={styles.insightCardText}>{currentTranslation.grammarInsights}</Text>
+              </View>
+            )}
+            
+            {currentTranslation.alternativeTranslations && currentTranslation.alternativeTranslations.length > 0 && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <MessageCircle size={16} color="#EF4444" />
+                  <Text style={styles.insightCardTitle}>Alternative Translations</Text>
+                </View>
+                {currentTranslation.alternativeTranslations.map((alt, index) => (
+                  <TouchableOpacity 
+                    key={index}
+                    style={styles.alternativeItem}
+                    onPress={() => setTranslatedText(alt)}
+                  >
+                    <Text style={styles.alternativeText}>• {alt}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+            
+            {currentTranslation.difficulty && (
+              <View style={styles.difficultyBadge}>
+                <Text style={[
+                  styles.difficultyText,
+                  currentTranslation.difficulty === 'beginner' && styles.difficultyBeginner,
+                  currentTranslation.difficulty === 'intermediate' && styles.difficultyIntermediate,
+                  currentTranslation.difficulty === 'advanced' && styles.difficultyAdvanced,
+                ]}>
+                  {currentTranslation.difficulty.toUpperCase()} LEVEL
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Recent Translations */}
+        {translations.length > 0 && (
+          <View style={styles.historySection}>
+            <Text style={styles.historyTitle}>Recent Translations</Text>
+            {translations.slice(0, 3).map((translation) => {
+              const fromLangData = LANGUAGES.find(l => l.code === translation.fromLanguage);
+              const toLangData = LANGUAGES.find(l => l.code === translation.toLanguage);
+              
+              return (
+                <TouchableOpacity 
+                  key={translation.id}
+                  style={styles.historyItem}
+                  onPress={() => {
+                    setSourceText(translation.sourceText);
+                    setTranslatedText(translation.translatedText);
+                    setFromLanguage(translation.fromLanguage);
+                    setToLanguage(translation.toLanguage);
+                  }}
+                >
+                  <View style={styles.historyItemHeader}>
+                    <Text style={styles.historyLanguages}>
+                      {fromLangData?.flag} → {toLangData?.flag}
+                    </Text>
+                    <TouchableOpacity 
+                      onPress={() => toggleFavorite(translation.id)}
+                    >
+                      <Star 
+                        size={16} 
+                        color={translation.isFavorite ? '#F59E0B' : '#9CA3AF'}
+                        fill={translation.isFavorite ? '#F59E0B' : 'none'}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={styles.historySourceText} numberOfLines={1}>
+                    {translation.sourceText}
+                  </Text>
+                  <Text style={styles.historyTranslatedText} numberOfLines={1}>
+                    {translation.translatedText}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
+      </ScrollView>
+
+      {/* Language Selectors */}
+      <LanguageSelector
+        languages={LANGUAGES}
+        selectedCode={fromLanguage}
+        onSelect={setFromLanguage}
+        visible={showFromLanguages}
+        onClose={() => setShowFromLanguages(false)}
+      />
+      
+      <LanguageSelector
+        languages={LANGUAGES}
+        selectedCode={toLanguage}
+        onSelect={setToLanguage}
+        visible={showToLanguages}
+        onClose={() => setShowToLanguages(false)}
+      />
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        visible={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        onUpgrade={handleUpgrade}
+        reason="feature"
+      />
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F9FAFB',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1F2937',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  remainingText: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginRight: 12,
+  },
+  historyButton: {
+    padding: 8,
+  },
+  content: {
+    flex: 1,
+    padding: 20,
+  },
+  languageSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+  },
+  languageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    flex: 1,
+  },
+  languageFlag: {
+    fontSize: 20,
+    marginRight: 8,
+  },
+  languageText: {
+    fontSize: 16,
+    color: '#1F2937',
+    flex: 1,
+  },
+  swapButton: {
+    backgroundColor: '#EBF4FF',
+    padding: 12,
+    borderRadius: 12,
+    marginHorizontal: 12,
+  },
+  inputSection: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  inputHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  textInput: {
+    fontSize: 16,
+    color: '#1F2937',
+    minHeight: 100,
+    textAlignVertical: 'top',
+    marginBottom: 12,
+  },
+  inputFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  characterCount: {
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+  translateButton: {
+    backgroundColor: '#3B82F6',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  translateButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  outputSection: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  outputHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  outputLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  outputActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionButton: {
+    marginLeft: 16,
+  },
+  outputText: {
+    minHeight: 60,
+    justifyContent: 'center',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: '#6B7280',
+  },
+  translatedText: {
+    fontSize: 16,
+    color: '#1F2937',
+    lineHeight: 24,
+  },
+  historySection: {
+    marginTop: 20,
+  },
+  historyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 12,
+  },
+  historyItem: {
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  historyItemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  historyLanguages: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  historySourceText: {
+    fontSize: 14,
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  historyTranslatedText: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  languageSelectorOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  languageSelectorModal: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    width: '90%',
+    maxHeight: '80%',
+    overflow: 'hidden',
+  },
+  languageSelectorHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  languageSelectorTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  languageList: {
+    maxHeight: 400,
+  },
+  languageItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  selectedLanguageItem: {
+    backgroundColor: '#EBF4FF',
+  },
+  languageName: {
+    fontSize: 16,
+    color: '#1F2937',
+    flex: 1,
+    marginLeft: 12,
+  },
+  languageNative: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  languageDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  languageDisplayItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  languageDisplayLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    fontWeight: '600',
+  },
+  languageDisplayContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  languageDisplayFlag: {
+    fontSize: 24,
+    marginRight: 8,
+  },
+  languageDisplayName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  confidenceSection: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  confidenceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  confidenceLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#10B981',
+    marginLeft: 6,
+  },
+  confidenceBar: {
+    height: 6,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 3,
+    marginBottom: 4,
+  },
+  confidenceFill: {
+    height: '100%',
+    backgroundColor: '#10B981',
+    borderRadius: 3,
+  },
+  confidenceText: {
+    fontSize: 12,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+  insightsSection: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  insightsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  insightsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#8B5CF6',
+    marginLeft: 8,
+  },
+  insightCard: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#3B82F6',
+  },
+  insightCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  insightCardTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginLeft: 6,
+  },
+  insightCardText: {
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 20,
+  },
+  alternativeItem: {
+    paddingVertical: 4,
+  },
+  alternativeText: {
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 20,
+  },
+  difficultyBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginTop: 8,
+  },
+  difficultyText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  difficultyBeginner: {
+    backgroundColor: '#D1FAE5',
+    color: '#065F46',
+  },
+  difficultyIntermediate: {
+    backgroundColor: '#FEF3C7',
+    color: '#92400E',
+  },
+  difficultyAdvanced: {
+    backgroundColor: '#FEE2E2',
+    color: '#991B1B',
+  },
+});

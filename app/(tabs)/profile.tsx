@@ -1,0 +1,1568 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  Dimensions,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+} from 'react-native';
+
+import { LinearGradient } from 'expo-linear-gradient';
+import { 
+  MessageCircle, 
+  Flame, 
+  BookOpen, 
+  Zap, 
+  Crown,
+  Trophy,
+  Star,
+  Target,
+  Calendar,
+  TrendingUp,
+  Award,
+  Clock,
+  Users,
+  Shield,
+  Sparkles,
+  Mail,
+  Lock,
+  User as UserIcon,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  CheckCircle,
+  Globe,
+  Smartphone,
+  Facebook,
+  Chrome,
+  Apple,
+} from 'lucide-react-native';
+import { useUser } from '@/hooks/user-store';
+import { LANGUAGES } from '@/constants/languages';
+import UpgradeModal from '@/components/UpgradeModal';
+
+const { width } = Dimensions.get('window');
+
+type AuthMode = 'signin' | 'signup' | 'profile';
+
+export default function ProfileScreen() {
+  const { user, updateUser, upgradeToPremium } = useUser();
+  const [authMode, setAuthMode] = useState<AuthMode>(user.email ? 'profile' : 'signin');
+  const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
+  const [selectedTab, setSelectedTab] = useState<'stats' | 'achievements' | 'friends'>('stats');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
+  
+  // Form states
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
+  
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  const selectedLanguage = LANGUAGES.find(lang => lang.code === user.selectedLanguage);
+
+  const handleUpgrade = () => {
+    setShowUpgradeModal(false);
+    upgradeToPremium();
+    Alert.alert('Success!', 'You now have Premium access!');
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    
+    if (authMode === 'signup' && !formData.name.trim()) {
+      newErrors.name = 'Name is required';
+    }
+    
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email';
+    }
+    
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+    
+    if (authMode === 'signup') {
+      if (!formData.confirmPassword) {
+        newErrors.confirmPassword = 'Please confirm your password';
+      } else if (formData.password !== formData.confirmPassword) {
+        newErrors.confirmPassword = 'Passwords do not match';
+      }
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleAuth = async () => {
+    if (!validateForm()) return;
+    
+    setIsLoading(true);
+    
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Update user with auth data
+      updateUser({
+        name: formData.name || formData.email.split('@')[0],
+        email: formData.email,
+        id: `user_${Date.now()}`,
+      });
+      
+      setAuthMode('profile');
+      Alert.alert(
+        'Success!', 
+        authMode === 'signin' ? 'Welcome back!' : 'Account created successfully!'
+      );
+    } catch (error) {
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSocialAuth = async (provider: 'google' | 'facebook' | 'apple') => {
+    setIsLoading(true);
+    
+    try {
+      // Simulate social auth
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      updateUser({
+        name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} User`,
+        email: `user@${provider}.com`,
+        id: `${provider}_${Date.now()}`,
+      });
+      
+      setAuthMode('profile');
+      Alert.alert('Success!', `Signed in with ${provider.charAt(0).toUpperCase() + provider.slice(1)}!`);
+    } catch (error) {
+      Alert.alert('Error', 'Authentication failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSignOut = () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: () => {
+            updateUser({ name: undefined, email: undefined, id: 'guest' });
+            setAuthMode('signin');
+            setFormData({ name: '', email: '', password: '', confirmPassword: '' });
+          },
+        },
+      ]
+    );
+  };
+
+  const stats = [
+    {
+      icon: MessageCircle,
+      label: 'Total Chats',
+      value: user.stats.totalChats.toString(),
+      color: '#3B82F6',
+      change: '+12%',
+      isPositive: true,
+    },
+    {
+      icon: Flame,
+      label: 'Current Streak',
+      value: `${user.stats.streakDays} days`,
+      color: '#EF4444',
+      change: user.stats.streakDays > 0 ? 'Active' : 'Broken',
+      isPositive: user.stats.streakDays > 0,
+    },
+    {
+      icon: BookOpen,
+      label: 'Words Learned',
+      value: user.stats.wordsLearned.toString(),
+      color: '#10B981',
+      change: '+8 this week',
+      isPositive: true,
+    },
+    {
+      icon: Zap,
+      label: 'XP Points',
+      value: user.stats.xpPoints.toString(),
+      color: '#F59E0B',
+      change: '+150 today',
+      isPositive: true,
+    },
+  ];
+  
+  const weeklyGoals = [
+    {
+      id: 'daily_lesson',
+      title: 'Complete Daily Lesson',
+      description: 'Finish at least one lesson every day',
+      progress: 5,
+      target: 7,
+      icon: Target,
+      color: '#10B981',
+    },
+    {
+      id: 'weekly_xp',
+      title: 'Earn 500 XP',
+      description: 'Accumulate XP through lessons and practice',
+      progress: 320,
+      target: 500,
+      icon: Zap,
+      color: '#F59E0B',
+    },
+    {
+      id: 'perfect_lessons',
+      title: 'Perfect Lessons',
+      description: 'Complete 3 lessons with 100% accuracy',
+      progress: 1,
+      target: 3,
+      icon: Star,
+      color: '#8B5CF6',
+    },
+  ];
+  
+  const friendsActivity = [
+    {
+      id: '1',
+      name: 'Sarah Chen',
+      avatar: '👩‍💼',
+      action: 'completed a lesson',
+      time: '2 hours ago',
+      xp: 25,
+    },
+    {
+      id: '2',
+      name: 'Miguel Rodriguez',
+      avatar: '👨‍🎓',
+      action: 'reached a 30-day streak',
+      time: '4 hours ago',
+      xp: 100,
+    },
+    {
+      id: '3',
+      name: 'Emma Johnson',
+      avatar: '👩‍🎨',
+      action: 'earned a new badge',
+      time: '1 day ago',
+      xp: 50,
+    },
+  ];
+
+  // Render authentication screens
+  if (authMode === 'signin' || authMode === 'signup') {
+    return (
+      <KeyboardAvoidingView 
+        style={styles.container} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.authScrollContainer}
+        >
+          <LinearGradient
+            colors={['#667eea', '#764ba2']}
+            style={styles.authHeader}
+          >
+            <View style={styles.authHeaderContent}>
+              <View style={styles.logoContainer}>
+                <Globe size={40} color="white" />
+                <Text style={styles.logoText}>LinguaMate</Text>
+              </View>
+              <Text style={styles.authHeaderTitle}>
+                {authMode === 'signin' ? 'Welcome Back!' : 'Join LinguaMate'}
+              </Text>
+              <Text style={styles.authHeaderSubtitle}>
+                {authMode === 'signin' 
+                  ? 'Sign in to continue your language journey'
+                  : 'Start your personalized language learning adventure'
+                }
+              </Text>
+            </View>
+          </LinearGradient>
+
+          <View style={styles.authFormContainer}>
+            <View style={styles.authForm}>
+              <Text style={styles.formTitle}>
+                {authMode === 'signin' ? 'Sign In' : 'Create Account'}
+              </Text>
+
+              {/* Social Auth Buttons */}
+              <View style={styles.socialAuthContainer}>
+                <TouchableOpacity 
+                  style={[styles.socialButton, styles.googleButton]}
+                  onPress={() => handleSocialAuth('google')}
+                  disabled={isLoading}
+                >
+                  <Chrome size={20} color="#4285F4" />
+                  <Text style={[styles.socialButtonText, { color: '#4285F4' }]}>Google</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.socialButton, styles.facebookButton]}
+                  onPress={() => handleSocialAuth('facebook')}
+                  disabled={isLoading}
+                >
+                  <Facebook size={20} color="#1877F2" />
+                  <Text style={[styles.socialButtonText, { color: '#1877F2' }]}>Facebook</Text>
+                </TouchableOpacity>
+                
+                {Platform.OS === 'ios' && (
+                  <TouchableOpacity 
+                    style={[styles.socialButton, styles.appleButton]}
+                    onPress={() => handleSocialAuth('apple')}
+                    disabled={isLoading}
+                  >
+                    <Apple size={20} color="black" />
+                    <Text style={[styles.socialButtonText, { color: 'black' }]}>Apple</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              <View style={styles.dividerContainer}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>or</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              {/* Form Fields */}
+              {authMode === 'signup' && (
+                <View style={styles.inputContainer}>
+                  <View style={styles.inputWrapper}>
+                    <UserIcon size={20} color="#6B7280" style={styles.inputIcon} />
+                    <TextInput
+                      style={[styles.textInput, errors.name && styles.inputError]}
+                      placeholder="Full Name"
+                      value={formData.name}
+                      onChangeText={(text) => {
+                        setFormData(prev => ({ ...prev, name: text }));
+                        if (errors.name) setErrors(prev => ({ ...prev, name: '' }));
+                      }}
+                      autoCapitalize="words"
+                      editable={!isLoading}
+                    />
+                  </View>
+                  {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+                </View>
+              )}
+
+              <View style={styles.inputContainer}>
+                <View style={styles.inputWrapper}>
+                  <Mail size={20} color="#6B7280" style={styles.inputIcon} />
+                  <TextInput
+                    style={[styles.textInput, errors.email && styles.inputError]}
+                    placeholder="Email Address"
+                    value={formData.email}
+                    onChangeText={(text) => {
+                      setFormData(prev => ({ ...prev, email: text }));
+                      if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
+                    }}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    editable={!isLoading}
+                  />
+                </View>
+                {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+              </View>
+
+              <View style={styles.inputContainer}>
+                <View style={styles.inputWrapper}>
+                  <Lock size={20} color="#6B7280" style={styles.inputIcon} />
+                  <TextInput
+                    style={[styles.textInput, errors.password && styles.inputError]}
+                    placeholder="Password"
+                    value={formData.password}
+                    onChangeText={(text) => {
+                      setFormData(prev => ({ ...prev, password: text }));
+                      if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
+                    }}
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                    editable={!isLoading}
+                  />
+                  <TouchableOpacity 
+                    style={styles.eyeButton}
+                    onPress={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff size={20} color="#6B7280" />
+                    ) : (
+                      <Eye size={20} color="#6B7280" />
+                    )}
+                  </TouchableOpacity>
+                </View>
+                {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+              </View>
+
+              {authMode === 'signup' && (
+                <View style={styles.inputContainer}>
+                  <View style={styles.inputWrapper}>
+                    <Lock size={20} color="#6B7280" style={styles.inputIcon} />
+                    <TextInput
+                      style={[styles.textInput, errors.confirmPassword && styles.inputError]}
+                      placeholder="Confirm Password"
+                      value={formData.confirmPassword}
+                      onChangeText={(text) => {
+                        setFormData(prev => ({ ...prev, confirmPassword: text }));
+                        if (errors.confirmPassword) setErrors(prev => ({ ...prev, confirmPassword: '' }));
+                      }}
+                      secureTextEntry={!showConfirmPassword}
+                      autoCapitalize="none"
+                      editable={!isLoading}
+                    />
+                    <TouchableOpacity 
+                      style={styles.eyeButton}
+                      onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff size={20} color="#6B7280" />
+                      ) : (
+                        <Eye size={20} color="#6B7280" />
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                  {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
+                </View>
+              )}
+
+              {/* Forgot Password */}
+              {authMode === 'signin' && (
+                <TouchableOpacity style={styles.forgotPasswordButton}>
+                  <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                </TouchableOpacity>
+              )}
+
+              {/* Submit Button */}
+              <TouchableOpacity 
+                style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
+                onPress={handleAuth}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="white" size="small" />
+                ) : (
+                  <>
+                    <Text style={styles.submitButtonText}>
+                      {authMode === 'signin' ? 'Sign In' : 'Create Account'}
+                    </Text>
+                    <ArrowRight size={20} color="white" style={styles.submitButtonIcon} />
+                  </>
+                )}
+              </TouchableOpacity>
+
+              {/* Switch Auth Mode */}
+              <View style={styles.switchAuthContainer}>
+                <Text style={styles.switchAuthText}>
+                  {authMode === 'signin' 
+                    ? "Don't have an account? " 
+                    : "Already have an account? "
+                  }
+                </Text>
+                <TouchableOpacity 
+                  onPress={() => {
+                    setAuthMode(authMode === 'signin' ? 'signup' : 'signin');
+                    setErrors({});
+                    setFormData({ name: '', email: '', password: '', confirmPassword: '' });
+                  }}
+                  disabled={isLoading}
+                >
+                  <Text style={styles.switchAuthLink}>
+                    {authMode === 'signin' ? 'Sign Up' : 'Sign In'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Features Preview */}
+              <View style={styles.featuresContainer}>
+                <Text style={styles.featuresTitle}>Why join LinguaMate?</Text>
+                <View style={styles.featuresList}>
+                  <View style={styles.featureItem}>
+                    <CheckCircle size={16} color="#10B981" />
+                    <Text style={styles.featureText}>AI-powered personalized lessons</Text>
+                  </View>
+                  <View style={styles.featureItem}>
+                    <CheckCircle size={16} color="#10B981" />
+                    <Text style={styles.featureText}>Track your progress & streaks</Text>
+                  </View>
+                  <View style={styles.featureItem}>
+                    <CheckCircle size={16} color="#10B981" />
+                    <Text style={styles.featureText}>Interactive conversations</Text>
+                  </View>
+                  <View style={styles.featureItem}>
+                    <CheckCircle size={16} color="#10B981" />
+                    <Text style={styles.featureText}>Multiple language support</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    );
+  }
+
+  // Render profile screen for authenticated users
+  return (
+    <View style={styles.container}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <LinearGradient
+          colors={user.isPremium ? ['#8B5CF6', '#A855F7'] : ['#10B981', '#059669']}
+          style={styles.header}
+        >
+          <View style={styles.profileInfo}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {user.name ? user.name.charAt(0).toUpperCase() : '👤'}
+              </Text>
+            </View>
+            <Text style={styles.userName}>
+              {user.name || 'Language Learner'}
+            </Text>
+            
+            {user.email && (
+              <Text style={styles.userEmail}>{user.email}</Text>
+            )}
+            
+            <View style={styles.languageInfo}>
+              <Text style={styles.languageFlag}>{selectedLanguage?.flag}</Text>
+              <Text style={styles.languageName}>Learning {selectedLanguage?.name}</Text>
+            </View>
+            
+            <View style={styles.levelInfo}>
+              <Shield size={16} color="white" />
+              <Text style={styles.levelText}>Level {Math.floor(user.stats.xpPoints / 100) + 1}</Text>
+            </View>
+            
+            <View style={styles.profileActions}>
+              <View style={styles.premiumBadge}>
+                {user.isPremium ? (
+                  <View style={styles.premiumContainer}>
+                    <Crown size={16} color="#FFD700" />
+                    <Text style={styles.premiumText}>Premium</Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity 
+                    style={styles.upgradeButton}
+                    onPress={() => setShowUpgradeModal(true)}
+                  >
+                    <Star size={16} color="white" />
+                    <Text style={styles.upgradeText}>Upgrade</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              
+              <TouchableOpacity 
+                style={styles.signOutButton}
+                onPress={handleSignOut}
+              >
+                <Text style={styles.signOutText}>Sign Out</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </LinearGradient>
+
+        {/* Tab Navigation */}
+        <View style={styles.tabContainer}>
+          {(['stats', 'achievements', 'friends'] as const).map((tab) => (
+            <TouchableOpacity
+              key={tab}
+              style={[
+                styles.tabButton,
+                selectedTab === tab && styles.activeTabButton,
+              ]}
+              onPress={() => setSelectedTab(tab)}
+            >
+              <Text style={[
+                styles.tabButtonText,
+                selectedTab === tab && styles.activeTabButtonText,
+              ]}>
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        
+        {/* Stats Tab */}
+        {selectedTab === 'stats' && (
+          <>
+            <View style={styles.statsContainer}>
+              <Text style={styles.sectionTitle}>Your Progress</Text>
+              <View style={styles.statsGrid}>
+                {stats.map((stat, index) => {
+                  const IconComponent = stat.icon;
+                  return (
+                    <View key={index} style={styles.statCard}>
+                      <View style={[styles.statIcon, { backgroundColor: stat.color }]}>
+                        <IconComponent size={24} color="white" />
+                      </View>
+                      <Text style={styles.statValue}>{stat.value}</Text>
+                      <Text style={styles.statLabel}>{stat.label}</Text>
+                      <View style={styles.statChange}>
+                        <TrendingUp 
+                          size={12} 
+                          color={stat.isPositive ? '#10B981' : '#EF4444'} 
+                        />
+                        <Text style={[
+                          styles.statChangeText,
+                          { color: stat.isPositive ? '#10B981' : '#EF4444' }
+                        ]}>
+                          {stat.change}
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+            
+            {/* Weekly Goals */}
+            <View style={styles.goalsContainer}>
+              <Text style={styles.sectionTitle}>Weekly Goals</Text>
+              {weeklyGoals.map((goal) => {
+                const IconComponent = goal.icon;
+                const progressPercentage = (goal.progress / goal.target) * 100;
+                
+                return (
+                  <View key={goal.id} style={styles.goalCard}>
+                    <View style={[styles.goalIcon, { backgroundColor: goal.color }]}>
+                      <IconComponent size={20} color="white" />
+                    </View>
+                    
+                    <View style={styles.goalInfo}>
+                      <Text style={styles.goalTitle}>{goal.title}</Text>
+                      <Text style={styles.goalDescription}>{goal.description}</Text>
+                      
+                      <View style={styles.goalProgress}>
+                        <View style={styles.goalProgressBar}>
+                          <View 
+                            style={[
+                              styles.goalProgressFill, 
+                              { 
+                                width: `${Math.min(progressPercentage, 100)}%`,
+                                backgroundColor: goal.color 
+                              }
+                            ]} 
+                          />
+                        </View>
+                        <Text style={styles.goalProgressText}>
+                          {goal.progress}/{goal.target}
+                        </Text>
+                      </View>
+                    </View>
+                    
+                    {progressPercentage >= 100 && (
+                      <View style={styles.goalCompleted}>
+                        <Trophy size={16} color="#F59E0B" />
+                      </View>
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          </>
+        )}
+
+        {/* Achievements Tab */}
+        {selectedTab === 'achievements' && (
+          <View style={styles.achievementsContainer}>
+            <Text style={styles.sectionTitle}>Your Achievements</Text>
+            
+            {user.stats.badges.length > 0 ? (
+              <View style={styles.badgesGrid}>
+                {user.stats.badges.map((badge) => (
+                  <View key={badge.id} style={styles.badgeCard}>
+                    <Text style={styles.badgeIcon}>{badge.icon}</Text>
+                    <Text style={styles.badgeName}>{badge.name}</Text>
+                    <Text style={styles.badgeDescription}>{badge.description}</Text>
+                    <Text style={styles.badgeDate}>
+                      Earned {new Date(badge.unlockedAt).toLocaleDateString()}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <View style={styles.noBadgesContainer}>
+                <Trophy size={48} color="#9CA3AF" />
+                <Text style={styles.noBadgesTitle}>No achievements yet</Text>
+                <Text style={styles.noBadgesText}>
+                  Complete lessons and maintain streaks to earn badges!
+                </Text>
+              </View>
+            )}
+            
+            {/* Available Badges */}
+            <View style={styles.availableBadgesContainer}>
+              <Text style={styles.sectionTitle}>Available Badges</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <View style={styles.availableBadgesList}>
+                  {[
+                    { icon: '🎯', name: 'First Steps', requirement: '1 chat' },
+                    { icon: '🔥', name: '3-Day Streak', requirement: '3 days' },
+                    { icon: '⚡', name: 'Week Warrior', requirement: '7 days' },
+                    { icon: '👑', name: 'Monthly Master', requirement: '30 days' },
+                    { icon: '💬', name: 'Chatterbox', requirement: '50 chats' },
+                    { icon: '📚', name: 'Vocabulary Builder', requirement: '100 words' },
+                  ].map((badge, index) => (
+                    <View key={index} style={styles.availableBadgeCard}>
+                      <Text style={styles.availableBadgeIcon}>{badge.icon}</Text>
+                      <Text style={styles.availableBadgeName}>{badge.name}</Text>
+                      <Text style={styles.availableBadgeRequirement}>{badge.requirement}</Text>
+                    </View>
+                  ))}
+                </View>
+              </ScrollView>
+            </View>
+          </View>
+        )}
+        
+        {/* Friends Tab */}
+        {selectedTab === 'friends' && (
+          <View style={styles.friendsContainer}>
+            <Text style={styles.sectionTitle}>Friends Activity</Text>
+            
+            <View style={styles.addFriendsCard}>
+              <Users size={24} color="#8B5CF6" />
+              <Text style={styles.addFriendsTitle}>Connect with Friends</Text>
+              <Text style={styles.addFriendsText}>
+                Add friends to compete and motivate each other!
+              </Text>
+              <TouchableOpacity style={styles.addFriendsButton}>
+                <Text style={styles.addFriendsButtonText}>Find Friends</Text>
+              </TouchableOpacity>
+            </View>
+            
+            {friendsActivity.map((activity) => (
+              <View key={activity.id} style={styles.activityCard}>
+                <Text style={styles.activityAvatar}>{activity.avatar}</Text>
+                
+                <View style={styles.activityInfo}>
+                  <Text style={styles.activityName}>{activity.name}</Text>
+                  <Text style={styles.activityAction}>{activity.action}</Text>
+                  <Text style={styles.activityTime}>{activity.time}</Text>
+                </View>
+                
+                <View style={styles.activityXp}>
+                  <Zap size={14} color="#F59E0B" />
+                  <Text style={styles.activityXpText}>+{activity.xp}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {!user.isPremium && (
+          <View style={styles.premiumPromoContainer}>
+            <LinearGradient
+              colors={['#8B5CF6', '#7C3AED']}
+              style={styles.premiumPromo}
+            >
+              <Crown size={32} color="#FFD700" />
+              <Text style={styles.premiumPromoTitle}>Unlock Premium</Text>
+              <Text style={styles.premiumPromoText}>
+                • Unlimited lessons and exercises{"\n"}
+                • Advanced AI coaching{"\n"}
+                • Detailed progress analytics{"\n"}
+                • Priority support
+              </Text>
+              <TouchableOpacity 
+                style={styles.premiumPromoButton}
+                onPress={() => setShowUpgradeModal(true)}
+              >
+                <Sparkles size={16} color="#8B5CF6" />
+                <Text style={styles.premiumPromoButtonText}>Upgrade Now</Text>
+              </TouchableOpacity>
+            </LinearGradient>
+          </View>
+        )}
+
+        {/* Quick Stats Summary */}
+        <View style={styles.quickStatsContainer}>
+          <Text style={styles.sectionTitle}>Quick Stats</Text>
+          <View style={styles.quickStatsGrid}>
+            <View style={styles.quickStatItem}>
+              <Calendar size={20} color="#3B82F6" />
+              <Text style={styles.quickStatValue}>12</Text>
+              <Text style={styles.quickStatLabel}>Days Active</Text>
+            </View>
+            
+            <View style={styles.quickStatItem}>
+              <Clock size={20} color="#10B981" />
+              <Text style={styles.quickStatValue}>2.5h</Text>
+              <Text style={styles.quickStatLabel}>Study Time</Text>
+            </View>
+            
+            <View style={styles.quickStatItem}>
+              <Award size={20} color="#F59E0B" />
+              <Text style={styles.quickStatValue}>85%</Text>
+              <Text style={styles.quickStatLabel}>Accuracy</Text>
+            </View>
+            
+            <View style={styles.quickStatItem}>
+              <Target size={20} color="#8B5CF6" />
+              <Text style={styles.quickStatValue}>#8</Text>
+              <Text style={styles.quickStatLabel}>Rank</Text>
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+
+      <UpgradeModal
+        visible={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        onUpgrade={handleUpgrade}
+        reason="feature"
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F9FAFB',
+  },
+  authScrollContainer: {
+    flexGrow: 1,
+  },
+  authHeader: {
+    paddingTop: 60,
+    paddingBottom: 40,
+    paddingHorizontal: 20,
+  },
+  authHeaderContent: {
+    alignItems: 'center',
+  },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  logoText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: 'white',
+    marginLeft: 12,
+  },
+  authHeaderTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  authHeaderSubtitle: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.9)',
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  authFormContainer: {
+    flex: 1,
+    backgroundColor: '#F9FAFB',
+    marginTop: -20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  authForm: {
+    padding: 24,
+  },
+  formTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  socialAuthContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+  },
+  socialButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'white',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginHorizontal: 4,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  googleButton: {
+    borderColor: '#4285F4',
+  },
+  facebookButton: {
+    borderColor: '#1877F2',
+  },
+  appleButton: {
+    borderColor: '#000',
+  },
+  socialButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 24,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E5E7EB',
+  },
+  dividerText: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginHorizontal: 16,
+  },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    paddingHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  textInput: {
+    flex: 1,
+    paddingVertical: 16,
+    fontSize: 16,
+    color: '#1F2937',
+  },
+  inputError: {
+    borderColor: '#EF4444',
+  },
+  eyeButton: {
+    padding: 4,
+  },
+  errorText: {
+    fontSize: 12,
+    color: '#EF4444',
+    marginTop: 4,
+    marginLeft: 4,
+  },
+  forgotPasswordButton: {
+    alignSelf: 'flex-end',
+    marginBottom: 24,
+  },
+  forgotPasswordText: {
+    fontSize: 14,
+    color: '#667eea',
+    fontWeight: '600',
+  },
+  submitButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#667eea',
+    paddingVertical: 16,
+    borderRadius: 12,
+    marginBottom: 24,
+    shadowColor: '#667eea',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  submitButtonDisabled: {
+    opacity: 0.7,
+  },
+  submitButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  submitButtonIcon: {
+    marginLeft: 8,
+  },
+  switchAuthContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  switchAuthText: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  switchAuthLink: {
+    fontSize: 14,
+    color: '#667eea',
+    fontWeight: '600',
+  },
+  featuresContainer: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  featuresTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  featuresList: {
+    gap: 12,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  featureText: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginLeft: 12,
+    flex: 1,
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingVertical: 40,
+    alignItems: 'center',
+  },
+  profileInfo: {
+    alignItems: 'center',
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  avatarText: {
+    fontSize: 32,
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  userName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 4,
+  },
+  userEmail: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 8,
+  },
+  profileActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  signOutButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  signOutText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  premiumBadge: {
+    marginTop: 8,
+  },
+  premiumContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  premiumText: {
+    color: 'white',
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  upgradeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  upgradeText: {
+    color: 'white',
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  statsContainer: {
+    padding: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: 16,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  statCard: {
+    width: '48%',
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  statIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+  badgesContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  badgesList: {
+    flexDirection: 'row',
+    paddingRight: 20,
+  },
+  badgeCard: {
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    width: '48%',
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  badgeIcon: {
+    fontSize: 32,
+    marginBottom: 8,
+  },
+  badgeName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1F2937',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  badgeDescription: {
+    fontSize: 12,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+  premiumPromoContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  premiumPromo: {
+    padding: 24,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  premiumPromoTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  premiumPromoText: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.9)',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  premiumPromoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 20,
+  },
+  premiumPromoButtonText: {
+    color: '#8B5CF6',
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  languageInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  languageFlag: {
+    fontSize: 16,
+    marginRight: 6,
+  },
+  languageName: {
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  levelInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  levelText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 8,
+    marginHorizontal: 4,
+  },
+  activeTabButton: {
+    backgroundColor: '#F0FDF4',
+  },
+  tabButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  activeTabButtonText: {
+    color: '#10B981',
+  },
+  statChange: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  statChangeText: {
+    fontSize: 10,
+    fontWeight: '500',
+    marginLeft: 2,
+  },
+  goalsContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  goalCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  goalIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  goalInfo: {
+    flex: 1,
+  },
+  goalTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  goalDescription: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 8,
+  },
+  goalProgress: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  goalProgressBar: {
+    flex: 1,
+    height: 6,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 3,
+    marginRight: 8,
+  },
+  goalProgressFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  goalProgressText: {
+    fontSize: 12,
+    color: '#6B7280',
+    fontWeight: '600',
+  },
+  goalCompleted: {
+    marginLeft: 8,
+  },
+  achievementsContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  badgesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  badgeDate: {
+    fontSize: 10,
+    color: '#9CA3AF',
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  noBadgesContainer: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  noBadgesTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  noBadgesText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    textAlign: 'center',
+    paddingHorizontal: 20,
+  },
+  availableBadgesContainer: {
+    marginTop: 24,
+  },
+  availableBadgesList: {
+    flexDirection: 'row',
+    paddingRight: 20,
+  },
+  availableBadgeCard: {
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderStyle: 'dashed',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginRight: 12,
+    minWidth: 100,
+  },
+  availableBadgeIcon: {
+    fontSize: 24,
+    marginBottom: 8,
+    opacity: 0.5,
+  },
+  availableBadgeName: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6B7280',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  availableBadgeRequirement: {
+    fontSize: 10,
+    color: '#9CA3AF',
+    textAlign: 'center',
+  },
+  friendsContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  addFriendsCard: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  addFriendsTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  addFriendsText: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  addFriendsButton: {
+    backgroundColor: '#8B5CF6',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  addFriendsButtonText: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  activityCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  activityAvatar: {
+    fontSize: 20,
+    marginRight: 12,
+  },
+  activityInfo: {
+    flex: 1,
+  },
+  activityName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 2,
+  },
+  activityAction: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginBottom: 2,
+  },
+  activityTime: {
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+  activityXp: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  activityXpText: {
+    fontSize: 12,
+    color: '#F59E0B',
+    fontWeight: '600',
+    marginLeft: 2,
+  },
+  quickStatsContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  quickStatsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  quickStatItem: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+    flex: 1,
+    marginHorizontal: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  quickStatValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginTop: 4,
+    marginBottom: 2,
+  },
+  quickStatLabel: {
+    fontSize: 10,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+});
