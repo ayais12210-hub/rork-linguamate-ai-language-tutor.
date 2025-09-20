@@ -11,16 +11,90 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Send, Settings, Sparkles } from 'lucide-react-native';
+import { Send, Settings, Sparkles, Languages, Copy, Volume2 } from 'lucide-react-native';
 import { useChat } from '@/hooks/chat-store';
 import { useUser } from '@/hooks/user-store';
 import { LANGUAGES } from '@/constants/languages';
 import UpgradeModal from '@/components/UpgradeModal';
 import { router } from 'expo-router';
 
+interface AITranslationResponseShape {
+  translation?: string;
+  explanation?: string;
+  culturalContext?: string;
+  grammarInsights?: string;
+  alternativeTranslations?: unknown;
+  alternatives?: unknown;
+  difficulty?: string;
+  confidence?: unknown;
+  coachingTips?: string;
+}
+
+function stripJSONCodeFences(raw: string): string {
+  try {
+    let s = raw.trim();
+    if (s.startsWith('```')) {
+      const firstFenceEnd = s.indexOf('\n');
+      s = s.slice(firstFenceEnd + 1);
+      const lastFence = s.lastIndexOf('```');
+      if (lastFence !== -1) s = s.slice(0, lastFence);
+    }
+    const firstBrace = s.indexOf('{');
+    const lastBrace = s.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      s = s.slice(firstBrace, lastBrace + 1);
+    }
+    return s;
+  } catch (e) {
+    console.log('[Chat] stripJSONCodeFences error', e);
+    return raw;
+  }
+}
+
+function toStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.map(v => (typeof v === 'string' ? v : JSON.stringify(v))).filter(Boolean);
+  }
+  if (typeof value === 'string') {
+    const parts = value
+      .replace(/^[\s•*-]+/gm, '')
+      .split(/\n|;|\|/)
+      .map(t => t.trim())
+      .filter(Boolean);
+    return parts.length > 0 ? parts : [value];
+  }
+  if (value == null) return [];
+  return [JSON.stringify(value)];
+}
+
+function coerceConfidence(value: unknown): number | undefined {
+  if (typeof value === 'number') return Math.max(0, Math.min(1, value));
+  if (typeof value === 'string') {
+    const m = value.match(/([0-9]*\.?[0-9]+)/);
+    if (m) {
+      const n = parseFloat(m[1]);
+      if (!Number.isNaN(n)) return Math.max(0, Math.min(1, n > 1 ? n / 100 : n));
+    }
+  }
+  return undefined;
+}
+
+function normalizeAIResponse(raw: string): AITranslationResponseShape {
+  try {
+    const cleaned = stripJSONCodeFences(raw);
+    const parsed = JSON.parse(cleaned) as AITranslationResponseShape;
+    return parsed;
+  } catch (e) {
+    console.log('[Chat] JSON parse failed, falling back to plain text', e);
+    return { translation: raw } as AITranslationResponseShape;
+  }
+}
+
 export default function ChatScreen() {
   const [inputText, setInputText] = useState<string>('');
   const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
+  const [isTranslatingDraft, setIsTranslatingDraft] = useState<boolean>(false);
+  const [draftTranslation, setDraftTranslation] = useState<AITranslationResponseShape | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const { messages, isLoading, sendMessage, suggestions, refreshSuggestions } = useChat();
   const { user, canSendMessage, upgradeToPremium } = useUser();
@@ -73,6 +147,7 @@ export default function ChatScreen() {
 
     await sendMessage(inputText);
     setInputText('');
+    setDraftTranslation(null);
   };
 
   const handleUpgrade = () => {
@@ -90,6 +165,54 @@ export default function ChatScreen() {
   };
 
   const remainingMessages = getRemainingMessages();
+
+  const handleTranslateDraft = useCallback(async () => {
+    const text = (inputText ?? '').trim();
+    if (!text) return;
+    setIsTranslatingDraft(true);
+    setDraftTranslation(null);
+    try {
+      const selectedLang = LANGUAGES.find(lang => lang.code === user.selectedLanguage)?.name ?? 'Target Language';
+      const nativeLang = LANGUAGES.find(lang => lang.code === user.nativeLanguage)?.name ?? 'Native Language';
+
+      const response = await fetch('https://toolkit.rork.com/text/llm/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: 'system',
+              content: `You are an elite multilingual AI coach and professional translator with deep expertise in ${nativeLang} and ${selectedLang}.
+Return ONLY JSON. Fields: translation, explanation, culturalContext, grammarInsights, alternativeTranslations (array of 3-6), difficulty, confidence, coachingTips. Keep explanations concise for chat UI.`,
+            },
+            { role: 'user', content: text },
+          ],
+        }),
+      });
+      const data = await response.json();
+      const normalized = normalizeAIResponse(String(data?.completion ?? ''));
+      setDraftTranslation(normalized);
+    } catch (e) {
+      console.log('Draft translate failed', e);
+      Alert.alert('Translate failed', 'Could not analyze your draft. Try again.');
+    } finally {
+      setIsTranslatingDraft(false);
+    }
+  }, [inputText, user.selectedLanguage, user.nativeLanguage]);
+
+  const insertAltIntoInput = useCallback((alt: string) => {
+    setInputText(prev => {
+      const has = (prev ?? '').trim().length > 0;
+      const sep = has ? ' ' : '';
+      return `${prev ?? ''}${sep}${alt}`;
+    });
+  }, []);
+
+  const replaceInputWithTranslation = useCallback(() => {
+    const t = draftTranslation?.translation?.toString() ?? '';
+    if (!t) return;
+    setInputText(t);
+  }, [draftTranslation]);
 
   const handleSuggestionPress = useCallback(async (text: string) => {
     if (!text) return;
@@ -259,6 +382,57 @@ export default function ChatScreen() {
             </ScrollView>
           </View>
         )}
+
+        {(draftTranslation || isTranslatingDraft) && (
+          <View style={styles.translatorCard} testID="translatorCard">
+            <View style={styles.translatorHeader}>
+              <View style={styles.translatorHeaderLeft}>
+                <Languages size={16} color="#2563EB" />
+                <Text style={styles.translatorTitle}>Coach Translator</Text>
+              </View>
+              <View style={styles.translatorHeaderRight}>
+                <TouchableOpacity
+                  onPress={replaceInputWithTranslation}
+                  disabled={!draftTranslation?.translation}
+                  style={[styles.translatorActionBtn, !draftTranslation?.translation ? styles.translatorActionBtnDisabled : undefined]}
+                  testID="translatorReplaceBtn"
+                >
+                  <Text style={styles.translatorActionText}>Use</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            {isTranslatingDraft ? (
+              <Text style={styles.loadingText}>Analyzing...</Text>
+            ) : (
+              <View>
+                {!!draftTranslation?.translation && (
+                  <View style={styles.translatorSection}>
+                    <Text style={styles.translatorLabel}>Translation</Text>
+                    <Text style={styles.translatorText}>{draftTranslation.translation}</Text>
+                  </View>
+                )}
+                {!!draftTranslation?.alternativeTranslations && toStringArray(draftTranslation.alternativeTranslations).length > 0 && (
+                  <View style={styles.translatorSection}>
+                    <Text style={styles.translatorLabel}>Alternatives</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.altRow}>
+                      {toStringArray(draftTranslation.alternativeTranslations).map((alt, idx) => (
+                        <TouchableOpacity key={`alt-${idx}`} style={styles.altPill} onPress={() => insertAltIntoInput(alt)} testID={`altPill-${idx}`}>
+                          <Text style={styles.altPillText}>{alt}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
+                {!!draftTranslation?.explanation && (
+                  <View style={styles.translatorSection}>
+                    <Text style={styles.translatorLabel}>Why this works</Text>
+                    <Text style={styles.translatorSubText}>{draftTranslation.explanation}</Text>
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
+        )}
       </ScrollView>
 
       {!user.isPremium && (
@@ -282,6 +456,14 @@ export default function ChatScreen() {
             maxLength={500}
             testID="chatInput"
           />
+          <TouchableOpacity
+            style={[styles.toolbarBtn, isTranslatingDraft && styles.toolbarBtnDisabled]}
+            onPress={handleTranslateDraft}
+            disabled={isTranslatingDraft || !inputText.trim()}
+            testID="translateDraftBtn"
+          >
+            <Languages size={18} color={isTranslatingDraft || !inputText.trim() ? '#9CA3AF' : '#2563EB'} />
+          </TouchableOpacity>
           <TouchableOpacity
             style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]}
             onPress={handleSend}
@@ -536,6 +718,20 @@ const styles = StyleSheet.create({
     maxHeight: 100,
     color: '#1F2937',
   },
+  toolbarBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  toolbarBtnDisabled: {
+    opacity: 0.6,
+  },
   sendButton: {
     backgroundColor: '#3B82F6',
     width: 44,
@@ -581,5 +777,84 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#6B7280',
     lineHeight: 18,
+  },
+  translatorCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  translatorHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  translatorHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  translatorTitle: {
+    marginLeft: 6,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  translatorHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  translatorActionBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: '#EEF2FF',
+  },
+  translatorActionBtnDisabled: {
+    backgroundColor: '#F3F4F6',
+  },
+  translatorActionText: {
+    fontSize: 12,
+    color: '#3730A3',
+    fontWeight: '600',
+  },
+  translatorSection: {
+    marginTop: 6,
+  },
+  translatorLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+  translatorText: {
+    fontSize: 14,
+    color: '#111827',
+    lineHeight: 20,
+  },
+  translatorSubText: {
+    fontSize: 13,
+    color: '#374151',
+    lineHeight: 18,
+  },
+  altRow: {
+    flexDirection: 'row',
+  },
+  altPill: {
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+  },
+  altPillText: {
+    fontSize: 13,
+    color: '#111827',
   },
 });
