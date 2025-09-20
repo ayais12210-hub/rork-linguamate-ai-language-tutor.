@@ -139,4 +139,9 @@ export const BADGES = [
   { id: 'chats_50', name: 'Chatterbox', description: 'Completed 50 conversations', icon: '💬', requiredValue: 50, type: 'totalChats' },
   { id: 'chats_100', name: 'Conversation King', description: 'Completed 100 conversations', icon: '🗣️', requiredValue: 100, type: 'totalChats' },
   { id: 'words_100', name: 'Vocabulary Builder', description: 'Learned 100 new words', icon: '📚', requiredValue: 100, type: 'wordsLearned' },
+  { id: 'badges_1', name: 'Badge Beginner', description: 'Earned your first badge', icon: '🏅', requiredValue: 1, type: 'badgesCount' },
+  { id: 'badges_3', name: 'Badge Collector', description: 'Earned 3 badges', icon: '🥉', requiredValue: 3, type: 'badgesCount' },
+  { id: 'badges_5', name: 'Badge Hunter', description: 'Earned 5 badges', icon: '🥈', requiredValue: 5, type: 'badgesCount' },
+  { id: 'badges_10', name: 'Badge Champion', description: 'Earned 10 badges', icon: '🥇', requiredValue: 10, type: 'badgesCount' },
+  { id: 'badges_20', name: 'Badge Legend', description: 'Earned 20 badges', icon: '🏆', requiredValue: 20, type: 'badgesCount' },
 ];

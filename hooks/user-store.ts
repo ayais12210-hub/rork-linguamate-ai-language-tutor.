@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
 import { useEffect, useState } from 'react';
-import { BADGES } from '@/constants/languages';
-import { Badge, User, UserStats, OnboardingData } from '@/types/user';
+import { BADGES, LANGUAGES } from '@/constants/languages';
+import { Badge, User, UserStats } from '@/types/user';
 
 const USER_STORAGE_KEY = 'linguamate_user';
 
@@ -66,44 +66,94 @@ export const [UserProvider, useUser] = createContextHook(() => {
   };
 
   const updateUser = (updates: Partial<User>) => {
-    const updatedUser = { ...user, ...updates };
+    const updatedUser: User = { ...user, ...updates } as User;
+
+    if (updates.selectedLanguage) {
+      const lang = LANGUAGES.find(l => l.code === updates.selectedLanguage);
+      const currentStats = updatedUser.stats || defaultUser.stats!;
+      const badgesArr = currentStats.badges || [];
+
+      if (lang) {
+        const langBadgeId = `lang_flag_${lang.code}`;
+        const hasBadge = badgesArr.some(b => b.id === langBadgeId);
+        if (!hasBadge) {
+          const added: Badge = {
+            id: langBadgeId,
+            name: `${lang.name} Flag`,
+            description: `You selected ${lang.name} as your language`,
+            icon: lang.flag,
+            unlockedAt: new Date().toISOString(),
+          };
+          const withLang = { ...currentStats, badges: [...badgesArr, added] } as UserStats;
+          // Also check badge count trophies after adding language badge
+          const more = checkForNewBadges(withLang, [...badgesArr, added], updatedUser);
+          const finalBadges = [...badgesArr, added, ...more.filter(nb => ![...badgesArr, added].some(b => b.id === nb.id))];
+          updatedUser.stats = { ...withLang, badges: finalBadges } as UserStats;
+        }
+      }
+    }
+
     saveUser(updatedUser);
   };
 
   const updateStats = (updates: Partial<UserStats>) => {
     const currentStats = user.stats || defaultUser.stats!;
-    const updatedStats = { ...currentStats, ...updates };
-    const updatedUser = { ...user, stats: updatedStats };
-    
-    // Check for new badges
-    const currentBadges = currentStats.badges || [];
-    const newBadges = checkForNewBadges(updatedStats, currentBadges);
+    const updatedStats: UserStats = { ...currentStats, ...updates } as UserStats;
+    const updatedUser: User = { ...user, stats: updatedStats } as User;
+
+    const currentBadges: Badge[] = currentStats.badges || [];
+    const newBadges = checkForNewBadges(updatedStats, currentBadges, updatedUser);
     if (newBadges.length > 0) {
       updatedStats.badges = [...(updatedStats.badges || []), ...newBadges];
       updatedUser.stats = updatedStats;
     }
-    
+
     saveUser(updatedUser);
   };
 
-  const checkForNewBadges = (stats: UserStats, currentBadges: Badge[]): Badge[] => {
+  const checkForNewBadges = (stats: UserStats, currentBadges: Badge[], userArg?: User): Badge[] => {
     const newBadges: Badge[] = [];
-    const currentBadgeIds = currentBadges.map(b => b.id);
+    const currentBadgeIds = new Set(currentBadges.map(b => b.id));
 
-    BADGES.forEach(badge => {
-      if (!currentBadgeIds.includes(badge.id)) {
-        const statValue = stats[badge.type as keyof UserStats] as number;
-        if (statValue >= badge.requiredValue) {
+    BADGES.forEach(def => {
+      if (currentBadgeIds.has(def.id)) return;
+
+      let meets = false;
+      if (def.type === 'badgesCount') {
+        const count = (currentBadges.length + newBadges.length);
+        meets = count >= def.requiredValue;
+      } else {
+        const key = def.type as keyof UserStats;
+        const statValue = (stats?.[key] as unknown as number) ?? 0;
+        meets = statValue >= def.requiredValue;
+      }
+
+      if (meets) {
+        newBadges.push({
+          id: def.id,
+          name: def.name,
+          description: def.description,
+          icon: def.icon,
+          unlockedAt: new Date().toISOString(),
+        });
+      }
+    });
+
+    if (userArg?.selectedLanguage) {
+      const lang = LANGUAGES.find(l => l.code === userArg.selectedLanguage);
+      if (lang) {
+        const langBadgeId = `lang_flag_${lang.code}`;
+        if (!currentBadges.some(b => b.id === langBadgeId) && !newBadges.some(b => b.id === langBadgeId)) {
           newBadges.push({
-            id: badge.id,
-            name: badge.name,
-            description: badge.description,
-            icon: badge.icon,
+            id: langBadgeId,
+            name: `${lang.name} Flag`,
+            description: `You selected ${lang.name} as your language`,
+            icon: lang.flag,
             unlockedAt: new Date().toISOString(),
           });
         }
       }
-    });
+    }
 
     return newBadges;
   };
