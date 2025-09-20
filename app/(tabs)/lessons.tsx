@@ -145,6 +145,15 @@ interface LessonProgress {
   score: number;
 }
 
+interface ExerciseResult {
+  exerciseId: string;
+  question: string;
+  userAnswer: string;
+  correctAnswer: string;
+  isCorrect: boolean;
+  explanation?: string;
+}
+
 interface Achievement {
   id: string;
   title: string;
@@ -181,6 +190,10 @@ export default function LessonsScreen() {
   const [showAchievement, setShowAchievement] = useState<Achievement | null>(null);
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'beginner' | 'intermediate' | 'advanced' | 'expert'>('all');
   const [currentUnit, setCurrentUnit] = useState<number>(1);
+  const [results, setResults] = useState<ExerciseResult[]>([]);
+  const [showCompletion, setShowCompletion] = useState<boolean>(false);
+  const [xpEarned, setXpEarned] = useState<number>(0);
+  const [lessonStartedAt, setLessonStartedAt] = useState<number>(0);
   const scrollViewRef = useRef<ScrollView>(null);
   const heartAnimation = useRef(new Animated.Value(1)).current;
   const comboAnimation = useRef(new Animated.Value(0)).current;
@@ -722,6 +735,10 @@ Return a JSON object with this exact structure:
       setCurrentExercise(0);
       setSelectedAnswer('');
       setShowResult(false);
+      setResults([]);
+      setShowCompletion(false);
+      setXpEarned(0);
+      setLessonStartedAt(Date.now());
     } catch (error) {
       Alert.alert('Error', 'Failed to load lesson. Please try again.');
       console.error('Error starting lesson:', error);
@@ -774,11 +791,32 @@ Return a JSON object with this exact structure:
     
     setIsCorrect(correct);
     setShowResult(true);
+
+    const userAnswerString = Array.isArray(selectedAnswer)
+      ? selectedAnswer.join(' ')
+      : typeof selectedAnswer === 'string'
+        ? selectedAnswer
+        : JSON.stringify(selectedAnswer);
+
+    const correctAnswerString = Array.isArray(exercise.correctAnswer)
+      ? exercise.correctAnswer.join(' ')
+      : String(exercise.correctAnswer ?? '');
+
+    setResults(prev => ([
+      ...prev,
+      {
+        exerciseId: exercise.id,
+        question: exercise.question,
+        userAnswer: userAnswerString,
+        correctAnswer: correctAnswerString,
+        isCorrect: correct,
+        explanation: exercise.explanation,
+      },
+    ]));
     
-    // Update stats
     if (correct) {
       updateStats({
-        xpPoints: (user.stats?.xpPoints || 0) + 5, // Small XP for each correct answer
+        xpPoints: (user.stats?.xpPoints || 0) + 5,
       });
     }
     
@@ -831,19 +869,22 @@ Return a JSON object with this exact structure:
   
   const completeLesson = () => {
     if (!selectedLesson) return;
-    
+
+    const total = selectedLesson.exercises.length;
+    const correctCount = results.filter(r => r.isCorrect).length;
+    const perfect = correctCount === total && total > 0;
+    const bonus = perfect ? selectedLesson.perfectBonus : 0;
+    const totalXp = selectedLesson.xpReward + bonus;
+
     setCompletedLessons(prev => [...prev, selectedLesson.id]);
-    
+
     updateStats({
-      xpPoints: (user.stats?.xpPoints || 0) + selectedLesson.xpReward,
-      wordsLearned: (user.stats?.wordsLearned || 0) + selectedLesson.exercises.length,
+      xpPoints: (user.stats?.xpPoints || 0) + totalXp,
+      wordsLearned: (user.stats?.wordsLearned || 0) + total,
     });
-    
-    Alert.alert(
-      'Lesson Complete! 🎉',
-      `You earned ${selectedLesson.xpReward} XP!`,
-      [{ text: 'Continue', onPress: () => setSelectedLesson(null) }]
-    );
+
+    setXpEarned(totalXp);
+    setShowCompletion(true);
   };
   
   const handleUpgrade = () => {
@@ -915,6 +956,88 @@ Return a JSON object with this exact structure:
     }
     return sliced;
   }, []);
+
+  const renderCompletionScreen = () => {
+    if (!selectedLesson) return null;
+    const total = selectedLesson.exercises.length;
+    const correctCount = results.filter(r => r.isCorrect).length;
+    const durationSec = Math.max(1, Math.floor((Date.now() - lessonStartedAt) / 1000));
+    return (
+      <ErrorBoundary>
+        <SafeAreaView style={styles.container}>
+          <ScrollView contentContainerStyle={styles.completionScroll}>
+            <View style={styles.completionHeader}>
+              <View style={styles.trophyCircle}>
+                <Trophy size={40} color="#F59E0B" />
+              </View>
+              <Text style={styles.completionTitle} testID="lesson-complete-title">Congratulations!</Text>
+              <Text style={styles.completionSubtitle}>Lesson completed</Text>
+            </View>
+
+            <View style={styles.completionStatsRow}>
+              <View style={styles.completionStatCard}>
+                <Zap size={18} color="#F59E0B" />
+                <Text style={styles.completionStatValue}>+{xpEarned}</Text>
+                <Text style={styles.completionStatLabel}>XP Earned</Text>
+              </View>
+              <View style={styles.completionStatCard}>
+                <CheckCircle size={18} color="#10B981" />
+                <Text style={styles.completionStatValue}>{correctCount}/{total}</Text>
+                <Text style={styles.completionStatLabel}>Correct</Text>
+              </View>
+              <View style={styles.completionStatCard}>
+                <Clock size={18} color="#3B82F6" />
+                <Text style={styles.completionStatValue}>{durationSec}s</Text>
+                <Text style={styles.completionStatLabel}>Time</Text>
+              </View>
+            </View>
+
+            <View style={styles.recapCard}>
+              <Text style={styles.recapTitle}>Recap</Text>
+              {selectedLesson.exercises.map((ex, idx) => {
+                const res = results[idx];
+                const isRight = res?.isCorrect ?? false;
+                return (
+                  <View key={ex.id} style={styles.recapItem} testID={`recap-${idx}`}>
+                    <Text style={styles.recapQuestion}>{idx + 1}. {ex.question}</Text>
+                    <View style={[styles.answerPill, isRight ? styles.answerPillCorrect : styles.answerPillIncorrect]}>
+                      <Text style={[styles.answerPillText, isRight ? styles.answerPillTextCorrect : styles.answerPillTextIncorrect]}>
+                        Your answer: {res?.userAnswer ?? ''}
+                      </Text>
+                    </View>
+                    {!isRight && (
+                      <View style={styles.correctAnswerRow}>
+                        <Text style={styles.completionCorrectAnswerLabel}>Correct:</Text>
+                        <Text style={styles.completionCorrectAnswerValue}>
+                          {Array.isArray(ex.correctAnswer) ? ex.correctAnswer.join(' ') : String(ex.correctAnswer)}
+                        </Text>
+                      </View>
+                    )}
+                    {!!ex.explanation && (
+                      <Text style={styles.explanationSmall}>{ex.explanation}</Text>
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+
+            <View style={styles.completionButtonsRow}>
+              <TouchableOpacity
+                style={[styles.primaryButton]}
+                testID="back-to-lessons"
+                onPress={() => {
+                  setSelectedLesson(null);
+                  setShowCompletion(false);
+                }}
+              >
+                <Text style={styles.primaryButtonText}>Back to Lessons</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </ErrorBoundary>
+    );
+  };
 
   // Render lesson exercise view
   const renderLessonExercise = () => {
@@ -1477,7 +1600,7 @@ Return a JSON object with this exact structure:
         
         {/* Study Stats */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Today's Progress</Text>
+          <Text style={styles.sectionTitle}>Today’s Progress</Text>
           
           <View style={styles.statsGrid}>
             <View style={styles.statCard}>
@@ -1538,6 +1661,9 @@ Return a JSON object with this exact structure:
   
   // Main render - always call hooks in the same order
   if (selectedLesson) {
+    if (showCompletion) {
+      return renderCompletionScreen();
+    }
     return renderLessonExercise();
   }
   
@@ -1848,6 +1974,155 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   
+  // Completion Styles
+  completionScroll: {
+    padding: 20,
+  },
+  completionHeader: {
+    alignItems: 'center',
+    marginTop: 12,
+    marginBottom: 16,
+  },
+  trophyCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#FFF7ED',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  completionTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 6,
+  },
+  completionSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  completionStatsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12,
+  },
+  completionStatCard: {
+    flex: 1,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    marginHorizontal: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  completionStatValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+    marginTop: 6,
+    marginBottom: 4,
+  },
+  completionStatLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  recapCard: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  recapTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 12,
+  },
+  recapItem: {
+    marginBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+    paddingBottom: 12,
+  },
+  recapQuestion: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 6,
+  },
+  answerPill: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    alignSelf: 'flex-start',
+    marginBottom: 6,
+  },
+  answerPillCorrect: {
+    backgroundColor: '#F0FDF4',
+    borderColor: '#BBF7D0',
+  },
+  answerPillIncorrect: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
+  },
+  answerPillText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  answerPillTextCorrect: {
+    color: '#065F46',
+  },
+  answerPillTextIncorrect: {
+    color: '#991B1B',
+  },
+  correctAnswerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  completionCorrectAnswerLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginRight: 6,
+  },
+  completionCorrectAnswerValue: {
+    fontSize: 12,
+    color: '#111827',
+    fontWeight: '600',
+  },
+  explanationSmall: {
+    fontSize: 12,
+    color: '#4B5563',
+    lineHeight: 18,
+  },
+  completionButtonsRow: {
+    marginTop: 20,
+  },
+  primaryButton: {
+    backgroundColor: '#10B981',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  primaryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+
   // Lesson Exercise Styles
   lessonHeader: {
     flexDirection: 'row',
