@@ -93,6 +93,11 @@ export default function ChatScreen() {
 
   const handleSuggestionPress = useCallback(async (text: string) => {
     if (!text) return;
+    setInputText(prev => {
+      const hasContent = (prev ?? '').trim().length > 0;
+      const separator = hasContent ? ' ' : '';
+      return `${prev ?? ''}${separator}${text}`;
+    });
     toggleSuggestion(text);
   }, [toggleSuggestion]);
 
@@ -415,7 +420,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 6,
-    gap: 6 as unknown as number,
   },
   suggestionsTitle: {
     fontSize: 12,
@@ -435,7 +439,6 @@ const styles = StyleSheet.create({
   },
   suggestionsRow: {
     flexDirection: 'row',
-    gap: 8 as unknown as number,
   },
   suggestionPill: {
     backgroundColor: 'white',
@@ -481,13 +484,13 @@ const styles = StyleSheet.create({
   bulkButtonsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8 as unknown as number,
   },
   bulkBtn: {
     backgroundColor: '#F3F4F6',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 10,
+    marginRight: 8,
   },
   bulkBtnText: {
     fontSize: 12,

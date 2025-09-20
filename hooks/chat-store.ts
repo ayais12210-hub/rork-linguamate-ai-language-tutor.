@@ -58,7 +58,7 @@ export const [ChatProvider, useChat] = createContextHook(() => {
           messages: [
             { role: 'system', content: system },
             ...recent,
-            { role: 'user', content: `Give suggestions in ${targetLanguage} with ${nativeLanguage} in mind.` }
+            { role: 'user', content: `Give suggestions in ${targetLanguage} with ${nativeLanguage} in mind. Return JSON array only.` }
           ]
         })
       });
@@ -67,21 +67,36 @@ export const [ChatProvider, useChat] = createContextHook(() => {
       let list: string[] = [];
       if (typeof data?.completion === 'string') {
         try {
-          const match = data.completion.match(/\[([\s\S]*)\]$/);
-          const maybeJson = match ? `[${match[1]}]` : data.completion;
+          const jsonMatch = data.completion.match(/\[[\s\S]*\]/);
+          const maybeJson = jsonMatch ? jsonMatch[0] : data.completion;
           const parsed = JSON.parse(maybeJson);
           if (Array.isArray(parsed)) {
-            list = parsed.filter((s: unknown) => typeof s === 'string').slice(0, 5);
+            list = parsed.filter((s: unknown) => typeof s === 'string');
           }
         } catch (e) {
-          console.log('Suggestion JSON parse failed, fallback to lines');
-          list = data.completion.split('\n').map((l: string) => l.replace(/^[-•\d.\s]+/, '').trim()).filter(Boolean).slice(0, 5);
+          list = data.completion
+            .split('\n')
+            .map((l: string) => l.replace(/^[-•\d.\s\"]+/, '').replace(/[\"]+$/,'').trim())
+            .filter(Boolean);
         }
       }
-      setSuggestions(list);
+      const cleaned = Array.from(new Set(
+        list
+          .map((s) => (s ?? '').toString().trim())
+          .filter((s) => s.length > 0)
+          .map((s) => s.replace(/[\s]+/g, ' '))
+          .map((s) => (s.length > 80 ? s.slice(0, 79) + '…' : s))
+      ));
+      const limited = cleaned.slice(0, 5);
+      if (limited.length === 0) {
+        const fallback = ['Hello!','How are you?','Let\'s practice today.','Teach me a new phrase.','Correct my last sentence.'];
+        setSuggestions(fallback);
+      } else {
+        setSuggestions(limited);
+      }
     } catch (e) {
       console.error('Failed to refresh suggestions', e);
-      setSuggestions([]);
+      setSuggestions(['Could you give me a hint?','I need help with grammar.','Can we practice numbers?']);
     }
   }, [messages, user.selectedLanguage, user.nativeLanguage, user.proficiencyLevel, user.interests]);
 
