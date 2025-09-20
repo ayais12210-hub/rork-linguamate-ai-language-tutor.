@@ -40,6 +40,7 @@ interface NumberGame {
   correctAnswer: string;
   numberData: NumberData;
 }
+import ModuleShell from '@/modules/shared/ModuleShell';
 
 export default function NumbersModule({ languageCode, onComplete, onBack }: Props) {
   const [numbers, setNumbers] = useState<NumberData[]>([]);
@@ -296,7 +297,7 @@ export default function NumbersModule({ languageCode, onComplete, onBack }: Prop
       });
       
       updateStats({
-        xpPoints: user.stats.xpPoints + 5,
+        xpPoints: (user.stats?.xpPoints ?? 0) + 5,
       });
     } else {
       setStreak(0);
@@ -335,8 +336,8 @@ export default function NumbersModule({ languageCode, onComplete, onBack }: Prop
 
   const completeModule = () => {
     updateStats({
-      xpPoints: user.stats.xpPoints + 100,
-      wordsLearned: user.stats.wordsLearned + 10,
+      xpPoints: (user.stats?.xpPoints ?? 0) + 100,
+      wordsLearned: (user.stats?.wordsLearned ?? 0) + 10,
     });
     
     onComplete?.();
@@ -361,36 +362,20 @@ export default function NumbersModule({ languageCode, onComplete, onBack }: Prop
   const progress = ((gameIndex + 1) / totalGames) * 100;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <ChevronLeft size={24} color="#6B7280" />
-        </TouchableOpacity>
-        
-        <View style={styles.progressContainer}>
-          <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: `${progress}%` }]} />
-          </View>
-          <Text style={styles.progressText}>
-            {gameIndex + 1} / {totalGames}
-          </Text>
-        </View>
-        
-        <View style={styles.statsContainer}>
-          <View style={styles.scoreBox}>
-            <Zap size={16} color="#F59E0B" />
-            <Text style={styles.scoreText}>{score}</Text>
-          </View>
-          
-          <View style={styles.timerBox}>
-            <Timer size={16} color={timeLeft < 10 ? '#EF4444' : '#6B7280'} />
-            <Text style={[styles.timerText, timeLeft < 10 && styles.timerWarning]}>
-              {timeLeft}s
-            </Text>
-          </View>
-        </View>
-      </View>
-
+    <ModuleShell
+      title="Numbers & Counting"
+      subtitle={selectedLanguage ? `In ${selectedLanguage.name}` : undefined}
+      moduleType="numbers"
+      difficulty="beginner"
+      estimatedTime={15}
+      xpReward={100}
+      progress={Math.round(progress)}
+      lives={3}
+      streak={streak}
+      showTimer={false}
+      onBack={onBack}
+      onComplete={() => onComplete?.()}
+    >
       {streak > 2 && (
         <LinearGradient
           colors={['#FEF3C7', '#FDE68A']}
@@ -400,109 +385,106 @@ export default function NumbersModule({ languageCode, onComplete, onBack }: Prop
         </LinearGradient>
       )}
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {currentGame && (
-          <Animated.View
-            style={[
-              styles.gameCard,
-              {
-                transform: [
-                  { translateX: shakeAnimation },
-                  {
-                    scale: animationValue.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [1, 1.05],
-                    }),
-                  },
-                ],
-              },
-            ]}
-          >
-            <Text style={styles.question}>{currentGame.question}</Text>
-            
-            {currentGame.type === 'listening' && (
-              <TouchableOpacity onPress={playAudio} style={styles.audioButton}>
-                <Volume2 size={32} color="#10B981" />
-                <Text style={styles.audioText}>Tap to listen</Text>
-              </TouchableOpacity>
-            )}
-            
-            {currentGame.type === 'typing' ? (
-              <View style={styles.typingContainer}>
-                <TextInput
-                  style={[
-                    styles.typingInput,
-                    showResult && isCorrect && styles.correctInput,
-                    showResult && !isCorrect && styles.incorrectInput,
-                  ]}
-                  value={typedAnswer}
-                  onChangeText={setTypedAnswer}
-                  placeholder="Type your answer..."
-                  placeholderTextColor="#9CA3AF"
-                  autoCapitalize="none"
-                  editable={!showResult}
-                  onSubmitEditing={checkAnswer}
-                />
-              </View>
-            ) : (
-              currentGame.options && (
-                <View style={styles.optionsGrid}>
-                  {currentGame.options.map((option, index) => (
-                    <TouchableOpacity
-                      key={`${option}_${index}`}
-                      style={[
-                        styles.optionButton,
-                        selectedAnswer === option && styles.selectedOption,
-                        showResult && option === currentGame.correctAnswer && styles.correctOption,
-                        showResult && selectedAnswer === option && !isCorrect && styles.incorrectOption,
-                      ]}
-                      onPress={() => !showResult && setSelectedAnswer(option)}
-                      disabled={showResult}
+      {currentGame && (
+        <Animated.View
+          style={[
+            styles.gameCard,
+            {
+              transform: [
+                { translateX: shakeAnimation },
+                {
+                  scale: animationValue.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [1, 1.05],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          <Text style={styles.question}>{currentGame.question}</Text>
+          {currentGame.type === 'listening' && (
+            <TouchableOpacity onPress={playAudio} style={styles.audioButton}>
+              <Volume2 size={32} color="#10B981" />
+              <Text style={styles.audioText}>Tap to listen</Text>
+            </TouchableOpacity>
+          )}
+
+          {currentGame.type === 'typing' ? (
+            <View style={styles.typingContainer}>
+              <TextInput
+                style={[
+                  styles.typingInput,
+                  showResult && isCorrect && styles.correctInput,
+                  showResult && !isCorrect && styles.incorrectInput,
+                ]}
+                value={typedAnswer}
+                onChangeText={setTypedAnswer}
+                placeholder="Type your answer..."
+                placeholderTextColor="#9CA3AF"
+                autoCapitalize="none"
+                editable={!showResult}
+                onSubmitEditing={checkAnswer}
+              />
+            </View>
+          ) : (
+            currentGame.options && (
+              <View style={styles.optionsGrid}>
+                {currentGame.options.map((option, index) => (
+                  <TouchableOpacity
+                    key={`${option}_${index}`}
+                    style={[
+                      styles.optionButton,
+                      selectedAnswer === option && styles.selectedOption,
+                      showResult && option === currentGame.correctAnswer && styles.correctOption,
+                      showResult && selectedAnswer === option && !isCorrect && styles.incorrectOption,
+                    ]}
+                    onPress={() => !showResult && setSelectedAnswer(option)}
+                    disabled={showResult}
+                  >
+                    <Text style={[
+                      styles.optionText,
+                      selectedAnswer === option && styles.selectedOptionText,
+                    ]}
                     >
-                      <Text style={[
-                        styles.optionText,
-                        selectedAnswer === option && styles.selectedOptionText,
-                      ]}>
-                        {option}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )
-            )}
-            
-            {showResult && (
-              <View style={[
+                      {option}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )
+          )}
+
+          {showResult && (
+            <View
+              style={[
                 styles.resultContainer,
                 isCorrect ? styles.correctResult : styles.incorrectResult,
-              ]}>
-                <Text style={styles.resultText}>
-                  {isCorrect ? '✓ Correct!' : `✗ Answer: ${currentGame.correctAnswer}`}
+              ]}
+            >
+              <Text style={styles.resultText}>
+                {isCorrect ? '✓ Correct!' : `✗ Answer: ${currentGame.correctAnswer}`}
+              </Text>
+              {currentGame.numberData.pronunciation && (
+                <Text style={styles.pronunciationText}>
+                  Pronunciation: {currentGame.numberData.pronunciation}
                 </Text>
-                {currentGame.numberData.pronunciation && (
-                  <Text style={styles.pronunciationText}>
-                    Pronunciation: {currentGame.numberData.pronunciation}
-                  </Text>
-                )}
-              </View>
-            )}
-          </Animated.View>
-        )}
-        
-        {!showResult && currentGame && (
-          <TouchableOpacity
-            style={[
-              styles.checkButton,
-              (!selectedAnswer && !typedAnswer) && styles.disabledButton,
-            ]}
-            onPress={checkAnswer}
-            disabled={!selectedAnswer && !typedAnswer}
-          >
-            <Text style={styles.checkButtonText}>Check Answer</Text>
-          </TouchableOpacity>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+              )}
+            </View>
+          )}
+        </Animated.View>
+      )}
+
+      {!showResult && currentGame && (
+        <TouchableOpacity
+          style={[styles.checkButton, (!selectedAnswer && !typedAnswer) && styles.disabledButton]}
+          onPress={checkAnswer}
+          disabled={!selectedAnswer && !typedAnswer}
+        >
+          <Text style={styles.checkButtonText}>Check Answer</Text>
+        </TouchableOpacity>
+      )}
+    </ModuleShell>
   );
 }
 
@@ -521,65 +503,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6B7280',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  backButton: {
-    padding: 8,
-  },
-  progressContainer: {
-    flex: 1,
-    marginHorizontal: 16,
-  },
-  progressBar: {
-    height: 8,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#10B981',
-  },
-  progressText: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  scoreBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  scoreText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#F59E0B',
-    marginLeft: 4,
-  },
-  timerBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  timerText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#6B7280',
-    marginLeft: 4,
-  },
-  timerWarning: {
-    color: '#EF4444',
-  },
+
   streakBanner: {
     paddingVertical: 12,
     alignItems: 'center',

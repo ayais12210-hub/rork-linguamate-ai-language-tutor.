@@ -1,15 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { 
-  ChevronLeft, 
-  Zap, 
-  Timer, 
-  Target, 
+import {
+  ChevronLeft,
+  Zap,
+  Timer,
+  Target,
   Heart,
   Star,
-  Settings
+  Settings,
+  Trophy,
+  Gift,
+  X,
+  Flame,
 } from 'lucide-react-native';
 
 interface ModuleShellProps {
@@ -25,15 +29,15 @@ interface ModuleShellProps {
   showTimer?: boolean;
   timeLimit?: number;
   onBack?: () => void;
-  onComplete?: () => void;
+  onComplete?: (finalXp?: number) => void;
   onPause?: () => void;
   onSettings?: () => void;
   children: React.ReactNode;
 }
 
-export default function ModuleShell({ 
-  title, 
-  subtitle, 
+export default function ModuleShell({
+  title,
+  subtitle,
   moduleType,
   difficulty = 'beginner',
   estimatedTime = 10,
@@ -43,18 +47,21 @@ export default function ModuleShell({
   streak = 0,
   showTimer = false,
   timeLimit = 300,
-  onBack, 
-  onComplete, 
+  onBack,
+  onComplete,
   onPause,
   onSettings,
-  children 
+  children,
 }: ModuleShellProps) {
-  const [timeLeft, setTimeLeft] = useState(timeLimit);
-  const [isPaused, setIsPaused] = useState(false);
-  
+  const [timeLeft, setTimeLeft] = useState<number>(timeLimit);
+  const [isPaused, setIsPaused] = useState<boolean>(false);
+  const [showRewards, setShowRewards] = useState<boolean>(false);
+  const [combo, setCombo] = useState<number>(0);
+  const [actionsCount, setActionsCount] = useState<number>(0);
+
   const progressAnimation = useRef(new Animated.Value(progress)).current;
   const streakAnimation = useRef(new Animated.Value(streak > 0 ? 1 : 0)).current;
-  
+
   useEffect(() => {
     Animated.timing(progressAnimation, {
       toValue: progress,
@@ -62,7 +69,7 @@ export default function ModuleShell({
       useNativeDriver: false,
     }).start();
   }, [progress, progressAnimation]);
-  
+
   useEffect(() => {
     if (streak > 0) {
       Animated.spring(streakAnimation, {
@@ -71,29 +78,28 @@ export default function ModuleShell({
       }).start();
     }
   }, [streak, streakAnimation]);
-  
+
   useEffect(() => {
     if (showTimer && timeLeft > 0 && !isPaused) {
       const timer = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 1) {
-            // Time's up!
             return 0;
           }
           return prev - 1;
         });
       }, 1000);
-      
+
       return () => clearInterval(timer);
     }
   }, [showTimer, timeLeft, isPaused]);
-  
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
-  
+
   const getDifficultyColor = () => {
     switch (difficulty) {
       case 'beginner': return '#10B981';
@@ -103,15 +109,41 @@ export default function ModuleShell({
       default: return '#10B981';
     }
   };
-  
+
   const handlePause = () => {
     setIsPaused(!isPaused);
     onPause?.();
   };
-  
+
+  const multiplier = useMemo<number>(() => {
+    const base = 1;
+    const streakBonus = streak > 0 ? Math.min(1 + streak * 0.05, 2) : 1;
+    const comboBonus = combo > 0 ? Math.min(1 + combo * 0.02, 1.5) : 1;
+    return parseFloat((base * streakBonus * comboBonus).toFixed(2));
+  }, [streak, combo]);
+
+  const projectedXp = useMemo<number>(() => Math.round((xpReward ?? 0) * multiplier), [xpReward, multiplier]);
+
+  const handleComplete = useCallback(() => {
+    setShowRewards(true);
+  }, []);
+
+  const acknowledgeRewards = useCallback(() => {
+    setShowRewards(false);
+    onComplete?.(projectedXp);
+  }, [onComplete, projectedXp]);
+
+  const registerAction = useCallback((wasCorrect: boolean) => {
+    setActionsCount(prev => prev + 1);
+    if (wasCorrect) {
+      setCombo(prev => prev + 1);
+    } else {
+      setCombo(0);
+    }
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* Enhanced Header */}
       <LinearGradient
         colors={['#FFFFFF', '#F8FAFC']}
         style={styles.header}
@@ -120,11 +152,11 @@ export default function ModuleShell({
           <TouchableOpacity testID="module-back" onPress={onBack} style={styles.backButton}>
             <ChevronLeft size={24} color="#6B7280" />
           </TouchableOpacity>
-          
+
           <View style={styles.headerCenter}>
             <Text style={styles.title}>{title}</Text>
             {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
-            
+
             <View style={styles.difficultyBadge}>
               <View style={[styles.difficultyDot, { backgroundColor: getDifficultyColor() }]} />
               <Text style={[styles.difficultyText, { color: getDifficultyColor() }]}>
@@ -132,40 +164,40 @@ export default function ModuleShell({
               </Text>
             </View>
           </View>
-          
-          <TouchableOpacity onPress={onSettings} style={styles.settingsButton}>
+
+          <TouchableOpacity testID="module-settings" onPress={onSettings} style={styles.settingsButton}>
             <Settings size={20} color="#6B7280" />
           </TouchableOpacity>
         </View>
-        
-        {/* Progress Bar */}
+
         <View style={styles.progressContainer}>
           <View style={styles.progressBar}>
-            <Animated.View 
+            <Animated.View
               style={[
-                styles.progressFill, 
-                { 
+                styles.progressFill,
+                {
                   width: progressAnimation.interpolate({
                     inputRange: [0, 100],
                     outputRange: ['0%', '100%'],
                     extrapolate: 'clamp',
                   })
                 }
-              ]} 
+              ]}
             />
           </View>
           <Text style={styles.progressText}>{Math.round(progress)}%</Text>
+          <View style={styles.multiplierPill}>
+            <Flame size={14} color="#F59E0B" />
+            <Text style={styles.multiplierText}>x{multiplier.toFixed(2)}</Text>
+          </View>
         </View>
-        
-        {/* Stats Row */}
+
         <View style={styles.statsRow}>
-          {/* XP Reward */}
           <View style={styles.statItem}>
             <Zap size={16} color="#F59E0B" />
             <Text style={styles.statText}>{xpReward} XP</Text>
           </View>
-          
-          {/* Time */}
+
           {showTimer && (
             <TouchableOpacity onPress={handlePause} style={styles.statItem}>
               <Timer size={16} color={timeLeft < 60 ? '#EF4444' : '#6B7280'} />
@@ -174,16 +206,14 @@ export default function ModuleShell({
               </Text>
             </TouchableOpacity>
           )}
-          
-          {/* Lives */}
+
           <View style={styles.statItem}>
             <Heart size={16} color={lives > 1 ? '#EF4444' : '#9CA3AF'} />
             <Text style={styles.statText}>{lives}</Text>
           </View>
-          
-          {/* Streak */}
+
           {streak > 0 && (
-            <Animated.View 
+            <Animated.View
               style={[
                 styles.statItem,
                 {
@@ -200,45 +230,85 @@ export default function ModuleShell({
               <Text style={[styles.statText, styles.streakText]}>{streak}</Text>
             </Animated.View>
           )}
-          
-          {/* Estimated Time */}
+
           <View style={styles.statItem}>
             <Target size={16} color="#6B7280" />
             <Text style={styles.statText}>{estimatedTime}m</Text>
           </View>
+
+          <View style={styles.statItem}>
+            <Zap size={16} color="#F59E0B" />
+            <Text style={styles.statText}>{Math.max(xpReward, projectedXp)} XP</Text>
+          </View>
         </View>
       </LinearGradient>
-      
-      {/* Pause Overlay */}
+
       {isPaused && (
         <View style={styles.pauseOverlay}>
           <View style={styles.pauseModal}>
             <Text style={styles.pauseTitle}>Paused</Text>
-            <Text style={styles.pauseSubtitle}>Take your time!</Text>
-            <TouchableOpacity onPress={handlePause} style={styles.resumeButton}>
+            <Text style={styles.pauseSubtitle}>Take your time</Text>
+            <TouchableOpacity testID="resume-module" onPress={handlePause} style={styles.resumeButton}>
               <Text style={styles.resumeButtonText}>Resume</Text>
             </TouchableOpacity>
           </View>
         </View>
       )}
-      
-      {/* Content */}
-      <ScrollView 
-        style={styles.content} 
-        contentContainerStyle={styles.contentInner} 
+
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentInner}
         showsVerticalScrollIndicator={false}
         scrollEnabled={!isPaused}
       >
         {children}
+        <TouchableOpacity testID="complete-module" onPress={() => setShowRewards(true)} style={styles.completeButton}>
+          <Text style={styles.completeButtonText}>Finish Module</Text>
+        </TouchableOpacity>
       </ScrollView>
+
+      {showRewards && (
+        <View style={styles.rewardOverlay}>
+          <View style={styles.rewardCard}>
+            <View style={styles.rewardHeader}>
+              <Trophy size={22} color="#F59E0B" />
+              <Text style={styles.rewardTitle}>Module Complete</Text>
+              <TouchableOpacity accessibilityRole="button" onPress={acknowledgeRewards} style={styles.rewardClose}>
+                <X size={18} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.rewardBody}>
+              <View style={styles.rewardRow}>
+                <Zap size={18} color="#F59E0B" />
+                <Text style={styles.rewardText}>Base XP</Text>
+                <Text style={styles.rewardValue}>{xpReward}</Text>
+              </View>
+              <View style={styles.rewardRow}>
+                <Flame size={18} color="#F59E0B" />
+                <Text style={styles.rewardText}>Multiplier</Text>
+                <Text style={styles.rewardValue}>x{multiplier.toFixed(2)}</Text>
+              </View>
+              <View style={styles.rewardDivider} />
+              <View style={styles.rewardRow}>
+                <Gift size={18} color="#10B981" />
+                <Text style={styles.rewardStrong}>Total Reward</Text>
+                <Text style={styles.rewardStrong}>{projectedXp} XP</Text>
+              </View>
+            </View>
+            <TouchableOpacity testID="acknowledge-reward" onPress={acknowledgeRewards} style={styles.rewardButton}>
+              <Text style={styles.rewardButtonText}>Collect</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#F9FAFB' 
+  container: {
+    flex: 1,
+    backgroundColor: '#F9FAFB'
   },
   header: {
     paddingHorizontal: 20,
@@ -251,7 +321,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  backButton: { 
+  backButton: {
     padding: 8,
     borderRadius: 8,
     backgroundColor: '#F3F4F6',
@@ -260,15 +330,15 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
   },
-  title: { 
-    fontSize: 20, 
-    fontWeight: '700', 
+  title: {
+    fontSize: 20,
+    fontWeight: '700',
     color: '#111827',
     textAlign: 'center',
   },
-  subtitle: { 
-    fontSize: 14, 
-    color: '#6B7280', 
+  subtitle: {
+    fontSize: 14,
+    color: '#6B7280',
     marginTop: 4,
     textAlign: 'center',
   },
@@ -319,6 +389,21 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#374151',
     minWidth: 40,
+  },
+  multiplierPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF7ED',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginLeft: 8,
+  },
+  multiplierText: {
+    marginLeft: 4,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#EA580C',
   },
   statsRow: {
     flexDirection: 'row',
@@ -385,10 +470,99 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  content: { 
-    flex: 1 
+  content: {
+    flex: 1
   },
-  contentInner: { 
-    padding: 20 
+  contentInner: {
+    padding: 20
+  },
+  completeButton: {
+    marginTop: 12,
+    alignSelf: 'center',
+    backgroundColor: '#10B981',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  completeButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  rewardOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  rewardCard: {
+    width: '86%',
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
+  },
+  rewardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  rewardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  rewardClose: {
+    padding: 6,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+  },
+  rewardBody: {
+    marginTop: 12,
+    gap: 8,
+  },
+  rewardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+  },
+  rewardText: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 14,
+    color: '#374151',
+  },
+  rewardValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  rewardDivider: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginVertical: 8,
+  },
+  rewardStrong: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  rewardButton: {
+    marginTop: 12,
+    backgroundColor: '#10B981',
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  rewardButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

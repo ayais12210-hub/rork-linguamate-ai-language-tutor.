@@ -232,13 +232,13 @@ export default function ModulesScreen() {
     setActiveModuleComponent(module.type);
   };
 
-  const handleModuleComplete = () => {
+  const handleModuleComplete = (finalXp?: number) => {
     if (selectedModule) {
+      const reward = typeof finalXp === 'number' && !Number.isNaN(finalXp) ? finalXp : selectedModule.xpReward;
       updateStats({
-        xpPoints: (user.stats?.xpPoints ?? 0) + selectedModule.xpReward,
+        xpPoints: (user.stats?.xpPoints ?? 0) + reward,
       });
     }
-    
     setActiveModuleComponent(null);
     setSelectedModule(null);
     calculateProgress();
