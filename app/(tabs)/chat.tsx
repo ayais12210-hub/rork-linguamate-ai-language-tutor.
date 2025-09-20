@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Send, Settings } from 'lucide-react-native';
+import { Send, Settings, Sparkles } from 'lucide-react-native';
 import { useChat } from '@/hooks/chat-store';
 import { useUser } from '@/hooks/user-store';
 import { LANGUAGES } from '@/constants/languages';
@@ -22,7 +22,7 @@ export default function ChatScreen() {
   const [inputText, setInputText] = useState<string>('');
   const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
   const scrollViewRef = useRef<ScrollView>(null);
-  const { messages, isLoading, sendMessage } = useChat();
+  const { messages, isLoading, sendMessage, suggestions, refreshSuggestions } = useChat();
   const { user, canSendMessage, upgradeToPremium } = useUser();
 
   const selectedLanguage = LANGUAGES.find(lang => lang.code === user.selectedLanguage);
@@ -32,6 +32,12 @@ export default function ChatScreen() {
       scrollViewRef.current?.scrollToEnd({ animated: true });
     }
   }, [messages]);
+
+  useEffect(() => {
+    if (messages.length === 0) {
+      refreshSuggestions();
+    }
+  }, [messages.length, refreshSuggestions]);
 
   const handleSend = async () => {
     if (!inputText.trim()) return;
@@ -54,12 +60,34 @@ export default function ChatScreen() {
   const getRemainingMessages = () => {
     if (user.isPremium) return null;
     const today = new Date().toDateString();
-    const isNewDay = user.stats.lastMessageDate !== today;
-    const used = isNewDay ? 0 : user.stats.messagesUsedToday;
+    const isNewDay = user.stats?.lastMessageDate !== today;
+    const used = isNewDay ? 0 : (user.stats?.messagesUsedToday ?? 0);
     return 5 - used;
   };
 
   const remainingMessages = getRemainingMessages();
+
+  const handleSuggestionPress = useCallback(async (text: string) => {
+    if (!text) return;
+    if (!canSendMessage()) {
+      setShowUpgradeModal(true);
+      return;
+    }
+    if (inputText.trim().length === 0) {
+      setInputText(text);
+    } else {
+      setInputText(prev => (prev.trim().length === 0 ? text : `${prev} ${text}`));
+    }
+  }, [canSendMessage, inputText]);
+
+  const handleSuggestionSend = useCallback(async (text: string) => {
+    if (!text) return;
+    if (!canSendMessage()) {
+      setShowUpgradeModal(true);
+      return;
+    }
+    await sendMessage(text);
+  }, [canSendMessage, sendMessage]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -85,6 +113,7 @@ export default function ChatScreen() {
         style={styles.messagesContainer}
         contentContainerStyle={styles.messagesContent}
         showsVerticalScrollIndicator={false}
+        testID="chatMessagesScroll"
       >
         {messages.length === 0 && (
           <View style={styles.emptyState}>
@@ -146,6 +175,27 @@ export default function ChatScreen() {
             </View>
           </View>
         )}
+
+        {suggestions.length > 0 && (
+          <View style={styles.suggestionsBlock}>
+            <View style={styles.suggestionsHeader}>
+              <Sparkles size={16} color="#8B5CF6" />
+              <Text style={styles.suggestionsTitle}>Suggestions</Text>
+              <TouchableOpacity onPress={refreshSuggestions} style={styles.suggestionsRefresh} accessibilityLabel="Refresh suggestions" testID="refreshSuggestionsBtn">
+                <Text style={styles.suggestionsRefreshText}>Refresh</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.suggestionsRow} testID="suggestionsRow">
+              {suggestions.map((s, idx) => (
+                <View key={`${s}-${idx}`} style={styles.suggestionPill}>
+                  <TouchableOpacity onPress={() => handleSuggestionPress(s)} onLongPress={() => handleSuggestionSend(s)} accessibilityLabel={`Suggestion ${idx+1}`} testID={`suggestion-${idx}`}>
+                    <Text style={styles.suggestionText}>{s}</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        )}
       </ScrollView>
 
       {!user.isPremium && (
@@ -167,11 +217,13 @@ export default function ChatScreen() {
             placeholderTextColor="#9CA3AF"
             multiline
             maxLength={500}
+            testID="chatInput"
           />
           <TouchableOpacity
             style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]}
             onPress={handleSend}
             disabled={!inputText.trim() || isLoading}
+            testID="sendButton"
           >
             <Send size={20} color={!inputText.trim() ? '#9CA3AF' : 'white'} />
           </TouchableOpacity>
@@ -297,6 +349,53 @@ const styles = StyleSheet.create({
     color: '#92400E',
     fontSize: 14,
     fontWeight: '500',
+  },
+  suggestionsBlock: {
+    marginBottom: 8,
+  },
+  suggestionsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    gap: 6 as unknown as number,
+  },
+  suggestionsTitle: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginLeft: 6,
+    flex: 1,
+  },
+  suggestionsRefresh: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+  },
+  suggestionsRefreshText: {
+    fontSize: 12,
+    color: '#374151',
+  },
+  suggestionsRow: {
+    flexDirection: 'row',
+    gap: 8 as unknown as number,
+  },
+  suggestionPill: {
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  suggestionText: {
+    fontSize: 14,
+    color: '#374151',
   },
   inputContainer: {
     backgroundColor: 'white',

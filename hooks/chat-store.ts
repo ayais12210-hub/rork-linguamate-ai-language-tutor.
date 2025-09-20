@@ -1,7 +1,7 @@
 import createContextHook from '@nkzw/create-context-hook';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ChatMessage, Correction } from '@/types/user';
+import { ChatMessage } from '@/types/user';
 import { useUser } from './user-store';
 import { LANGUAGES } from '@/constants/languages';
 
@@ -10,6 +10,7 @@ const CHAT_STORAGE_KEY = 'linguamate_chat_history';
 export const [ChatProvider, useChat] = createContextHook(() => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const { user, incrementMessageCount } = useUser();
 
   useEffect(() => {
@@ -26,7 +27,7 @@ export const [ChatProvider, useChat] = createContextHook(() => {
     try {
       const stored = await AsyncStorage.getItem(CHAT_STORAGE_KEY);
       if (stored) {
-        const parsedMessages = JSON.parse(stored);
+        const parsedMessages: ChatMessage[] = JSON.parse(stored);
         setMessages(parsedMessages);
       }
     } catch (error) {
@@ -42,6 +43,48 @@ export const [ChatProvider, useChat] = createContextHook(() => {
     }
   };
 
+  const refreshSuggestions = useCallback(async () => {
+    try {
+      const recent = messages.slice(-8).map(m => ({ role: m.isUser ? 'user' as const : 'assistant' as const, content: m.text }));
+      const targetLanguage = getLanguageName(user.selectedLanguage);
+      const nativeLanguage = getLanguageName(user.nativeLanguage);
+
+      const system = `You generate short next-message suggestions for a language learning chat between a student and an AI coach. Return ONLY a JSON array of 3-5 short suggestions (max 80 chars each) in ${targetLanguage}, tailored to user's level (${user.proficiencyLevel}), interests (${user.interests?.join?.(', ') ?? 'general'}), and previous turns. Avoid repeating the last AI message. Include a mix of question prompts, practice tasks, and cultural tidbits. Also provide beginner-friendly options when level is beginner.`;
+
+      const res = await fetch('https://toolkit.rork.com/text/llm/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: system },
+            ...recent,
+            { role: 'user', content: `Give suggestions in ${targetLanguage} with ${nativeLanguage} in mind.` }
+          ]
+        })
+      });
+
+      const data = await res.json();
+      let list: string[] = [];
+      if (typeof data?.completion === 'string') {
+        try {
+          const match = data.completion.match(/\[([\s\S]*)\]$/);
+          const maybeJson = match ? `[${match[1]}]` : data.completion;
+          const parsed = JSON.parse(maybeJson);
+          if (Array.isArray(parsed)) {
+            list = parsed.filter((s: unknown) => typeof s === 'string').slice(0, 5);
+          }
+        } catch (e) {
+          console.log('Suggestion JSON parse failed, fallback to lines');
+          list = data.completion.split('\n').map((l: string) => l.replace(/^[-•\d.\s]+/, '').trim()).filter(Boolean).slice(0, 5);
+        }
+      }
+      setSuggestions(list);
+    } catch (e) {
+      console.error('Failed to refresh suggestions', e);
+      setSuggestions([]);
+    }
+  }, [messages, user.selectedLanguage, user.nativeLanguage, user.proficiencyLevel, user.interests]);
+
   const sendMessage = async (text: string) => {
     if (!text.trim()) return;
 
@@ -50,7 +93,7 @@ export const [ChatProvider, useChat] = createContextHook(() => {
       text: text.trim(),
       isUser: true,
       timestamp: new Date().toISOString(),
-      language: user.selectedLanguage,
+      language: user.selectedLanguage ?? 'unknown',
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -60,14 +103,12 @@ export const [ChatProvider, useChat] = createContextHook(() => {
       const targetLanguage = getLanguageName(user.selectedLanguage);
       const nativeLanguage = getLanguageName(user.nativeLanguage);
       
-      // Build conversation context from recent messages
-      const recentMessages = messages.slice(-10); // Last 10 messages for context
+      const recentMessages = [...messages, userMessage].slice(-10);
       const conversationHistory = recentMessages.map(msg => ({
-        role: msg.isUser ? 'user' : 'assistant',
+        role: msg.isUser ? 'user' as const : 'assistant' as const,
         content: msg.text
       }));
 
-      // Create enhanced system prompt with user context
       const systemPrompt = createPersonalizedSystemPrompt(user, targetLanguage, nativeLanguage);
 
       const response = await fetch('https://toolkit.rork.com/text/llm/', {
@@ -82,10 +123,6 @@ export const [ChatProvider, useChat] = createContextHook(() => {
               content: systemPrompt,
             },
             ...conversationHistory,
-            {
-              role: 'user',
-              content: text,
-            },
           ],
         }),
       });
@@ -93,7 +130,6 @@ export const [ChatProvider, useChat] = createContextHook(() => {
       const data = await response.json();
       
       if (data.completion) {
-        // Parse the bilingual response
         const parsedResponse = parseBilingualResponse(data.completion);
         
         const aiMessage: ChatMessage = {
@@ -101,7 +137,7 @@ export const [ChatProvider, useChat] = createContextHook(() => {
           text: parsedResponse.mainText,
           isUser: false,
           timestamp: new Date().toISOString(),
-          language: user.selectedLanguage,
+          language: user.selectedLanguage ?? 'unknown',
           nativeTranslation: parsedResponse.nativeTranslation,
           targetTranslation: parsedResponse.targetTranslation,
           context: parsedResponse.context,
@@ -109,6 +145,8 @@ export const [ChatProvider, useChat] = createContextHook(() => {
 
         setMessages(prev => [...prev, aiMessage]);
         incrementMessageCount();
+
+        refreshSuggestions();
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -117,9 +155,10 @@ export const [ChatProvider, useChat] = createContextHook(() => {
         text: 'Sorry, I had trouble understanding. Please try again.',
         isUser: false,
         timestamp: new Date().toISOString(),
-        language: user.selectedLanguage,
+        language: user.selectedLanguage ?? 'unknown',
       };
       setMessages(prev => [...prev, errorMessage]);
+      setSuggestions([]);
     } finally {
       setIsLoading(false);
     }
@@ -127,6 +166,7 @@ export const [ChatProvider, useChat] = createContextHook(() => {
 
   const clearChat = async () => {
     setMessages([]);
+    setSuggestions([]);
     try {
       await AsyncStorage.removeItem(CHAT_STORAGE_KEY);
     } catch (error) {
@@ -135,9 +175,9 @@ export const [ChatProvider, useChat] = createContextHook(() => {
   };
 
   const createPersonalizedSystemPrompt = (user: any, targetLanguage: string, nativeLanguage: string): string => {
-    const goals = user.learningGoals.length > 0 ? user.learningGoals.join(', ') : 'general language learning';
-    const interests = user.interests.length > 0 ? user.interests.join(', ') : 'various topics';
-    const topics = user.preferredTopics.length > 0 ? user.preferredTopics.join(', ') : 'everyday conversations';
+    const goals = user.learningGoals?.length > 0 ? user.learningGoals.join(', ') : 'general language learning';
+    const interests = user.interests?.length > 0 ? user.interests.join(', ') : 'various topics';
+    const topics = user.preferredTopics?.length > 0 ? user.preferredTopics.join(', ') : 'everyday conversations';
     
     return `You are an expert AI language coach helping a ${user.proficiencyLevel} level student learn ${targetLanguage}. The student's native language is ${nativeLanguage}.
 
@@ -173,7 +213,6 @@ If the student makes an error, gently correct it and explain the grammar rule or
   };
 
   const parseBilingualResponse = (response: string) => {
-    // Parse the structured response format
     const targetMatch = response.match(/🎯\s*(.+?)(?=\n\n💬|$)/s);
     const nativeMatch = response.match(/💬\s*(.+?)(?=\n\n📝|$)/s);
     const contextMatch = response.match(/📝\s*(.+?)$/s);
@@ -186,16 +225,20 @@ If the student makes an error, gently correct it and explain the grammar rule or
     };
   };
 
-  const getLanguageName = (code: string): string => {
-    const language = LANGUAGES.find(lang => lang.code === code);
+  const getLanguageName = (code?: string): string => {
+    const language = code ? LANGUAGES.find(lang => lang.code === code) : undefined;
     return language ? language.name : 'the target language';
   };
 
-  return {
+  const value = React.useMemo(() => ({
     messages,
     isLoading,
+    suggestions,
+    refreshSuggestions,
     sendMessage,
     clearChat,
     loadChatHistory,
-  };
+  }), [messages, isLoading, suggestions, refreshSuggestions, sendMessage, clearChat, loadChatHistory]);
+
+  return value;
 });
