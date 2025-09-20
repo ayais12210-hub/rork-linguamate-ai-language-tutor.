@@ -11,12 +11,13 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Send, Settings, Sparkles, Languages, Copy, Volume2 } from 'lucide-react-native';
+import { Send, Settings, Sparkles, Languages } from 'lucide-react-native';
 import { useChat } from '@/hooks/chat-store';
 import { useUser } from '@/hooks/user-store';
 import { LANGUAGES } from '@/constants/languages';
 import UpgradeModal from '@/components/UpgradeModal';
 import { router } from 'expo-router';
+import TranslatorScreen from '@/app/(tabs)/translator';
 
 interface AITranslationResponseShape {
   translation?: string;
@@ -92,6 +93,7 @@ function normalizeAIResponse(raw: string): AITranslationResponseShape {
 
 export default function ChatScreen() {
   const [inputText, setInputText] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'coach' | 'translator'>('coach');
   const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
   const [isTranslatingDraft, setIsTranslatingDraft] = useState<boolean>(false);
   const [draftTranslation, setDraftTranslation] = useState<AITranslationResponseShape | null>(null);
@@ -270,6 +272,24 @@ Return ONLY JSON. Fields: translation, explanation, culturalContext, grammarInsi
         </TouchableOpacity>
       </View>
 
+      <View style={styles.topTabs}>
+        <TouchableOpacity
+          onPress={() => setActiveTab('coach')}
+          style={[styles.topTabBtn, activeTab === 'coach' ? styles.topTabBtnActive : undefined]}
+          testID="coachTabBtn"
+        >
+          <Text style={[styles.topTabText, activeTab === 'coach' ? styles.topTabTextActive : undefined]}>AI Coach</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => setActiveTab('translator')}
+          style={[styles.topTabBtn, activeTab === 'translator' ? styles.topTabBtnActive : undefined]}
+          testID="translatorTabBtn"
+        >
+          <Text style={[styles.topTabText, activeTab === 'translator' ? styles.topTabTextActive : undefined]}>Translator</Text>
+        </TouchableOpacity>
+      </View>
+
+      {activeTab === 'coach' && (
       <ScrollView
         ref={scrollViewRef}
         style={styles.messagesContainer}
@@ -434,6 +454,13 @@ Return ONLY JSON. Fields: translation, explanation, culturalContext, grammarInsi
           </View>
         )}
       </ScrollView>
+      )}
+
+      {activeTab === 'translator' && (
+        <View style={styles.translatorContainer} testID="embeddedTranslator">
+          <TranslatorScreen />
+        </View>
+      )}
 
       {!user.isPremium && (
         <View style={styles.adBanner}>
@@ -441,6 +468,7 @@ Return ONLY JSON. Fields: translation, explanation, culturalContext, grammarInsi
         </View>
       )}
 
+      {activeTab === 'coach' && (
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.inputContainer}
@@ -474,6 +502,7 @@ Return ONLY JSON. Fields: translation, explanation, culturalContext, grammarInsi
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+      )}
 
       <UpgradeModal
         visible={showUpgradeModal}
@@ -856,5 +885,38 @@ const styles = StyleSheet.create({
   altPillText: {
     fontSize: 13,
     color: '#111827',
+  },
+  topTabs: {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  topTabBtn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+    marginHorizontal: 4,
+  },
+  topTabBtnActive: {
+    backgroundColor: '#EEF2FF',
+    borderWidth: 1,
+    borderColor: '#A78BFA',
+  },
+  topTabText: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontWeight: '500' as const,
+  },
+  topTabTextActive: {
+    color: '#3730A3',
+    fontWeight: '700' as const,
+  },
+  translatorContainer: {
+    flex: 1,
   },
 });
