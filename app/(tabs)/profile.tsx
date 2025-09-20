@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
-  Dimensions,
+
   TextInput,
   KeyboardAvoidingView,
   Platform,
@@ -38,16 +38,16 @@ import {
   ArrowRight,
   CheckCircle,
   Globe,
-  Smartphone,
+
   Facebook,
   Chrome,
   Apple,
 } from 'lucide-react-native';
 import { useUser } from '@/hooks/user-store';
+import { useLearningProgress } from '@/state/learning-progress';
 import { LANGUAGES } from '@/constants/languages';
 import UpgradeModal from '@/components/UpgradeModal';
 
-const { width } = Dimensions.get('window');
 
 type AuthMode = 'signin' | 'signup' | 'profile';
 
@@ -59,6 +59,18 @@ export default function ProfileScreen() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
+  const { skills } = useLearningProgress();
+
+  const userStats = (user.stats ?? {
+    totalChats: 0,
+    streakDays: 0,
+    wordsLearned: 0,
+    xpPoints: 0,
+    lastActiveDate: '',
+    messagesUsedToday: 0,
+    lastMessageDate: '',
+    badges: [],
+  });
   
   // Form states
   const [formData, setFormData] = useState({
@@ -182,7 +194,7 @@ export default function ProfileScreen() {
     {
       icon: MessageCircle,
       label: 'Total Chats',
-      value: user.stats.totalChats.toString(),
+      value: userStats.totalChats.toString(),
       color: '#3B82F6',
       change: '+12%',
       isPositive: true,
@@ -190,15 +202,15 @@ export default function ProfileScreen() {
     {
       icon: Flame,
       label: 'Current Streak',
-      value: `${user.stats.streakDays} days`,
+      value: `${userStats.streakDays} days`,
       color: '#EF4444',
-      change: user.stats.streakDays > 0 ? 'Active' : 'Broken',
-      isPositive: user.stats.streakDays > 0,
+      change: userStats.streakDays > 0 ? 'Active' : 'Broken',
+      isPositive: userStats.streakDays > 0,
     },
     {
       icon: BookOpen,
       label: 'Words Learned',
-      value: user.stats.wordsLearned.toString(),
+      value: userStats.wordsLearned.toString(),
       color: '#10B981',
       change: '+8 this week',
       isPositive: true,
@@ -206,7 +218,7 @@ export default function ProfileScreen() {
     {
       icon: Zap,
       label: 'XP Points',
-      value: user.stats.xpPoints.toString(),
+      value: userStats.xpPoints.toString(),
       color: '#F59E0B',
       change: '+150 today',
       isPositive: true,
@@ -552,7 +564,7 @@ export default function ProfileScreen() {
             
             <View style={styles.levelInfo}>
               <Shield size={16} color="white" />
-              <Text style={styles.levelText}>Level {Math.floor(user.stats.xpPoints / 100) + 1}</Text>
+              <Text style={styles.levelText}>Level {Math.floor(userStats.xpPoints / 100) + 1}</Text>
             </View>
             
             <View style={styles.profileActions}>
@@ -686,12 +698,57 @@ export default function ProfileScreen() {
 
         {/* Achievements Tab */}
         {selectedTab === 'achievements' && (
-          <View style={styles.achievementsContainer}>
+          <View style={styles.achievementsContainer} testID="achievements-tab">
             <Text style={styles.sectionTitle}>Your Achievements</Text>
-            
-            {user.stats.badges.length > 0 ? (
-              <View style={styles.badgesGrid}>
-                {user.stats.badges.map((badge) => (
+
+            <View style={styles.streakCard} testID="streak-card">
+              <View style={styles.streakHeader}>
+                <Flame size={20} color="#EF4444" />
+                <Text style={styles.streakTitle}>Current Streak</Text>
+                <Text style={styles.streakValue}>{userStats.streakDays} days</Text>
+              </View>
+              <View style={styles.streakBarContainer}>
+                {Array.from({ length: 7 }).map((_, i) => {
+                  const filled = userStats.streakDays >= 7 - i;
+                  return (
+                    <View
+                      key={i}
+                      style={[styles.streakDot, filled ? styles.streakDotFilled : styles.streakDotEmpty]}
+                      testID={`streak-dot-${i}`}
+                    />
+                  );
+                })}
+              </View>
+            </View>
+
+            <View style={styles.sectionBlock} testID="lesson-achievements">
+              <Text style={styles.subSectionTitle}>Lesson Achievements</Text>
+              <View style={styles.typeGrid}>
+                {(['alphabet','number','vowel','consonant','syllable','word','grammar'] as const).map((t) => {
+                  const list = Object.values(skills).filter(s => s.type === t);
+                  const mastered = list.filter(s => s.mastery === 'mastered').length;
+                  const progressPct = list.length > 0 ? (mastered / list.length) * 100 : 0;
+                  return (
+                    <View key={t} style={styles.typeCard}>
+                      <View style={styles.typeHeader}>
+                        <Text style={styles.typeTitle}>{t.charAt(0).toUpperCase() + t.slice(1)}</Text>
+                        {mastered > 0 && (
+                          <Trophy size={16} color="#F59E0B" />
+                        )}
+                      </View>
+                      <View style={styles.goalProgressBar}>
+                        <View style={[styles.goalProgressFill, { width: `${Math.min(progressPct, 100)}%`, backgroundColor: '#10B981' }]} />
+                      </View>
+                      <Text style={styles.typeMeta}>{mastered}/{list.length} mastered</Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+
+            {userStats.badges.length > 0 ? (
+              <View style={styles.badgesGrid} testID="earned-badges">
+                {userStats.badges.map((badge) => (
                   <View key={badge.id} style={styles.badgeCard}>
                     <Text style={styles.badgeIcon}>{badge.icon}</Text>
                     <Text style={styles.badgeName}>{badge.name}</Text>
@@ -711,8 +768,42 @@ export default function ProfileScreen() {
                 </Text>
               </View>
             )}
-            
-            {/* Available Badges */}
+
+            <View style={styles.nextBadgeCard} testID="next-badge">
+              <Text style={styles.subSectionTitle}>Next Badge Progress</Text>
+              {(() => {
+                const badgesCatalog = [
+                  { id: 'first_chat', name: 'First Steps', requiredValue: 1, type: 'totalChats', icon: '🎯' },
+                  { id: 'streak_3', name: '3-Day Streak', requiredValue: 3, type: 'streakDays', icon: '🔥' },
+                  { id: 'streak_7', name: 'Week Warrior', requiredValue: 7, type: 'streakDays', icon: '⚡' },
+                  { id: 'streak_30', name: 'Monthly Master', requiredValue: 30, type: 'streakDays', icon: '👑' },
+                  { id: 'chats_50', name: 'Chatterbox', requiredValue: 50, type: 'totalChats', icon: '💬' },
+                  { id: 'chats_100', name: 'Conversation King', requiredValue: 100, type: 'totalChats', icon: '🗣️' },
+                  { id: 'words_100', name: 'Vocabulary Builder', requiredValue: 100, type: 'wordsLearned', icon: '📚' },
+                ] as const;
+                const earnedIds = new Set(userStats.badges.map(b => b.id));
+                const pending = badgesCatalog.filter(b => !earnedIds.has(b.id));
+                const next = pending[0];
+                if (!next) {
+                  return <Text style={styles.badgeDescription}>All badges unlocked. Fantastic!</Text>;
+                }
+                const currentValue = (userStats as any)[next.type] ?? 0;
+                const pct = Math.min((currentValue / next.requiredValue) * 100, 100);
+                return (
+                  <View style={styles.nextBadgeRow}>
+                    <Text style={styles.nextBadgeIcon}>{next.icon}</Text>
+                    <View style={styles.nextBadgeDetails}>
+                      <Text style={styles.badgeName}>{next.name}</Text>
+                      <View style={styles.goalProgressBar}>
+                        <View style={[styles.goalProgressFill, { width: `${pct}%`, backgroundColor: '#6366F1' }]} />
+                      </View>
+                      <Text style={styles.goalProgressText}>{currentValue}/{next.requiredValue}</Text>
+                    </View>
+                  </View>
+                );
+              })()}
+            </View>
+
             <View style={styles.availableBadgesContainer}>
               <Text style={styles.sectionTitle}>Available Badges</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -733,6 +824,14 @@ export default function ProfileScreen() {
                   ))}
                 </View>
               </ScrollView>
+            </View>
+
+            <View style={styles.languagesCard} testID="languages-card">
+              <Text style={styles.subSectionTitle}>Languages</Text>
+              <View style={styles.languagesRow}>
+                <Globe size={18} color="#0EA5E9" />
+                <Text style={styles.languageStatText}>Learning: {user.selectedLanguage ? 1 : 0}</Text>
+              </View>
             </View>
           </View>
         )}
@@ -1395,6 +1494,138 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     marginTop: 4,
     textAlign: 'center',
+  },
+  streakCard: {
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  streakHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  streakTitle: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 14,
+    color: '#1F2937',
+    fontWeight: '600',
+  },
+  streakValue: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontWeight: '600',
+  },
+  streakBarContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  streakDot: {
+    height: 10,
+    borderRadius: 5,
+    flex: 1,
+    marginHorizontal: 2,
+  },
+  streakDotFilled: {
+    backgroundColor: '#F59E0B',
+  },
+  streakDotEmpty: {
+    backgroundColor: '#E5E7EB',
+  },
+  sectionBlock: {
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  subSectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 10,
+  },
+  typeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  typeCard: {
+    width: '48%',
+    backgroundColor: 'white',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  typeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  typeTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  typeMeta: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 6,
+  },
+  nextBadgeCard: {
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 8,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  nextBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  nextBadgeIcon: {
+    fontSize: 28,
+    marginRight: 8,
+  },
+  nextBadgeDetails: {
+    flex: 1,
+  },
+  languagesCard: {
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  languagesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  languageStatText: {
+    marginLeft: 8,
+    color: '#374151',
+    fontWeight: '600',
   },
   noBadgesContainer: {
     alignItems: 'center',
