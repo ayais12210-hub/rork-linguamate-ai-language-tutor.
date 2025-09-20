@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -47,6 +47,15 @@ import { useUser } from '@/hooks/user-store';
 import { useLearningProgress } from '@/state/learning-progress';
 import { LANGUAGES } from '@/constants/languages';
 import UpgradeModal from '@/components/UpgradeModal';
+import { storageHelpers, STORAGE_KEYS } from '@/lib/storage';
+import { Lightbulb, Quote, History, Save, Trash2 } from 'lucide-react-native';
+
+interface JournalEntry {
+  id: string;
+  text: string;
+  createdAt: string;
+  languageCode?: string;
+}
 
 
 type AuthMode = 'signin' | 'signup' | 'profile';
@@ -60,6 +69,10 @@ export default function ProfileScreen() {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
   const { skills } = useLearningProgress();
+
+  const [journalDraft, setJournalDraft] = useState<string>('');
+  const [journal, setJournal] = useState<JournalEntry[]>([]);
+  const [journalSaving, setJournalSaving] = useState<boolean>(false);
 
   const userStats = (user.stats ?? {
     totalChats: 0,
@@ -83,6 +96,77 @@ export default function ProfileScreen() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   
   const selectedLanguage = LANGUAGES.find(lang => lang.code === user.selectedLanguage);
+
+  useEffect(() => {
+    const loadJournal = async () => {
+      try {
+        console.log('[Profile] Loading journal from storage');
+        const data = await storageHelpers.getObject<JournalEntry[]>(STORAGE_KEYS.JOURNAL);
+        if (data) {
+          setJournal(data);
+        }
+      } catch (e) {
+        console.error('[Profile] Failed to load journal', e);
+      }
+    };
+    loadJournal();
+  }, []);
+
+  const saveJournalEntry = useCallback(async () => {
+    const trimmed = journalDraft.trim();
+    if (!trimmed) {
+      Alert.alert('Empty entry', 'Write something you learned today.');
+      return;
+    }
+    setJournalSaving(true);
+    try {
+      const entry: JournalEntry = {
+        id: `jr_${Date.now()}`,
+        text: trimmed,
+        createdAt: new Date().toISOString(),
+        languageCode: user.selectedLanguage,
+      };
+      const updated = [entry, ...journal].slice(0, 100);
+      setJournal(updated);
+      setJournalDraft('');
+      await storageHelpers.setObject(STORAGE_KEYS.JOURNAL, updated);
+      console.log('[Profile] Journal saved. total:', updated.length);
+    } catch (e) {
+      console.error('[Profile] Failed to save journal', e);
+      Alert.alert('Save failed', 'Could not save your journal. Please try again.');
+    } finally {
+      setJournalSaving(false);
+    }
+  }, [journalDraft, journal, user.selectedLanguage]);
+
+  const removeEntry = useCallback(async (id: string) => {
+    try {
+      const updated = journal.filter(j => j.id !== id);
+      setJournal(updated);
+      await storageHelpers.setObject(STORAGE_KEYS.JOURNAL, updated);
+    } catch (e) {
+      console.error('[Profile] Failed to delete journal entry', e);
+      Alert.alert('Delete failed', 'Could not delete the entry.');
+    }
+  }, [journal]);
+
+  const suggestionChips = useMemo(() => {
+    const today = new Date();
+    const lang = selectedLanguage?.name ?? 'My language';
+    const items: string[] = [];
+    items.push(`I practiced ${userStats.wordsLearned} words in ${lang}.`);
+    items.push(`I kept a streak of ${userStats.streakDays} days!`);
+    items.push(`I had ${userStats.totalChats} total chats and gained ${userStats.xpPoints} XP.`);
+    items.push('A new concept clicked for me today: …');
+    items.push('I want to improve on: pronunciation and listening.');
+    items.push('Favorite phrase I learned: "…"');
+    items.push(`Date ${today.toLocaleDateString()}: My study mood was …`);
+    return items;
+  }, [selectedLanguage?.name, userStats.wordsLearned, userStats.streakDays, userStats.totalChats, userStats.xpPoints]);
+
+  const appendSuggestion = useCallback((s: string) => {
+    setJournalDraft(prev => (prev ? `${prev} ${s}` : s));
+  }, []);
 
   const handleUpgrade = () => {
     setShowUpgradeModal(false);
@@ -924,6 +1008,75 @@ export default function ProfileScreen() {
               <Text style={styles.quickStatLabel}>Rank</Text>
             </View>
           </View>
+        </View>
+
+        {/* Personal Journal */}
+        <View style={styles.journalContainer} testID="journal-container">
+          <View style={styles.journalHeader}>
+            <View style={styles.journalTitleRow}>
+              <Quote size={18} color="#111827" />
+              <Text style={styles.journalTitle}>Personal Journal</Text>
+              <History size={16} color="#6B7280" />
+            </View>
+            <Text style={styles.journalSubtitle}>Reflect on what you learned today. Entries are saved privately on this device.</Text>
+          </View>
+
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.journalChipsRow}>
+            {suggestionChips.map((s, idx) => (
+              <TouchableOpacity
+                key={`${idx}-${s.slice(0,10)}`}
+                style={styles.chip}
+                onPress={() => appendSuggestion(s)}
+                testID={`journal-chip-${idx}`}
+              >
+                <Lightbulb size={14} color="#0EA5E9" />
+                <Text style={styles.chipText}>{s}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          <View style={styles.journalEditor}>
+            <TextInput
+              style={styles.journalInput}
+              placeholder="What did you practice, discover, or struggle with today?"
+              multiline
+              value={journalDraft}
+              onChangeText={setJournalDraft}
+              editable={!journalSaving}
+              testID="journal-input"
+            />
+            <TouchableOpacity 
+              style={[styles.saveButton, journalSaving && styles.saveButtonDisabled]}
+              onPress={saveJournalEntry}
+              disabled={journalSaving}
+              testID="journal-save-button"
+            >
+              <Save size={16} color="white" />
+              <Text style={styles.saveButtonText}>{journalSaving ? 'Saving…' : 'Save Entry'}</Text>
+            </TouchableOpacity>
+          </View>
+
+          {journal.length > 0 && (
+            <View style={styles.entriesList} testID="journal-entries">
+              {journal.slice(0, 5).map((entry) => (
+                <View key={entry.id} style={styles.entryCard}>
+                  <View style={styles.entryHeader}>
+                    <View style={styles.entryHeaderLeft}>
+                      <Calendar size={14} color="#6B7280" />
+                      <Text style={styles.entryDate}>{new Date(entry.createdAt).toLocaleString()}</Text>
+                      {!!entry.languageCode && (
+                        <Text style={styles.entryLangTag}>{LANGUAGES.find(l => l.code === entry.languageCode)?.flag} {LANGUAGES.find(l => l.code === entry.languageCode)?.name}</Text>
+                      )}
+                    </View>
+                    <TouchableOpacity onPress={() => removeEntry(entry.id)} accessibilityRole="button" testID={`delete-entry-${entry.id}`}>
+                      <Trash2 size={16} color="#EF4444" />
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={styles.entryText}>{entry.text}</Text>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
       </ScrollView>
 
@@ -1795,5 +1948,124 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#6B7280',
     textAlign: 'center',
+  },
+  journalContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 28,
+  },
+  journalHeader: {
+    marginBottom: 12,
+  },
+  journalTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  journalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+    marginHorizontal: 8,
+  },
+  journalSubtitle: {
+    marginTop: 6,
+    color: '#6B7280',
+    fontSize: 12,
+  },
+  journalChipsRow: {
+    paddingHorizontal: 20,
+    paddingBottom: 8,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0F9FF',
+    borderColor: '#BAE6FD',
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    marginRight: 8,
+  },
+  chipText: {
+    color: '#0369A1',
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  journalEditor: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    padding: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  journalInput: {
+    minHeight: 90,
+    maxHeight: 160,
+    textAlignVertical: 'top',
+    fontSize: 14,
+    color: '#111827',
+    padding: 8,
+  },
+  saveButton: {
+    marginTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#10B981',
+    paddingVertical: 12,
+    borderRadius: 10,
+  },
+  saveButtonDisabled: {
+    opacity: 0.7,
+  },
+  saveButtonText: {
+    color: 'white',
+    fontWeight: '700',
+    marginLeft: 6,
+  },
+  entriesList: {
+    marginTop: 16,
+    gap: 10,
+  },
+  entryCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+    padding: 12,
+  },
+  entryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  entryHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexWrap: 'wrap',
+  },
+  entryDate: {
+    color: '#6B7280',
+    fontSize: 12,
+  },
+  entryLangTag: {
+    marginLeft: 6,
+    color: '#374151',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  entryText: {
+    color: '#111827',
+    fontSize: 14,
+    lineHeight: 20,
   },
 });

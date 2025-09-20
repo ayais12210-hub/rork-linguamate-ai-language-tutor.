@@ -13,6 +13,7 @@ export const STORAGE_KEYS = {
   ONBOARDING_COMPLETED: 'onboarding_completed',
   LANGUAGE_PREFERENCES: 'language_preferences',
   GAMIFICATION_DATA: 'gamification_data',
+  JOURNAL: 'journal_entries',
 } as const;
 
 type StorageKey = typeof STORAGE_KEYS[keyof typeof STORAGE_KEYS];
