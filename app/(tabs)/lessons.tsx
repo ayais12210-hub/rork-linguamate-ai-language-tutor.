@@ -122,6 +122,19 @@ interface DailyChallenge {
   expiresAt: Date;
 }
 
+interface WeeklyChallenge {
+  id: string;
+  title: string;
+  description: string;
+  target: number;
+  current: number;
+  xpReward: number;
+  icon: string;
+  completed: boolean;
+  weekStart: Date;
+  weekEnd: Date;
+}
+
 interface LessonProgress {
   lessonId: string;
   completedExercises: string[];
@@ -146,6 +159,7 @@ interface Achievement {
 
 export default function LessonsScreen() {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
+  const [challengeTab, setChallengeTab] = useState<'daily' | 'weekly'>('daily');
   const [currentExercise, setCurrentExercise] = useState<number>(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | string[]>('');
   const [showResult, setShowResult] = useState<boolean>(false);
@@ -218,6 +232,65 @@ export default function LessonsScreen() {
     },
   ];
   
+  const getWeekBounds = () => {
+    const now = new Date();
+    const day = now.getDay();
+    const diffToMonday = (day + 6) % 7;
+    const start = new Date(now);
+    start.setHours(0, 0, 0, 0);
+    start.setDate(now.getDate() - diffToMonday);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
+  };
+
+  const weeklyChallenges: WeeklyChallenge[] = useMemo(() => {
+    const { start, end } = getWeekBounds();
+    const lessonsCompleted = completedLessons.length;
+    const xp = user.stats?.xpPoints ?? 0;
+    const words = user.stats?.wordsLearned ?? 0;
+
+    return [
+      {
+        id: 'weekly_lessons',
+        title: 'Finish 12 Lessons',
+        description: 'Complete 12 lessons this week',
+        target: 12,
+        current: Math.min(lessonsCompleted, 12),
+        xpReward: 200,
+        icon: '📘',
+        completed: lessonsCompleted >= 12,
+        weekStart: start,
+        weekEnd: end,
+      },
+      {
+        id: 'weekly_xp',
+        title: 'Earn 500 XP',
+        description: 'Grind XP throughout the week',
+        target: 500,
+        current: Math.min(xp, 500),
+        xpReward: 150,
+        icon: '⚡',
+        completed: xp >= 500,
+        weekStart: start,
+        weekEnd: end,
+      },
+      {
+        id: 'weekly_words',
+        title: 'Learn 60 Words',
+        description: 'Expand your vocabulary',
+        target: 60,
+        current: Math.min(words, 60),
+        xpReward: 150,
+        icon: '🧠',
+        completed: words >= 60,
+        weekStart: start,
+        weekEnd: end,
+      },
+    ];
+  }, [completedLessons.length, user.stats?.xpPoints, user.stats?.wordsLearned]);
+
   const lessonTemplates: LessonTemplate[] = useMemo(() => [
     {
       id: 'basics_1',
@@ -1240,6 +1313,15 @@ Return a JSON object with this exact structure:
             </View>
           </View>
           
+          <View style={styles.multiplierRow}>
+            <View style={styles.multiplierPill}>
+              <Flame size={14} color="#F59E0B" />
+              <Text style={styles.multiplierText}>
+                {Math.max(1, (user.stats?.streakDays ?? 0))}x Streak Multiplier
+              </Text>
+            </View>
+          </View>
+
           <Text style={styles.headerTitle}>
             Learning {selectedLanguage?.name || 'Language'}
           </Text>
@@ -1248,12 +1330,30 @@ Return a JSON object with this exact structure:
           </Text>
         </LinearGradient>
         
-        {/* Daily Challenges */}
+        {/* Challenges Tabs */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Daily Challenges</Text>
+          <Text style={styles.sectionTitle}>Challenges</Text>
+
+          <View style={styles.tabRow}>
+            <Pressable
+              testID="tab-daily"
+              style={[styles.tabItem, challengeTab === 'daily' && styles.tabItemActive]}
+              onPress={() => setChallengeTab('daily')}
+            >
+              <Text style={[styles.tabText, challengeTab === 'daily' && styles.tabTextActive]}>Daily</Text>
+            </Pressable>
+            <Pressable
+              testID="tab-weekly"
+              style={[styles.tabItem, challengeTab === 'weekly' && styles.tabItemActive]}
+              onPress={() => setChallengeTab('weekly')}
+            >
+              <Text style={[styles.tabText, challengeTab === 'weekly' && styles.tabTextActive]}>Weekly</Text>
+            </Pressable>
+          </View>
+
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.challengesContainer}>
-              {dailyChallenges.map((challenge) => (
+              {(challengeTab === 'daily' ? dailyChallenges : weeklyChallenges).map((challenge) => (
                 <View key={challenge.id} style={styles.challengeCard}>
                   <Text style={styles.challengeIcon}>{challenge.icon}</Text>
                   <Text style={styles.challengeTitle}>{challenge.title}</Text>
@@ -1277,6 +1377,12 @@ Return a JSON object with this exact structure:
                     <Zap size={12} color="#F59E0B" />
                     <Text style={styles.challengeRewardText}>+{challenge.xpReward} XP</Text>
                   </View>
+
+                  {'weekStart' in challenge && (
+                    <Text style={styles.challengeSubtext}>
+                      Week: {new Date(challenge.weekStart).toLocaleDateString()} – {new Date(challenge.weekEnd).toLocaleDateString()}
+                    </Text>
+                  )}
                 </View>
               ))}
             </View>
@@ -1483,6 +1589,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.9)',
   },
+  multiplierRow: {
+    marginTop: 12,
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+  },
+  multiplierPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  multiplierText: {
+    marginLeft: 6,
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
   section: {
     paddingHorizontal: 20,
     marginBottom: 24,
@@ -1496,6 +1621,30 @@ const styles = StyleSheet.create({
   challengesContainer: {
     flexDirection: 'row',
     paddingRight: 20,
+  },
+  tabRow: {
+    flexDirection: 'row',
+    backgroundColor: '#E5E7EB',
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 12,
+  },
+  tabItem: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  tabItemActive: {
+    backgroundColor: '#FFFFFF',
+  },
+  tabText: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontWeight: '600',
+  },
+  tabTextActive: {
+    color: '#111827',
   },
   challengeCard: {
     backgroundColor: 'white',
@@ -1553,6 +1702,12 @@ const styles = StyleSheet.create({
     color: '#F59E0B',
     fontWeight: '600',
     marginLeft: 4,
+  },
+  challengeSubtext: {
+    marginTop: 8,
+    fontSize: 12,
+    color: '#6B7280',
+    textAlign: 'center',
   },
   lessonCard: {
     backgroundColor: 'white',
