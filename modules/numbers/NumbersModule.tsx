@@ -217,6 +217,7 @@ export default function NumbersModule({ languageCode, onComplete, onBack }: Prop
         game = {
           type: 'typing',
           question: `Type ${randomNumber.digit} in ${selectedLanguage?.name}`,
+          options: generateOptions(numbersData, randomNumber, 'word'),
           correctAnswer: randomNumber.word.toLowerCase(),
           numberData: randomNumber,
         };
@@ -425,7 +426,25 @@ export default function NumbersModule({ languageCode, onComplete, onBack }: Prop
                 autoCapitalize="none"
                 editable={!showResult}
                 onSubmitEditing={checkAnswer}
+                testID="typing-input"
               />
+              {currentGame.options && (
+                <View style={styles.suggestionsGrid}>
+                  {currentGame.options.slice(0, 4).map((option, index) => (
+                    <TouchableOpacity
+                      testID={`suggestion-${index}`}
+                      key={`${option}_${index}`}
+                      style={[styles.suggestionChip, typedAnswer === option && styles.suggestionChipSelected]}
+                      onPress={() => !showResult && setTypedAnswer(option)}
+                      disabled={showResult}
+                    >
+                      <Text style={[styles.suggestionText, typedAnswer === option && styles.suggestionTextSelected]}>
+                        {option}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
             </View>
           ) : (
             currentGame.options && (
@@ -602,6 +621,35 @@ const styles = StyleSheet.create({
     color: '#374151',
   },
   selectedOptionText: {
+    color: '#2563EB',
+  },
+  suggestionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginTop: 12,
+  },
+  suggestionChip: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#F9FAFB',
+    minWidth: '48%',
+    alignItems: 'center',
+  },
+  suggestionChipSelected: {
+    borderColor: '#3B82F6',
+    backgroundColor: '#EFF6FF',
+  },
+  suggestionText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  suggestionTextSelected: {
     color: '#2563EB',
   },
   resultContainer: {
