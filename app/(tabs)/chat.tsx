@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -26,6 +26,30 @@ export default function ChatScreen() {
   const { user, canSendMessage, upgradeToPremium } = useUser();
 
   const selectedLanguage = LANGUAGES.find(lang => lang.code === user.selectedLanguage);
+
+  const [selectedSuggestions, setSelectedSuggestions] = useState<string[]>([]);
+
+  const isSuggestionSelected = useCallback((text: string) => {
+    return selectedSuggestions.includes(text);
+  }, [selectedSuggestions]);
+
+  const toggleSuggestion = useCallback((text: string) => {
+    setSelectedSuggestions(prev => {
+      const exists = prev.includes(text);
+      if (exists) {
+        return prev.filter(t => t !== text);
+      }
+      return [...prev, text];
+    });
+  }, []);
+
+  const clearSelectedSuggestions = useCallback(() => {
+    setSelectedSuggestions([]);
+  }, []);
+
+  const combinedSelectedText = useMemo(() => {
+    return selectedSuggestions.join(' ');
+  }, [selectedSuggestions]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -69,16 +93,8 @@ export default function ChatScreen() {
 
   const handleSuggestionPress = useCallback(async (text: string) => {
     if (!text) return;
-    if (!canSendMessage()) {
-      setShowUpgradeModal(true);
-      return;
-    }
-    if (inputText.trim().length === 0) {
-      setInputText(text);
-    } else {
-      setInputText(prev => (prev.trim().length === 0 ? text : `${prev} ${text}`));
-    }
-  }, [canSendMessage, inputText]);
+    toggleSuggestion(text);
+  }, [toggleSuggestion]);
 
   const handleSuggestionSend = useCallback(async (text: string) => {
     if (!text) return;
@@ -88,6 +104,24 @@ export default function ChatScreen() {
     }
     await sendMessage(text);
   }, [canSendMessage, sendMessage]);
+
+  const handleBulkInsert = useCallback(() => {
+    if (combinedSelectedText.trim().length === 0) return;
+    setInputText(prev => {
+      const base = prev?.trim().length ? `${prev} ` : '';
+      return `${base}${combinedSelectedText}`;
+    });
+  }, [combinedSelectedText]);
+
+  const handleBulkSend = useCallback(async () => {
+    if (combinedSelectedText.trim().length === 0) return;
+    if (!canSendMessage()) {
+      setShowUpgradeModal(true);
+      return;
+    }
+    await sendMessage(combinedSelectedText);
+    clearSelectedSuggestions();
+  }, [combinedSelectedText, canSendMessage, sendMessage, clearSelectedSuggestions]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -186,13 +220,37 @@ export default function ChatScreen() {
               </TouchableOpacity>
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.suggestionsRow} testID="suggestionsRow">
-              {suggestions.map((s, idx) => (
-                <View key={`${s}-${idx}`} style={styles.suggestionPill}>
-                  <TouchableOpacity onPress={() => handleSuggestionPress(s)} onLongPress={() => handleSuggestionSend(s)} accessibilityLabel={`Suggestion ${idx+1}`} testID={`suggestion-${idx}`}>
-                    <Text style={styles.suggestionText}>{s}</Text>
-                  </TouchableOpacity>
+              {suggestions.map((s, idx) => {
+                const selected = isSuggestionSelected(s);
+                return (
+                  <View key={`${s}-${idx}`} style={[styles.suggestionPill, selected ? styles.suggestionPillSelected : undefined]}>
+                    <TouchableOpacity
+                      onPress={() => handleSuggestionPress(s)}
+                      onLongPress={() => handleSuggestionSend(s)}
+                      accessibilityLabel={`Suggestion ${idx+1}`}
+                      testID={`suggestion-${idx}`}
+                    >
+                      <Text style={[styles.suggestionText, selected ? styles.suggestionTextSelected : undefined]}>{s}</Text>
+                    </TouchableOpacity>
+                  </View>
+                );
+              })}
+              {selectedSuggestions.length > 0 && (
+                <View style={styles.bulkActionsPill} testID="bulkActionsPill">
+                  <Text style={styles.bulkCountText}>{selectedSuggestions.length} selected</Text>
+                  <View style={styles.bulkButtonsRow}>
+                    <TouchableOpacity onPress={handleBulkInsert} style={styles.bulkBtn} accessibilityLabel="Insert selected" testID="bulkInsertBtn">
+                      <Text style={styles.bulkBtnText}>Insert</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={handleBulkSend} style={[styles.bulkBtn, styles.bulkSendBtn]} accessibilityLabel="Send selected" testID="bulkSendBtn">
+                      <Text style={[styles.bulkBtnText, styles.bulkSendBtnText]}>Send</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={clearSelectedSuggestions} style={styles.bulkClearBtn} accessibilityLabel="Clear selected" testID="bulkClearBtn">
+                      <Text style={styles.bulkClearText}>Clear</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              ))}
+              )}
             </ScrollView>
           </View>
         )}
@@ -393,9 +451,64 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
+  suggestionPillSelected: {
+    backgroundColor: '#EEF2FF',
+    borderColor: '#A78BFA',
+  },
   suggestionText: {
     fontSize: 14,
     color: '#374151',
+  },
+  suggestionTextSelected: {
+    color: '#4C1D95',
+    fontWeight: '600' as const,
+  },
+  bulkActionsPill: {
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 16,
+    marginRight: 8,
+    justifyContent: 'center',
+  },
+  bulkCountText: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginBottom: 6,
+  },
+  bulkButtonsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8 as unknown as number,
+  },
+  bulkBtn: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+  bulkBtnText: {
+    fontSize: 12,
+    color: '#111827',
+  },
+  bulkSendBtn: {
+    backgroundColor: '#3B82F6',
+  },
+  bulkSendBtnText: {
+    color: 'white',
+    fontWeight: '600' as const,
+  },
+  bulkClearBtn: {
+    marginLeft: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  bulkClearText: {
+    fontSize: 12,
+    color: '#6B7280',
   },
   inputContainer: {
     backgroundColor: 'white',
