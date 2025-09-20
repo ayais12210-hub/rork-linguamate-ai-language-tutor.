@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -45,8 +45,9 @@ export default function ModulesScreen() {
   const [modules, setModules] = useState<LearningModule[]>([]);
   const [selectedModule, setSelectedModule] = useState<LearningModule | null>(null);
   const [activeModuleComponent, setActiveModuleComponent] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [challengeView, setChallengeView] = useState<'daily' | 'weekly'>('daily');
+
   const { user, updateStats } = useUser();
   const { skills } = useLearningProgress();
   
@@ -174,8 +175,33 @@ export default function ModulesScreen() {
   ];
 
   useEffect(() => {
+    console.log('[Modules] skills changed, recalculating progress');
     calculateProgress();
   }, [skills]);
+
+  const startOfWeek = useMemo(() => {
+    const now = new Date();
+    const day = now.getDay();
+    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+    const sow = new Date(now.setDate(diff));
+    sow.setHours(0, 0, 0, 0);
+    return sow;
+  }, []);
+
+  const weeklyPracticedSkills = useMemo(() => {
+    const list = Object.values(skills).filter(s => {
+      const lp = s.lastPracticedAt ? new Date(s.lastPracticedAt) : null;
+      return lp ? lp >= startOfWeek : false;
+    });
+    console.log('[Modules] weeklyPracticedSkills', list.length);
+    return list;
+  }, [skills, startOfWeek]);
+
+  const weeklyTarget = 7;
+  const weeklyProgressPct = useMemo(() => {
+    const pct = Math.min(100, Math.round((weeklyPracticedSkills.length / weeklyTarget) * 100));
+    return pct;
+  }, [weeklyPracticedSkills.length]);
 
   const calculateProgress = () => {
     const updatedModules = moduleConfigs.map(module => {
@@ -209,7 +235,7 @@ export default function ModulesScreen() {
   const handleModuleComplete = () => {
     if (selectedModule) {
       updateStats({
-        xpPoints: user.stats.xpPoints + selectedModule.xpReward,
+        xpPoints: (user.stats?.xpPoints ?? 0) + selectedModule.xpReward,
       });
     }
     
@@ -348,12 +374,11 @@ export default function ModulesScreen() {
 
   const totalXP = modules.reduce((sum, m) => sum + (m.progress > 0 ? m.xpReward * (m.progress / 100) : 0), 0);
   const completedModules = modules.filter(m => m.progress >= 100).length;
-  const averageProgress = modules.reduce((sum, m) => sum + m.progress, 0) / modules.length;
+  const averageProgress = modules.length > 0 ? modules.reduce((sum, m) => sum + m.progress, 0) / modules.length : 0;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} testID="modules-screen">
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header Stats */}
         <LinearGradient
           colors={['#6366F1', '#8B5CF6']}
           style={styles.headerGradient}
@@ -464,23 +489,60 @@ export default function ModulesScreen() {
           </View>
         </View>
 
-        {/* Daily Challenge */}
+        {/* Challenges */}
         <View style={styles.challengeSection}>
-          <LinearGradient
-            colors={['#FEF3C7', '#FDE68A']}
-            style={styles.challengeCard}
-          >
-            <Text style={styles.challengeTitle}>Daily Module Challenge</Text>
-            <Text style={styles.challengeDescription}>
-              Complete 3 module exercises today for bonus XP!
-            </Text>
-            <View style={styles.challengeProgress}>
-              <View style={styles.challengeProgressBar}>
-                <View style={[styles.challengeProgressFill, { width: '33%' }]} />
+          <View style={styles.challengeTabs}>
+            <TouchableOpacity
+              testID="challenge-tab-daily"
+              accessibilityRole="button"
+              onPress={() => setChallengeView('daily')}
+              style={[styles.challengeTabBtn, challengeView === 'daily' && styles.challengeTabBtnActive]}
+            >
+              <Text style={[styles.challengeTabText, challengeView === 'daily' && styles.challengeTabTextActive]}>Daily</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              testID="challenge-tab-weekly"
+              accessibilityRole="button"
+              onPress={() => setChallengeView('weekly')}
+              style={[styles.challengeTabBtn, challengeView === 'weekly' && styles.challengeTabBtnActive]}
+            >
+              <Text style={[styles.challengeTabText, challengeView === 'weekly' && styles.challengeTabTextActive]}>Weekly</Text>
+            </TouchableOpacity>
+          </View>
+
+          {challengeView === 'daily' ? (
+            <LinearGradient
+              colors={['#FEF3C7', '#FDE68A']}
+              style={styles.challengeCard}
+            >
+              <Text style={styles.challengeTitle}>Daily Module Challenge</Text>
+              <Text style={styles.challengeDescription}>
+                Complete 3 module exercises today for bonus XP!
+              </Text>
+              <View style={styles.challengeProgress}>
+                <View style={styles.challengeProgressBar}>
+                  <View style={[styles.challengeProgressFill, { width: '33%' }]} />
+                </View>
+                <Text style={styles.challengeProgressText}>1/3 Completed</Text>
               </View>
-              <Text style={styles.challengeProgressText}>1/3 Completed</Text>
-            </View>
-          </LinearGradient>
+            </LinearGradient>
+          ) : (
+            <LinearGradient
+              colors={['#E0E7FF', '#C7D2FE']}
+              style={styles.challengeCard}
+            >
+              <Text style={styles.challengeTitle}>Weekly Module Challenge</Text>
+              <Text style={styles.challengeDescription}>
+                Practice {weeklyTarget} modules this week to earn a mega badge
+              </Text>
+              <View style={styles.challengeProgress}>
+                <View style={styles.challengeProgressBar}>
+                  <View style={[styles.challengeProgressFill, { width: `${weeklyProgressPct}%`, backgroundColor: '#6366F1' }]} />
+                </View>
+                <Text style={styles.challengeProgressText}>{weeklyPracticedSkills.length}/{weeklyTarget} Completed</Text>
+              </View>
+            </LinearGradient>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -677,6 +739,37 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#92400E',
+  },
+  challengeTabs: {
+    flexDirection: 'row',
+    backgroundColor: '#EEF2FF',
+    padding: 6,
+    borderRadius: 12,
+    alignSelf: 'center',
+    marginBottom: 12,
+  },
+  challengeTabBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginHorizontal: 4,
+    backgroundColor: 'transparent',
+  },
+  challengeTabBtnActive: {
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  challengeTabText: {
+    fontSize: 14,
+    color: '#4F46E5',
+    fontWeight: '600',
+  },
+  challengeTabTextActive: {
+    color: '#3730A3',
   },
   comingSoonContainer: {
     flex: 1,
