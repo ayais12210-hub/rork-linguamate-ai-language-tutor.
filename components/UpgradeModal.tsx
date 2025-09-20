@@ -17,9 +17,10 @@ interface UpgradeModalProps {
   onClose: () => void;
   onUpgrade: () => void;
   reason?: 'limit' | 'feature';
+  testID?: string;
 }
 
-export default function UpgradeModal({ visible, onClose, onUpgrade, reason = 'limit' }: UpgradeModalProps) {
+export default function UpgradeModal({ visible, onClose, onUpgrade, reason = 'limit', testID }: UpgradeModalProps) {
   const features = [
     { icon: MessageCircle, text: 'Unlimited conversations', color: '#3B82F6' },
     { icon: Zap, text: 'Detailed grammar corrections', color: '#10B981' },
@@ -48,7 +49,7 @@ export default function UpgradeModal({ visible, onClose, onUpgrade, reason = 'li
       animationType="slide"
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
+      <View style={styles.overlay} testID={testID}>
         <View style={styles.modalContainer}>
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <X size={24} color="#6B7280" />

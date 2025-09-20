@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,12 +11,11 @@ import {
   Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { 
-  ArrowUpDown, 
-  Copy, 
-  Volume2, 
+import {
+  ArrowUpDown,
+  Copy,
+  Volume2,
   Star,
-  History,
   ChevronDown,
   X,
   BookOpen,
@@ -47,9 +46,81 @@ interface Translation {
   confidence?: number;
 }
 
+interface AITranslationResponseShape {
+  translation?: string;
+  explanation?: string;
+  culturalContext?: string;
+  grammarInsights?: string;
+  alternativeTranslations?: unknown;
+  alternatives?: unknown;
+  difficulty?: string;
+  confidence?: unknown;
+  coachingTips?: string;
+}
+
+function stripJSONCodeFences(raw: string): string {
+  try {
+    let s = raw.trim();
+    if (s.startsWith('```')) {
+      const firstFenceEnd = s.indexOf('\n');
+      s = s.slice(firstFenceEnd + 1);
+      const lastFence = s.lastIndexOf('```');
+      if (lastFence !== -1) s = s.slice(0, lastFence);
+    }
+    const firstBrace = s.indexOf('{');
+    const lastBrace = s.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      s = s.slice(firstBrace, lastBrace + 1);
+    }
+    return s;
+  } catch (e) {
+    console.log('[Translator] stripJSONCodeFences error', e);
+    return raw;
+  }
+}
+
+function toStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.map(v => (typeof v === 'string' ? v : JSON.stringify(v))).filter(Boolean);
+  }
+  if (typeof value === 'string') {
+    const parts = value
+      .replace(/^[\s•*-]+/gm, '')
+      .split(/\n|;|\|/)
+      .map(t => t.trim())
+      .filter(Boolean);
+    return parts.length > 0 ? parts : [value];
+  }
+  if (value == null) return [];
+  return [JSON.stringify(value)];
+}
+
+function coerceConfidence(value: unknown): number | undefined {
+  if (typeof value === 'number') return Math.max(0, Math.min(1, value));
+  if (typeof value === 'string') {
+    const m = value.match(/([0-9]*\.?[0-9]+)/);
+    if (m) {
+      const n = parseFloat(m[1]);
+      if (!Number.isNaN(n)) return Math.max(0, Math.min(1, n > 1 ? n / 100 : n));
+    }
+  }
+  return undefined;
+}
+
+function normalizeAIResponse(raw: string): AITranslationResponseShape {
+  try {
+    const cleaned = stripJSONCodeFences(raw);
+    const parsed = JSON.parse(cleaned) as AITranslationResponseShape;
+    return parsed;
+  } catch (e) {
+    console.log('[Translator] JSON parse failed, falling back to plain text', e);
+    return { translation: raw } as AITranslationResponseShape;
+  }
+}
+
 export default function TranslatorScreen() {
   const { user, upgradeToPremium } = useUser();
-  
+
   const [sourceText, setSourceText] = useState<string>('');
   const [translatedText, setTranslatedText] = useState<string>('');
   const [fromLanguage, setFromLanguage] = useState<string>(user.nativeLanguage || 'en');
@@ -63,19 +134,20 @@ export default function TranslatorScreen() {
   const [currentTranslation, setCurrentTranslation] = useState<Translation | null>(null);
   const [showInsights, setShowInsights] = useState<boolean>(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const sourceInputRef = useRef<TextInput>(null);
 
   const fromLang = LANGUAGES.find(lang => lang.code === fromLanguage) || LANGUAGES[0];
   const toLang = LANGUAGES.find(lang => lang.code === toLanguage) || LANGUAGES[1];
 
-  const canTranslate = () => {
+  const canTranslate = useCallback((): boolean => {
     if (user.isPremium) return true;
     const today = new Date().toDateString();
-    const isNewDay = user.stats.lastMessageDate !== today;
+    const isNewDay = user.stats?.lastMessageDate !== today;
     const used = isNewDay ? 0 : translationCount;
-    return used < 3; // 3 free translations per day
-  };
+    return used < 3;
+  }, [translationCount, user.isPremium, user.stats?.lastMessageDate]);
 
-  const handleTranslate = async () => {
+  const handleTranslate = useCallback(async () => {
     if (!sourceText.trim()) {
       Alert.alert('Error', 'Please enter text to translate');
       return;
@@ -87,9 +159,9 @@ export default function TranslatorScreen() {
     }
 
     setIsTranslating(true);
-    
+    console.log('[Translator] Starting translation request');
+
     try {
-      // Call AI translation API
       const response = await fetch('https://toolkit.rork.com/text/llm/', {
         method: 'POST',
         headers: {
@@ -99,7 +171,7 @@ export default function TranslatorScreen() {
           messages: [
             {
               role: 'system',
-              content: `You are an elite multilingual AI coach and professional translator with deep expertise in ${fromLang.name} and ${toLang.name}. 
+              content: `You are an elite multilingual AI coach and professional translator with deep expertise in ${fromLang.name} and ${toLang.name}.
 
 The user is a ${user.proficiencyLevel} level learner whose native language is ${fromLang.name} and is learning ${toLang.name}. They want to translate from their native language to their target language to practice and learn.
 
@@ -120,75 +192,72 @@ Focus on being an encouraging language coach who helps learners understand not j
             },
             {
               role: 'user',
-              content: sourceText
-            }
-          ]
-        })
+              content: sourceText,
+            },
+          ],
+        }),
       });
 
       const data = await response.json();
-      let translationData;
-      
-      try {
-        // Try to parse as JSON first (enhanced mode)
-        translationData = JSON.parse(data.completion);
-        setTranslatedText(translationData.translation);
-      } catch {
-        // Fallback to simple translation
-        translationData = { translation: data.completion };
-        setTranslatedText(data.completion);
-      }
-      
+      const normalized = normalizeAIResponse(String(data?.completion ?? ''));
+      const translationText = (normalized.translation ?? '').toString();
+      setTranslatedText(translationText);
+
+      const alternatives = toStringArray(
+        normalized.alternativeTranslations ?? normalized.alternatives ?? []
+      );
+      const difficultyNorm = (normalized.difficulty ?? '').toString().toLowerCase();
+      const difficultyValid = ['beginner', 'intermediate', 'advanced'].includes(difficultyNorm)
+        ? (difficultyNorm as 'beginner' | 'intermediate' | 'advanced')
+        : undefined;
+      const confidenceNorm = coerceConfidence(normalized.confidence);
+
       setTranslationCount(prev => prev + 1);
-      
-      // Add to history with enhanced data
+
       const newTranslation: Translation = {
         id: Date.now().toString(),
         sourceText,
-        translatedText: translationData.translation,
+        translatedText: translationText,
         fromLanguage,
         toLanguage,
         timestamp: new Date().toISOString(),
-        explanation: translationData.explanation,
-        culturalContext: translationData.culturalContext,
-        grammarInsights: translationData.grammarInsights,
-        alternativeTranslations: translationData.alternativeTranslations,
-        difficulty: translationData.difficulty,
-        confidence: translationData.confidence,
+        explanation: normalized.explanation ?? undefined,
+        culturalContext: normalized.culturalContext ?? undefined,
+        grammarInsights: normalized.grammarInsights ?? undefined,
+        alternativeTranslations: alternatives,
+        difficulty: difficultyValid,
+        confidence: confidenceNorm,
       };
-      
+
       setCurrentTranslation(newTranslation);
       setShowInsights(true);
-      
-      setTranslations(prev => [newTranslation, ...prev.slice(0, 19)]); // Keep last 20
-      
-      // Animate result
+
+      setTranslations(prev => [newTranslation, ...prev.slice(0, 19)]);
+
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 500,
         useNativeDriver: true,
       }).start();
-      
     } catch (error) {
       console.error('Translation error:', error);
       Alert.alert('Error', 'Failed to translate. Please try again.');
     } finally {
       setIsTranslating(false);
     }
-  };
+  }, [canTranslate, fadeAnim, fromLang.name, fromLanguage, sourceText, toLang.name, toLanguage, user.isPremium, user.proficiencyLevel]);
 
   const handleSwapLanguages = () => {
     const tempLang = fromLanguage;
     setFromLanguage(toLanguage);
     setToLanguage(tempLang);
-    
+
     const tempText = sourceText;
     setSourceText(translatedText);
     setTranslatedText(tempText);
   };
 
   const handleCopyText = (text: string) => {
-    // In a real app, you'd use Clipboard API
     Alert.alert('Copied!', 'Text copied to clipboard');
   };
 
@@ -197,7 +266,6 @@ Focus on being an encouraging language coach who helps learners understand not j
       setShowUpgradeModal(true);
       return;
     }
-    // In a real app, you'd use text-to-speech
     Alert.alert('Speaking...', `Would speak: "${text}" in ${language}`);
   };
 
@@ -206,13 +274,9 @@ Focus on being an encouraging language coach who helps learners understand not j
       setShowUpgradeModal(true);
       return;
     }
-    
-    setTranslations(prev => 
-      prev.map(t => 
-        t.id === translationId 
-          ? { ...t, isFavorite: !t.isFavorite }
-          : t
-      )
+
+    setTranslations(prev =>
+      prev.map(t => (t.id === translationId ? { ...t, isFavorite: !t.isFavorite } : t))
     );
   };
 
@@ -227,12 +291,12 @@ Focus on being an encouraging language coach who helps learners understand not j
     return 3 - translationCount;
   };
 
-  const LanguageSelector = ({ 
-    languages, 
-    selectedCode, 
-    onSelect, 
-    visible, 
-    onClose 
+  const LanguageSelector = ({
+    languages,
+    selectedCode,
+    onSelect,
+    visible,
+    onClose,
   }: {
     languages: Language[];
     selectedCode: string;
@@ -241,7 +305,7 @@ Focus on being an encouraging language coach who helps learners understand not j
     onClose: () => void;
   }) => {
     if (!visible) return null;
-    
+
     return (
       <View style={styles.languageSelectorOverlay}>
         <View style={styles.languageSelectorModal}>
@@ -252,7 +316,7 @@ Focus on being an encouraging language coach who helps learners understand not j
             </TouchableOpacity>
           </View>
           <ScrollView style={styles.languageList}>
-            {languages.map((language) => (
+            {languages.map(language => (
               <TouchableOpacity
                 key={language.code}
                 style={[
@@ -281,18 +345,14 @@ Focus on being an encouraging language coach who helps learners understand not j
         <Text style={styles.headerTitle}>Translator</Text>
         <View style={styles.headerRight}>
           {!user.isPremium && (
-            <Text style={styles.remainingText}>
-              {getRemainingTranslations()} left today
-            </Text>
+            <Text style={styles.remainingText}>{getRemainingTranslations()} left today</Text>
           )}
-
         </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Language Selection */}
         <View style={styles.languageSelector}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.languageButton}
             onPress={() => setShowFromLanguages(true)}
           >
@@ -300,15 +360,12 @@ Focus on being an encouraging language coach who helps learners understand not j
             <Text style={styles.languageText}>{fromLang.name}</Text>
             <ChevronDown size={16} color="#6B7280" />
           </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.swapButton}
-            onPress={handleSwapLanguages}
-          >
+
+          <TouchableOpacity style={styles.swapButton} onPress={handleSwapLanguages}>
             <ArrowUpDown size={20} color="#3B82F6" />
           </TouchableOpacity>
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={styles.languageButton}
             onPress={() => setShowToLanguages(true)}
           >
@@ -318,37 +375,38 @@ Focus on being an encouraging language coach who helps learners understand not j
           </TouchableOpacity>
         </View>
 
-        {/* Input Section */}
         <View style={styles.inputSection}>
-          <View style={styles.inputHeader}>
+          <View style={styles.inputHeader} testID="input-header">
             <Text style={styles.inputLabel}>Enter text</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => handleSpeakText(sourceText, fromLanguage)}
               disabled={!sourceText.trim()}
             >
-              <Volume2 
-                size={20} 
-                color={sourceText.trim() ? '#3B82F6' : '#9CA3AF'} 
-              />
+              <Volume2 size={20} color={sourceText.trim() ? '#3B82F6' : '#9CA3AF'} />
             </TouchableOpacity>
           </View>
           <TextInput
+            ref={sourceInputRef}
             style={styles.textInput}
             value={sourceText}
             onChangeText={setSourceText}
-            placeholder={fromLanguage === user.nativeLanguage ? `Type in your native language (${fromLang.name})...` : `Type in ${fromLang.name}...`}
+            placeholder={
+              fromLanguage === user.nativeLanguage
+                ? `Type in your native language (${fromLang.name})...`
+                : `Type in ${fromLang.name}...`
+            }
             placeholderTextColor="#9CA3AF"
             multiline
             maxLength={1000}
+            testID="source-input"
           />
           <View style={styles.inputFooter}>
-            <Text style={styles.characterCount}>
-              {sourceText.length}/1000
-            </Text>
-            <TouchableOpacity 
+            <Text style={styles.characterCount}>{sourceText.length}/1000</Text>
+            <TouchableOpacity
               style={styles.translateButton}
               onPress={handleTranslate}
               disabled={isTranslating || !sourceText.trim()}
+              testID="translate-button"
             >
               {isTranslating ? (
                 <ActivityIndicator size="small" color="white" />
@@ -359,7 +417,6 @@ Focus on being an encouraging language coach who helps learners understand not j
           </View>
         </View>
 
-        {/* Language Display */}
         <View style={styles.languageDisplay}>
           <View style={styles.languageDisplayItem}>
             <Text style={styles.languageDisplayLabel}>From</Text>
@@ -378,72 +435,77 @@ Focus on being an encouraging language coach who helps learners understand not j
           </View>
         </View>
 
-        {/* Output Section */}
         {(translatedText || isTranslating) && (
-          <Animated.View style={[styles.outputSection, { opacity: fadeAnim }]}>
+          <Animated.View style={[styles.outputSection, { opacity: fadeAnim }]} testID="output-section">
             <View style={styles.outputHeader}>
               <Text style={styles.outputLabel}>Professional Translation</Text>
-              <View style={styles.outputActions}>
-                <TouchableOpacity 
+              <View style={styles.outputActions} testID="output-actions">
+                <TouchableOpacity
                   onPress={() => handleSpeakText(translatedText, toLanguage)}
                   disabled={!translatedText.trim()}
                 >
-                  <Volume2 
-                    size={20} 
-                    color={translatedText.trim() ? '#3B82F6' : '#9CA3AF'} 
+                  <Volume2
+                    size={20}
+                    color={translatedText.trim() ? '#3B82F6' : '#9CA3AF'}
                   />
                 </TouchableOpacity>
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={() => handleCopyText(translatedText)}
                   disabled={!translatedText.trim()}
                   style={styles.actionButton}
                 >
-                  <Copy 
-                    size={20} 
-                    color={translatedText.trim() ? '#3B82F6' : '#9CA3AF'} 
-                  />
+                  <Copy size={20} color={translatedText.trim() ? '#3B82F6' : '#9CA3AF'} />
                 </TouchableOpacity>
               </View>
             </View>
             <View style={styles.outputText}>
               {isTranslating ? (
-                <View style={styles.loadingContainer}>
+                <View style={styles.loadingContainer} testID="loading">
                   <ActivityIndicator size="small" color="#3B82F6" />
                   <Text style={styles.loadingText}>AI Coach analyzing...</Text>
                 </View>
               ) : (
-                <Text style={styles.translatedText}>{translatedText}</Text>
+                <Text style={styles.translatedText} testID="translated-text">{translatedText}</Text>
               )}
             </View>
-            
-            {/* Confidence Score */}
-            {currentTranslation?.confidence && (
+
+            {currentTranslation?.confidence !== undefined && (
               <View style={styles.confidenceSection}>
                 <View style={styles.confidenceHeader}>
                   <Award size={16} color="#10B981" />
                   <Text style={styles.confidenceLabel}>Translation Confidence</Text>
                 </View>
                 <View style={styles.confidenceBar}>
-                  <View 
-                    style={[styles.confidenceFill, { width: `${(currentTranslation.confidence * 100)}%` }]} 
+                  <View
+                    style={[
+                      styles.confidenceFill,
+                      {
+                        width: `${Math.max(
+                          0,
+                          Math.min(100, Math.round(((currentTranslation.confidence ?? 0) as number) * 100))
+                        )}%`,
+                      },
+                    ]}
                   />
                 </View>
                 <Text style={styles.confidenceText}>
-                  {Math.round(currentTranslation.confidence * 100)}% confident
+                  {Math.max(
+                    0,
+                    Math.min(100, Math.round(((currentTranslation.confidence ?? 0) as number) * 100))
+                  )}% confident
                 </Text>
               </View>
             )}
           </Animated.View>
         )}
 
-        {/* AI Coach Insights */}
         {showInsights && currentTranslation && (
           <View style={styles.insightsSection}>
             <View style={styles.insightsHeader}>
               <Brain size={20} color="#8B5CF6" />
               <Text style={styles.insightsTitle}>AI Coach Insights</Text>
             </View>
-            
+
             {currentTranslation.explanation && (
               <View style={styles.insightCard}>
                 <View style={styles.insightCardHeader}>
@@ -453,7 +515,7 @@ Focus on being an encouraging language coach who helps learners understand not j
                 <Text style={styles.insightCardText}>{currentTranslation.explanation}</Text>
               </View>
             )}
-            
+
             {currentTranslation.culturalContext && (
               <View style={styles.insightCard}>
                 <View style={styles.insightCardHeader}>
@@ -463,7 +525,7 @@ Focus on being an encouraging language coach who helps learners understand not j
                 <Text style={styles.insightCardText}>{currentTranslation.culturalContext}</Text>
               </View>
             )}
-            
+
             {currentTranslation.grammarInsights && (
               <View style={styles.insightCard}>
                 <View style={styles.insightCardHeader}>
@@ -473,33 +535,45 @@ Focus on being an encouraging language coach who helps learners understand not j
                 <Text style={styles.insightCardText}>{currentTranslation.grammarInsights}</Text>
               </View>
             )}
-            
-            {currentTranslation.alternativeTranslations && currentTranslation.alternativeTranslations.length > 0 && (
-              <View style={styles.insightCard}>
-                <View style={styles.insightCardHeader}>
-                  <MessageCircle size={16} color="#EF4444" />
-                  <Text style={styles.insightCardTitle}>Alternative Translations</Text>
+
+            {Array.isArray(currentTranslation.alternativeTranslations) &&
+              currentTranslation.alternativeTranslations.length > 0 && (
+                <View style={styles.insightCard}>
+                  <View style={styles.insightCardHeader}>
+                    <MessageCircle size={16} color="#EF4444" />
+                    <Text style={styles.insightCardTitle}>Alternative Translations</Text>
+                  </View>
+                  {currentTranslation.alternativeTranslations.map((alt, index) => (
+                    <TouchableOpacity
+                      key={`${index}-${alt}`}
+                      style={styles.alternativeItem}
+                      onPress={() => {
+                        console.log('[Translator] Alternative selected -> source input');
+                        setSourceText(alt);
+                        try { sourceInputRef.current?.focus?.(); } catch (e) { console.log('focus err', e); }
+                      }}
+                      onLongPress={() => {
+                        console.log('[Translator] Alternative long-pressed -> translated preview');
+                        setTranslatedText(alt);
+                      }}
+                      testID={`alt-${index}`}
+                    >
+                      <Text style={styles.alternativeText}>• {alt}</Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
-                {currentTranslation.alternativeTranslations.map((alt, index) => (
-                  <TouchableOpacity 
-                    key={index}
-                    style={styles.alternativeItem}
-                    onPress={() => setTranslatedText(alt)}
-                  >
-                    <Text style={styles.alternativeText}>• {alt}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-            
+              )}
+
             {currentTranslation.difficulty && (
               <View style={styles.difficultyBadge}>
-                <Text style={[
-                  styles.difficultyText,
-                  currentTranslation.difficulty === 'beginner' && styles.difficultyBeginner,
-                  currentTranslation.difficulty === 'intermediate' && styles.difficultyIntermediate,
-                  currentTranslation.difficulty === 'advanced' && styles.difficultyAdvanced,
-                ]}>
+                <Text
+                  style={[
+                    styles.difficultyText,
+                    currentTranslation.difficulty === 'beginner' && styles.difficultyBeginner,
+                    currentTranslation.difficulty === 'intermediate' && styles.difficultyIntermediate,
+                    currentTranslation.difficulty === 'advanced' && styles.difficultyAdvanced,
+                  ]}
+                >
                   {currentTranslation.difficulty.toUpperCase()} LEVEL
                 </Text>
               </View>
@@ -507,16 +581,15 @@ Focus on being an encouraging language coach who helps learners understand not j
           </View>
         )}
 
-        {/* Recent Translations */}
         {translations.length > 0 && (
-          <View style={styles.historySection}>
+          <View style={styles.historySection} testID="history-section">
             <Text style={styles.historyTitle}>Recent Translations</Text>
-            {translations.slice(0, 3).map((translation) => {
+            {translations.slice(0, 3).map(translation => {
               const fromLangData = LANGUAGES.find(l => l.code === translation.fromLanguage);
               const toLangData = LANGUAGES.find(l => l.code === translation.toLanguage);
-              
+
               return (
-                <TouchableOpacity 
+                <TouchableOpacity
                   key={translation.id}
                   style={styles.historyItem}
                   onPress={() => {
@@ -530,11 +603,9 @@ Focus on being an encouraging language coach who helps learners understand not j
                     <Text style={styles.historyLanguages}>
                       {fromLangData?.flag} → {toLangData?.flag}
                     </Text>
-                    <TouchableOpacity 
-                      onPress={() => toggleFavorite(translation.id)}
-                    >
-                      <Star 
-                        size={16} 
+                    <TouchableOpacity onPress={() => toggleFavorite(translation.id)}>
+                      <Star
+                        size={16}
                         color={translation.isFavorite ? '#F59E0B' : '#9CA3AF'}
                         fill={translation.isFavorite ? '#F59E0B' : 'none'}
                       />
@@ -553,7 +624,6 @@ Focus on being an encouraging language coach who helps learners understand not j
         )}
       </ScrollView>
 
-      {/* Language Selectors */}
       <LanguageSelector
         languages={LANGUAGES}
         selectedCode={fromLanguage}
@@ -561,7 +631,7 @@ Focus on being an encouraging language coach who helps learners understand not j
         visible={showFromLanguages}
         onClose={() => setShowFromLanguages(false)}
       />
-      
+
       <LanguageSelector
         languages={LANGUAGES}
         selectedCode={toLanguage}
@@ -570,12 +640,12 @@ Focus on being an encouraging language coach who helps learners understand not j
         onClose={() => setShowToLanguages(false)}
       />
 
-      {/* Upgrade Modal */}
       <UpgradeModal
         visible={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
         onUpgrade={handleUpgrade}
         reason="feature"
+        testID="upgrade-modal"
       />
     </SafeAreaView>
   );
@@ -609,9 +679,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6B7280',
     marginRight: 12,
-  },
-  historyButton: {
-    padding: 8,
   },
   content: {
     flex: 1,
