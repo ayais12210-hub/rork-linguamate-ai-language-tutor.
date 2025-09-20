@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -801,6 +801,48 @@ Return a JSON object with this exact structure:
     }
   };
   
+  const generateSuggestions = useCallback((exercise: Exercise): string[] => {
+    const maxOptions = 4;
+    const options: string[] = [];
+
+    const pushUnique = (val: string) => {
+      const v = val.trim();
+      if (v && !options.includes(v)) options.push(v);
+    };
+
+    if (exercise.options && exercise.options.length > 0) {
+      exercise.options.forEach(pushUnique);
+    }
+
+    const correct = Array.isArray(exercise.correctAnswer)
+      ? exercise.correctAnswer.join(' ')
+      : String(exercise.correctAnswer ?? '').trim();
+
+    if (correct) pushUnique(correct);
+
+    const variants: string[] = [];
+    const lower = correct.toLowerCase();
+    if (lower) {
+      variants.push(lower);
+      variants.push(lower.replace(/\bthe\b/gi, '').replace(/\s+/g, ' ').trim());
+      if (lower.length > 3) variants.push(lower.slice(0, -1));
+      variants.push(lower.replace(/\s/g, ''));
+    }
+
+    variants.forEach(pushUnique);
+
+    while (options.length < maxOptions) {
+      pushUnique(`${correct} ${options.length + 1}`);
+    }
+
+    const sliced = options.slice(0, maxOptions);
+    for (let i = sliced.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [sliced[i], sliced[j]] = [sliced[j], sliced[i]];
+    }
+    return sliced;
+  }, []);
+
   // Render lesson exercise view
   const renderLessonExercise = () => {
     if (!selectedLesson) return null;
@@ -910,7 +952,10 @@ Return a JSON object with this exact structure:
                     showResult && !isCorrect && styles.incorrectInput,
                   ]}
                   value={typedAnswer}
-                  onChangeText={setTypedAnswer}
+                  onChangeText={(t) => {
+                    setTypedAnswer(t);
+                    setSelectedAnswer(t.trim());
+                  }}
                   placeholder={`Type in ${selectedLanguage?.name}...`}
                   placeholderTextColor="#9CA3AF"
                   multiline
@@ -922,6 +967,25 @@ Return a JSON object with this exact structure:
                   }}
                 />
               </View>
+
+              <View style={styles.suggestionsRow}>
+                {generateSuggestions(exercise).map((sug, idx) => (
+                  <TouchableOpacity
+                    key={`translate-suggestion-${idx}`}
+                    testID={`translate-suggestion-${idx}`}
+                    style={styles.suggestionChip}
+                    disabled={showResult}
+                    onPress={() => {
+                      if (!showResult) {
+                        setTypedAnswer(sug);
+                        setSelectedAnswer(sug);
+                      }
+                    }}
+                  >
+                    <Text style={styles.suggestionText}>{sug}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
               
               {showResult && (
                 <View style={styles.correctAnswerContainer}>
@@ -932,6 +996,61 @@ Return a JSON object with this exact structure:
             </View>
           )}
           
+          {exercise.type === 'typing' && (
+            <View style={styles.translateContainer}>
+              <View style={styles.translateBox}>
+                <Text style={styles.translatePrompt}>Type your answer:</Text>
+                <Text style={styles.translateText}>{exercise.question}</Text>
+              </View>
+
+              <View style={styles.inputContainer}>
+                <TextInput
+                  testID="typing-input"
+                  style={[
+                    styles.translateInput,
+                    showResult && isCorrect && styles.correctInput,
+                    showResult && !isCorrect && styles.incorrectInput,
+                  ]}
+                  value={typedAnswer}
+                  onChangeText={(t) => {
+                    setTypedAnswer(t);
+                    setSelectedAnswer(t.trim());
+                  }}
+                  placeholder="Type here..."
+                  placeholderTextColor="#9CA3AF"
+                  multiline
+                  editable={!showResult}
+                />
+              </View>
+
+              <View style={styles.suggestionsRow}>
+                {generateSuggestions(exercise).map((sug, idx) => (
+                  <TouchableOpacity
+                    key={`typing-suggestion-${idx}`}
+                    testID={`typing-suggestion-${idx}`}
+                    style={styles.suggestionChip}
+                    disabled={showResult}
+                    onPress={() => {
+                      if (!showResult) {
+                        setTypedAnswer(sug);
+                        setSelectedAnswer(sug);
+                      }
+                    }}
+                  >
+                    <Text style={styles.suggestionText}>{sug}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {showResult && (
+                <View style={styles.correctAnswerContainer}>
+                  <Text style={styles.correctAnswerLabel}>Correct answer:</Text>
+                  <Text style={styles.correctAnswerText}>{Array.isArray(exercise.correctAnswer) ? exercise.correctAnswer.join(' ') : exercise.correctAnswer}</Text>
+                </View>
+              )}
+            </View>
+          )}
+
           {exercise.type === 'word_order' && exercise.words && (
             <View style={styles.wordOrderContainer}>
               <Text style={styles.wordOrderPrompt}>
@@ -1842,6 +1961,26 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   
+  suggestionsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 8,
+  },
+  suggestionChip: {
+    backgroundColor: '#E5E7EB',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  suggestionText: {
+    fontSize: 12,
+    color: '#111827',
+    fontWeight: '600',
+  },
+
   // Word Order Exercise Styles
   wordOrderContainer: {
     marginBottom: 24,
