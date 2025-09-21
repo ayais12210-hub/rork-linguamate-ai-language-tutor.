@@ -45,6 +45,13 @@ import {
   generateProgressReportProcedure
 } from "./routes/analytics/analytics";
 import { getLearnContentProcedure } from "./routes/learn/learn";
+import {
+  getLeaderboardProcedure as getLeaderboardDataProcedure,
+  searchUsersProcedure,
+  getUserStatsProcedure,
+  compareUsersProcedure,
+  getGlobalStatsProcedure
+} from "./routes/leaderboard/leaderboard";
 
 export const appRouter = createTRPCRouter({
   // Legacy example route
@@ -109,6 +116,15 @@ export const appRouter = createTRPCRouter({
   // Learn page backend
   learn: createTRPCRouter({
     getContent: getLearnContentProcedure,
+  }),
+
+  // Leaderboard
+  leaderboard: createTRPCRouter({
+    get: getLeaderboardDataProcedure,
+    searchUsers: searchUsersProcedure,
+    getUserStats: getUserStatsProcedure,
+    compareUsers: compareUsersProcedure,
+    getGlobalStats: getGlobalStatsProcedure,
   }),
 });
 
