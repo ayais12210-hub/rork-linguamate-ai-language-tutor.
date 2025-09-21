@@ -1,10 +1,13 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useUser } from '@/hooks/user-store';
 import { LANGUAGES } from '@/constants/languages';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { GraduationCap, Volume2, RefreshCw, ChevronRight, Lightbulb, Sparkles, Grid, Hash, Quote } from 'lucide-react-native';
+import { trpcClient } from '@/lib/trpc';
+import { useQuery } from '@tanstack/react-query';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface AlphabetEntry {
   id: string;
@@ -12,89 +15,60 @@ interface AlphabetEntry {
   romanization?: string;
   pronunciation: string;
   type: 'vowel' | 'consonant' | 'special';
-  examples: Array<{ word: string; translation: string; pronunciation?: string }>;
+  examples: { word: string; translation: string; pronunciation?: string }[];
   difficulty: number;
 }
 
 interface LearnPayload {
   alphabet: AlphabetEntry[];
-  numbers: Array<{ value: number; target: string; pronunciation?: string }>;
-  commonWords: Array<{ target: string; native: string; pronunciation?: string; theme: string }>;
-  phrases: Array<{ target: string; native: string; pronunciation?: string; context: string }>;
+  numbers: { value: number; target: string; pronunciation?: string }[];
+  commonWords: { target: string; native: string; pronunciation?: string; theme: string }[];
+  phrases: { target: string; native: string; pronunciation?: string; context: string }[];
   tips: string[];
 }
 
 export default function LearnScreen() {
   const { user } = useUser();
+  const insets = useSafeAreaInsets();
   const [data, setData] = useState<LearnPayload | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const onceRef = useRef<boolean>(false);
 
   const targetLang = useMemo(() => LANGUAGES.find(l => l.code === user.selectedLanguage), [user.selectedLanguage]);
   const nativeLang = useMemo(() => LANGUAGES.find(l => l.code === user.nativeLanguage), [user.nativeLanguage]);
+
+  const learnQuery = useQuery({
+    queryKey: ['learn', targetLang?.code, nativeLang?.code],
+    enabled: !!targetLang && !!nativeLang,
+    queryFn: async () => {
+      if (!targetLang || !nativeLang) throw new Error('Languages not selected');
+      const payload = await trpcClient.learn.getContent.query({ targetName: targetLang.name, nativeName: nativeLang.name });
+      return payload as LearnPayload;
+    },
+  });
+
+  React.useEffect(() => {
+    if (learnQuery.data) {
+      setData(learnQuery.data);
+    }
+    if (learnQuery.error) {
+      console.error('[Learn] tRPC error', learnQuery.error);
+      setError('Could not load learning content. Please try again.');
+    }
+  }, [learnQuery.data, learnQuery.error]);
 
   const fetchLearnData = useCallback(async () => {
     if (!targetLang || !nativeLang) {
       setError('Please select your native and learning languages in settings.');
       return;
     }
-    setIsLoading(true);
     setError(null);
-    try {
-      const prompt = `Create compact structured JSON for a language LEARN page for learners of ${targetLang.name} whose native language is ${nativeLang.name}.
-Return ONLY JSON with keys: alphabet, numbers, commonWords, phrases, tips.
-- alphabet: 26-40 important items covering the full script/alphabet for ${targetLang.name}. Each item: {id, character, romanization, pronunciation, type, difficulty, examples:[{word, translation (in ${nativeLang.name}), pronunciation}]}.
-- numbers: list for 0-20, then tens up to 100. Each: {value, target, pronunciation}.
-- commonWords: 30 items mixing themes (people, time, places, food, travel). Each: {target, native (${nativeLang.name}), pronunciation, theme}.
-- phrases: 30 high-utility phrases. Each: {target, native (${nativeLang.name}), pronunciation, context}.
-- tips: 8 bullet tips about pronunciation, stress, rhythm, polite forms, gender/particles, common pitfalls, mnemonic hooks. Keep tips in ${nativeLang.name}.
-Constraints:
-- Use plain text, no IPA if unnecessary; keep romanization simple if applicable; omit romanization if language is Latin-based.
-- Keep strings short and clean; avoid markdown; ensure valid JSON.`;
+    await learnQuery.refetch();
+  }, [learnQuery, targetLang, nativeLang]);
 
-      console.log('[Learn] Fetching learn data for', targetLang.code, '->', nativeLang.code);
-      const res = await fetch('https://toolkit.rork.com/text/llm/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [{ role: 'user', content: prompt }] }),
-      });
-      if (!res.ok) throw new Error('Failed to generate content');
-      const json = await res.json();
-      let content: string = String(json.completion ?? '').trim();
-      if (content.includes('```')) content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '');
-      const match = content.match(/\{[\s\S]*\}/);
-      if (match) content = match[0];
-      const parsed: LearnPayload = JSON.parse(content);
-
-      // Fallback shaping to ensure arrays exist
-      const shaped: LearnPayload = {
-        alphabet: Array.isArray(parsed.alphabet) ? parsed.alphabet : [],
-        numbers: Array.isArray(parsed.numbers) ? parsed.numbers : [],
-        commonWords: Array.isArray(parsed.commonWords) ? parsed.commonWords : [],
-        phrases: Array.isArray(parsed.phrases) ? parsed.phrases : [],
-        tips: Array.isArray(parsed.tips) ? parsed.tips : [],
-      };
-      setData(shaped);
-    } catch (e: unknown) {
-      console.error('[Learn] Error', e);
-      setError('Could not load learning content. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [targetLang, nativeLang]);
-
-  useEffect(() => {
-    if (!onceRef.current) {
-      onceRef.current = true;
-      fetchLearnData();
-    }
-  }, [fetchLearnData]);
-
-  const sectionHeader = useCallback((icon: React.ReactNode, title: string, subtitle?: string) => (
+  const sectionHeader = useCallback((icon: React.ReactElement, title: string, subtitle?: string) => (
     <View style={styles.sectionHeader}>
       <View style={styles.sectionTitleRow}>
-        <View>{icon}</View>
+        <View>{React.isValidElement(icon) ? icon : null}</View>
         <Text style={styles.sectionTitle} testID={`section-${title.toLowerCase().replace(/\s/g, '-')}`}>{title}</Text>
       </View>
       {!!subtitle && <Text style={styles.sectionSubtitle}>{subtitle}</Text>}
@@ -126,7 +100,8 @@ Constraints:
 
   return (
     <ErrorBoundary>
-      <ScrollView style={styles.container} contentContainerStyle={styles.scrollPad} showsVerticalScrollIndicator={false}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>        
+        <ScrollView contentContainerStyle={styles.scrollPad} showsVerticalScrollIndicator={false}>
         <LinearGradient colors={["#34D399", "#10B981"]} style={styles.hero}>
           <View style={styles.heroRow}>
             <View style={styles.heroLeft}>
@@ -142,7 +117,7 @@ Constraints:
 
         <View style={styles.section}>
           {sectionHeader(<Grid size={20} color="#10B981" />, 'Alphabet', `Essentials of ${targetLang.name}${targetLang.code.startsWith('en') ? '' : ' with quick romanization'}`)}
-          {isLoading && (
+          {learnQuery.isFetching && (
             <View style={styles.loadingRow}>
               <ActivityIndicator color="#10B981" />
               <Text style={styles.loadingText}>Loading alphabet…</Text>
@@ -182,7 +157,7 @@ Constraints:
 
         <View style={styles.section}>
           {sectionHeader(<Hash size={20} color="#3B82F6" />, 'Numbers', `0–20 and tens up to 100 in ${targetLang.name}`)}
-          {isLoading && !data && (
+          {learnQuery.isFetching && !data && (
             <View style={styles.loadingRow}>
               <ActivityIndicator color="#3B82F6" />
               <Text style={styles.loadingText}>Loading numbers…</Text>
@@ -257,7 +232,8 @@ Constraints:
           <Text style={styles.refreshText}>Refresh content</Text>
           <ChevronRight size={16} color="#111827" />
         </TouchableOpacity>
-      </ScrollView>
+        </ScrollView>
+      </View>
     </ErrorBoundary>
   );
 }

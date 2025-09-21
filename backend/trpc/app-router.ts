@@ -44,6 +44,7 @@ import {
   getPersonalizedRecommendationsProcedure,
   generateProgressReportProcedure
 } from "./routes/analytics/analytics";
+import { getLearnContentProcedure } from "./routes/learn/learn";
 
 export const appRouter = createTRPCRouter({
   // Legacy example route
@@ -103,6 +104,11 @@ export const appRouter = createTRPCRouter({
     getLeaderboard: getLeaderboardProcedure,
     getRecommendations: getPersonalizedRecommendationsProcedure,
     generateReport: generateProgressReportProcedure,
+  }),
+
+  // Learn page backend
+  learn: createTRPCRouter({
+    getContent: getLearnContentProcedure,
   }),
 });
 
