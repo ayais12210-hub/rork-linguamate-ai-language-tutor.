@@ -57,7 +57,7 @@ interface Lesson {
   id: string;
   title: string;
   description: string;
-  difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+  difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert' | 'professional';
   xpReward: number;
   isCompleted: boolean;
   isLocked: boolean;
@@ -91,7 +91,7 @@ interface LessonTemplate {
   id: string;
   titleKey: string;
   descriptionKey: string;
-  difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+  difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert' | 'professional';
   xpReward: number;
   category: 'vocabulary' | 'grammar' | 'conversation' | 'pronunciation' | 'listening' | 'writing' | 'culture';
   exerciseTemplates: ExerciseTemplate[];
@@ -188,7 +188,7 @@ export default function LessonsScreen() {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [lessonProgress, setLessonProgress] = useState<LessonProgress | null>(null);
   const [showAchievement, setShowAchievement] = useState<Achievement | null>(null);
-  const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'beginner' | 'intermediate' | 'advanced' | 'expert'>('all');
+  const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'beginner' | 'intermediate' | 'advanced' | 'expert' | 'professional'>('all');
   const [currentUnit, setCurrentUnit] = useState<number>(1);
   const [results, setResults] = useState<ExerciseResult[]>([]);
   const [showCompletion, setShowCompletion] = useState<boolean>(false);
@@ -510,55 +510,49 @@ export default function LessonsScreen() {
     setIsGeneratingLesson(true);
     
     try {
-      const prompt = `Generate a language learning lesson for learning ${selectedLanguage.name} from ${nativeLanguage.name}.
+      const completedCount = completedLessons.length;
+      const difficultyBoost = Math.min(3, Math.floor(completedCount / 5));
+      const baseCount = template.exerciseTemplates.length;
+      const targetCount = Math.min(20, baseCount + difficultyBoost * 3);
+      const effectiveDifficulty = (() => {
+        const order = ['beginner', 'intermediate', 'advanced', 'expert', 'professional'] as const;
+        const idx = Math.max(0, order.indexOf(template.difficulty));
+        const bumped = Math.min(order.length - 1, idx + (completedCount >= 15 ? 2 : completedCount >= 8 ? 1 : 0));
+        return order[bumped];
+      })();
+
+      const prompt = `Generate a comprehensive language learning lesson for learning ${selectedLanguage.name} from ${nativeLanguage.name}.
 
 Lesson Details:
 - Title: ${template.titleKey}
 - Description: ${template.descriptionKey}
-- Difficulty: ${template.difficulty}
+- Difficulty: ${effectiveDifficulty}
 - Category: ${template.category}
 
-Generate ${template.exerciseTemplates.length} exercises based on these templates:
-${template.exerciseTemplates.map(ex => `- ${ex.type}: ${ex.concept} (difficulty ${ex.difficulty})`).join('\n')}
+Generate ${targetCount} exercises mixing and matching these templates and increasing challenge gradually:
+${template.exerciseTemplates.map(ex => `- ${ex.type}: ${ex.concept} (base difficulty ${ex.difficulty})`).join('\n')}
 
-For each exercise, provide:
-1. A clear question in ${nativeLanguage.name}
-2. For multiple choice: 4 options with 1 correct answer
-3. For fill_blank: 4 options with 1 correct answer  
-4. For translate: provide 'nativeText' (text to translate) and 'correctAnswer' (translation)
-5. For word_order: provide 'words' array and 'correctAnswer' (correct sentence)
-6. For match_pairs: provide 'pairs' array with 'left' and 'right' properties
-7. A helpful explanation in ${nativeLanguage.name}
+Rules for every exercise:
+1. Provide a clear "question" in ${nativeLanguage.name}.
+2. For multiple_choice: include exactly 4 distinct "options" with 1 "correctAnswer".
+3. For fill_blank: include exactly 4 "options" with 1 "correctAnswer".
+4. For translate: include "nativeText" (in ${nativeLanguage.name}) and string "correctAnswer" (in ${selectedLanguage.name}).
+5. For word_order: include "words" (array of shuffled tokens) and string "correctAnswer" (full correct sentence in ${selectedLanguage.name}).
+6. For match_pairs: include "pairs" array: {"left": native term, "right": target translation}.
+7. Always include a concise "explanation" in ${nativeLanguage.name}.
+8. IDs must be unique (ex1, ex2, ...), types limited to translate | multiple_choice | fill_blank | match_pairs | listening | speaking | word_order | typing | select_missing.
+9. Keep all strings plain (no markdown), and avoid phonetic scripts unless necessary.
 
-For translate exercises, use this format:
-{
-  "nativeText": "Text in ${nativeLanguage.name} to translate",
-  "correctAnswer": "Translation in ${selectedLanguage.name}"
-}
-
-For word_order exercises:
-{
-  "words": ["shuffled", "words", "array"],
-  "correctAnswer": "correct sentence order"
-}
-
-For match_pairs exercises:
-{
-  "pairs": [{"left": "word1", "right": "translation1"}, {"left": "word2", "right": "translation2"}]
-}
-
-IMPORTANT: Return ONLY valid JSON without any markdown formatting, code blocks, or extra text.
-
-Return a JSON object with this exact structure:
+Return ONLY valid JSON with this structure:
 {
   "exercises": [
     {
       "id": "ex1",
       "type": "multiple_choice",
-      "question": "Question in ${nativeLanguage.name}",
+      "question": "...",
       "options": ["option1", "option2", "option3", "option4"],
       "correctAnswer": "correct option",
-      "explanation": "Explanation in ${nativeLanguage.name}"
+      "explanation": "..."
     }
   ]
 }`;
@@ -610,15 +604,15 @@ Return a JSON object with this exact structure:
         id: template.id,
         title: template.titleKey,
         description: template.descriptionKey,
-        difficulty: template.difficulty,
-        xpReward: template.xpReward,
+        difficulty: effectiveDifficulty,
+        xpReward: template.xpReward + Math.min(50, difficultyBoost * 10),
         isCompleted: completedLessons.includes(template.id),
         isLocked: false,
         category: template.category,
         exercises: lessonData.exercises,
-        estimatedTime: template.estimatedTime,
+        estimatedTime: Math.max(template.estimatedTime, Math.ceil((lessonData.exercises?.length ?? 0) * 1.2)),
         hearts: 5,
-        perfectBonus: template.perfectBonus,
+        perfectBonus: template.perfectBonus + difficultyBoost * 5,
         unit: template.unit,
         order: template.order,
       };
@@ -634,20 +628,28 @@ Return a JSON object with this exact structure:
   };
 
   const lessons: Lesson[] = useMemo(() => {
+    const completedCount = completedLessons.length;
     return lessonTemplates.map((template, index) => {
       const previousLessonCompleted = index === 0 || completedLessons.includes(lessonTemplates[index - 1].id);
-      const isLocked = !previousLessonCompleted && (template.difficulty === 'intermediate' || template.difficulty === 'advanced') && !user.isPremium;
+      const isLocked = !previousLessonCompleted && (template.difficulty === 'intermediate' || template.difficulty === 'advanced' || template.difficulty === 'expert' || template.difficulty === 'professional') && !user.isPremium;
+
+      const effectiveDifficulty = (() => {
+        const order = ['beginner', 'intermediate', 'advanced', 'expert', 'professional'] as const;
+        const idx = Math.max(0, order.indexOf(template.difficulty));
+        const bumped = Math.min(order.length - 1, idx + (completedCount >= 15 ? 2 : completedCount >= 8 ? 1 : 0));
+        return order[bumped];
+      })();
       
       return {
         id: template.id,
         title: template.titleKey,
         description: template.descriptionKey,
-        difficulty: template.difficulty,
+        difficulty: effectiveDifficulty,
         xpReward: template.xpReward,
         isCompleted: completedLessons.includes(template.id),
         isLocked,
         category: template.category,
-        exercises: [], // Will be generated when lesson is started
+        exercises: [],
         estimatedTime: template.estimatedTime,
         hearts: 5,
         perfectBonus: template.perfectBonus,
@@ -898,6 +900,8 @@ Return a JSON object with this exact structure:
       case 'beginner': return '#10B981';
       case 'intermediate': return '#F59E0B';
       case 'advanced': return '#EF4444';
+      case 'expert': return '#2563EB';
+      case 'professional': return '#8B5CF6';
       default: return '#6B7280';
     }
   };
@@ -1517,7 +1521,7 @@ Return a JSON object with this exact structure:
           <Text style={styles.sectionTitle}>Lessons</Text>
 
           <View style={styles.filterRow}>
-            {(['all','beginner','intermediate','advanced','expert'] as const).map((lvl) => (
+            {(['all','beginner','intermediate','advanced','expert','professional'] as const).map((lvl) => (
               <Pressable
                 key={lvl}
                 testID={`filter-${lvl}`}
