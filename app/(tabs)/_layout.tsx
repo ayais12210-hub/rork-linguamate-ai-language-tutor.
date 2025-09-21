@@ -1,5 +1,5 @@
 import { Tabs, useRouter } from 'expo-router';
-import { MessageCircle, User, Languages, BookOpen, Trophy, Settings, Layers } from 'lucide-react-native';
+import { MessageCircle, User, Languages, BookOpen, Trophy, Settings, Layers, GraduationCap } from 'lucide-react-native';
 import React from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 
@@ -45,10 +45,18 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="lessons"
+        name="learn"
         options={{
           title: 'Learn',
           headerTitle: 'Learn',
+          tabBarIcon: ({ color, size }) => <GraduationCap size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="lessons"
+        options={{
+          title: 'Lessons',
+          headerTitle: 'Lessons',
           tabBarIcon: ({ color, size }) => <BookOpen size={size} color={color} />,
         }}
       />
