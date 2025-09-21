@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
+import { Audio, AVPlaybackStatusSuccess } from 'expo-av';
 
 export interface SpeechSettings {
   rate: number;
@@ -50,6 +51,8 @@ export const useSpeech = () => {
   const recordingTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
+  const nativeRecording = useRef<Audio.Recording | null>(null);
+  const nativeSound = useRef<Audio.Sound | null>(null);
 
   useEffect(() => {
     loadVoices();
@@ -85,9 +88,25 @@ export const useSpeech = () => {
         setAudioPermission(false);
       }
     } else {
-      // Mock permission for development - expo-av not available in Expo Go
-      console.log('Audio recording requires a custom development client');
-      setAudioPermission(false);
+      try {
+        const { granted } = await Audio.requestPermissionsAsync();
+        if (!granted) {
+          setAudioPermission(false);
+          return;
+        }
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: true,
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: false,
+          interruptionModeIOS: 1,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+        });
+        setAudioPermission(true);
+      } catch (error) {
+        console.error('Error requesting audio permission (native):', error);
+        setAudioPermission(false);
+      }
     }
   };
 
@@ -133,14 +152,15 @@ export const useSpeech = () => {
 
   // Speech-to-Text Functions
   const startRecording = async () => {
-    if (!audioPermission) {
+    let granted = audioPermission;
+    if (!granted) {
       await requestAudioPermission();
-      if (!audioPermission) return;
+      granted = audioPermission;
+      if (!granted) return;
     }
 
     try {
       if (Platform.OS === 'web') {
-        // Web recording using MediaRecorder
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaRecorder.current = new MediaRecorder(stream);
         audioChunks.current = [];
@@ -157,7 +177,6 @@ export const useSpeech = () => {
           duration: 0,
         });
 
-        // Start duration timer
         recordingTimer.current = setInterval(() => {
           setRecordingState(prev => ({
             ...prev,
@@ -165,9 +184,18 @@ export const useSpeech = () => {
           }));
         }, 1000) as ReturnType<typeof setInterval>;
       } else {
-        // Mobile recording not available in Expo Go
-        console.log('Audio recording requires a custom development client');
-        return;
+        if (nativeRecording.current) {
+          try { await nativeRecording.current.stopAndUnloadAsync(); } catch {}
+          nativeRecording.current = null;
+        }
+        const rec = new Audio.Recording();
+        await rec.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+        await rec.startAsync();
+        nativeRecording.current = rec;
+        setRecordingState({ isRecording: true, isPaused: false, duration: 0 });
+        recordingTimer.current = setInterval(() => {
+          setRecordingState(prev => ({ ...prev, duration: prev.duration + 1 }));
+        }, 1000) as ReturnType<typeof setInterval>;
       }
     } catch (error) {
       console.error('Failed to start recording:', error);
@@ -176,7 +204,6 @@ export const useSpeech = () => {
 
   const stopRecording = async (): Promise<string | null> => {
     try {
-      // Stop duration timer
       if (recordingTimer.current) {
         clearInterval(recordingTimer.current);
         recordingTimer.current = null;
@@ -188,32 +215,29 @@ export const useSpeech = () => {
             mediaRecorder.current!.onstop = async () => {
               const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' });
               const url = URL.createObjectURL(audioBlob);
-              
-              setRecordingState({
-                isRecording: false,
-                isPaused: false,
-                duration: 0,
-                uri: url,
-              });
-
-              // Stop all tracks
+              setRecordingState({ isRecording: false, isPaused: false, duration: 0, uri: url });
               const stream = mediaRecorder.current!.stream;
               stream.getTracks().forEach(track => track.stop());
-              
               resolve(url);
             };
-            
             mediaRecorder.current!.stop();
           });
         }
+      } else {
+        if (!nativeRecording.current) return null;
+        try {
+          await nativeRecording.current.stopAndUnloadAsync();
+        } catch (e) {
+          console.error('stopAndUnloadAsync error', e);
+        }
+        await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
+        const uri = nativeRecording.current.getURI() ?? null;
+        nativeRecording.current = null;
+        setRecordingState({ isRecording: false, isPaused: false, duration: 0, uri: uri ?? undefined });
+        return uri;
       }
 
-      setRecordingState({
-        isRecording: false,
-        isPaused: false,
-        duration: 0,
-      });
-
+      setRecordingState({ isRecording: false, isPaused: false, duration: 0 });
       return null;
     } catch (error) {
       console.error('Failed to stop recording:', error);
@@ -249,19 +273,26 @@ export const useSpeech = () => {
       const formData = new FormData();
       
       if (Platform.OS === 'web') {
-        // For web, convert blob URL to file
         const response = await fetch(uri);
         const blob = await response.blob();
         const file = new File([blob], 'recording.webm', { type: 'audio/webm' });
         formData.append('audio', file);
       } else {
-        // For mobile (when available with custom dev client)
-        console.log('Audio transcription requires a custom development client');
-        return null;
+        const uriParts = uri.split('.');
+        const fileType = uriParts[uriParts.length - 1];
+        const audioFile: any = {
+          uri,
+          name: `recording.${fileType}`,
+          type: `audio/${fileType}`,
+        };
+        formData.append('audio', audioFile);
       }
 
-      if (language) {
-        formData.append('language', language);
+      if (language && typeof language === 'string') {
+        const sanitized = language.trim().slice(0, 10);
+        if (sanitized) {
+          formData.append('language', sanitized);
+        }
       }
 
       const response = await fetch('https://toolkit.rork.com/stt/transcribe/', {
@@ -296,10 +327,19 @@ export const useSpeech = () => {
 
     try {
       if (Platform.OS === 'web') {
-        const audio = new Audio(recordingState.uri);
-        await audio.play();
+        const audioEl = new (window as any).Audio(recordingState.uri);
+        await audioEl.play();
       } else {
-        console.log('Audio playback requires a custom development client');
+        if (nativeSound.current) {
+          try { await nativeSound.current.unloadAsync(); } catch {}
+          nativeSound.current = null;
+        }
+        const { sound } = await Audio.Sound.createAsync({ uri: recordingState.uri });
+        nativeSound.current = sound;
+        const status = (await sound.playAsync()) as AVPlaybackStatusSuccess;
+        if (!status.isLoaded) {
+          console.log('Sound not loaded');
+        }
       }
     } catch (error) {
       console.error('Error playing recording:', error);
@@ -309,6 +349,10 @@ export const useSpeech = () => {
   const deleteRecording = () => {
     if (recordingState.uri && Platform.OS === 'web') {
       URL.revokeObjectURL(recordingState.uri);
+    }
+    if (nativeSound.current) {
+      try { nativeSound.current.unloadAsync(); } catch {}
+      nativeSound.current = null;
     }
     
     setRecordingState({
