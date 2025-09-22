@@ -7,9 +7,11 @@ import { createContext } from "@/backend/trpc/create-context";
 // app will be mounted at /api
 const app = new Hono();
 
-// Enable CORS for all routes
+// Enable CORS for all routes (dev-friendly)
 app.use("*", cors({
-  origin: ['http://localhost:8081', 'http://localhost:19006', 'https://toolkit.rork.com'],
+  origin: "*",
+  allowHeaders: ["Content-Type", "Authorization"],
+  allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   credentials: true,
 }));
 
