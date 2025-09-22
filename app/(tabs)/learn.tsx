@@ -318,7 +318,7 @@ export default function LearnScreen() {
                         ))}
                       </View>
                     )}
-                    <TouchableOpacity style={styles.soundBtn} onPress={() => onPlay(ch.character)}>
+                    <TouchableOpacity style={styles.soundBtn} onPress={() => onPlay(ch.character)} testID={`alpha-pronounce-${idx}`}>
                       <Volume2 size={16} color="#10B981" />
                       <Text style={styles.soundText}>Pronounce</Text>
                     </TouchableOpacity>
@@ -337,7 +337,7 @@ export default function LearnScreen() {
                         <Text style={styles.alphaExampleInline}>{ch.examples[0].word} · {ch.examples[0].translation}</Text>
                       )}
                     </View>
-                    <TouchableOpacity style={styles.soundIcon} onPress={() => onPlay(ch.character)}>
+                    <TouchableOpacity style={styles.soundIcon} onPress={() => onPlay(ch.character)} testID={`alpha-play-${idx}`}>
                       <Play size={16} color="#10B981" />
                     </TouchableOpacity>
                   </View>
@@ -359,18 +359,18 @@ export default function LearnScreen() {
             <View>
               <View style={styles.numberRow}>
                 {data.numbers.slice(0, 21).map((n) => (
-                  <View key={`n_${n.value}`} style={styles.numberPill}>
+                  <TouchableOpacity key={`n_${n.value}`} style={styles.numberPill} onPress={() => onPlay(n.target)} testID={`num-${n.value}`}>
                     <Text style={styles.numberValue}>{n.value}</Text>
                     <Text style={styles.numberTarget}>{n.target}</Text>
-                  </View>
+                  </TouchableOpacity>
                 ))}
               </View>
               <View style={styles.tensRow}>
                 {data.numbers.filter(n => n.value % 10 === 0 && n.value >= 20).map((n) => (
-                  <View key={`t_${n.value}`} style={styles.tenCard}>
+                  <TouchableOpacity key={`t_${n.value}`} style={styles.tenCard} onPress={() => onPlay(n.target)} testID={`ten-${n.value}`}>
                     <Text style={styles.tenValue}>{n.value}</Text>
                     <Text style={styles.tenTarget}>{n.target}</Text>
-                  </View>
+                  </TouchableOpacity>
                 ))}
               </View>
             </View>
@@ -410,11 +410,11 @@ export default function LearnScreen() {
           {sectionHeader(<Sparkles size={20} color="#F59E0B" />, 'Common Words', 'High-frequency vocabulary with translations')}
           <View style={styles.wordsGrid}>
             {filteredWords?.slice(0, 24).map((w, i) => (
-              <View key={`w_${i}`} style={styles.wordCard}>
+              <TouchableOpacity key={`w_${i}`} style={styles.wordCard} onPress={() => onPlay(w.target)} testID={`word-${i}`}>
                 <Text style={styles.wordTarget}>{w.target}</Text>
                 <Text style={styles.wordNative}>{w.native}</Text>
                 {!!w.theme && <Text style={styles.wordTheme}>{w.theme}</Text>}
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         </View>
@@ -428,7 +428,7 @@ export default function LearnScreen() {
                   <Text style={styles.phraseTarget}>{p.target}</Text>
                   <Text style={styles.phraseNative}>{p.native}</Text>
                 </View>
-                <TouchableOpacity style={styles.soundIcon} onPress={() => onPlay(p.target)}>
+                <TouchableOpacity style={styles.soundIcon} onPress={() => onPlay(p.target)} testID={`phrase-play-${i}`}>
                   <Volume2 size={18} color="#8B5CF6" />
                 </TouchableOpacity>
               </View>
