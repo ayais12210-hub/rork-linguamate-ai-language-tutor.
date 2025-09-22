@@ -10,6 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Speech from 'expo-speech';
 import { useGamification } from '@/hooks/use-gamification';
+import PhonicsTrainer from '@/components/PhonicsTrainer';
 
 interface AlphabetEntry {
   id: string;
@@ -520,7 +521,7 @@ export default function LearnScreen() {
         </View>
 
         <View style={styles.section}>
-          {sectionHeader(<Waves size={20} color="#F43F5E" />, 'Phonics', 'Sound-to-letter mapping with examples')}
+          {sectionHeader(<Waves size={20} color="#F43F5E" />, 'Phonics', 'Sound-to-letter mapping with practice drills')}
           <View>
             {phonics.slice(0, 12).map((ph, i) => (
               <View key={`ph_${ph.id}_${i}`} style={styles.phonicsRow}>
@@ -539,6 +540,7 @@ export default function LearnScreen() {
                 </View>
               </View>
             ))}
+            <PhonicsTrainer items={phonics.slice(0, 8)} targetLangCode={targetLang.code} testIDPrefix="phonics-trainer" />
           </View>
         </View>
 
