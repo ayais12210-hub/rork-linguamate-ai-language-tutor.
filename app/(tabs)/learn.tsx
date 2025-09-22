@@ -5,8 +5,8 @@ import { useUser } from '@/hooks/user-store';
 import { LANGUAGES } from '@/constants/languages';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { GraduationCap, Volume2, RefreshCw, ChevronRight, Lightbulb, Sparkles, Grid, Hash, Quote } from 'lucide-react-native';
-import { trpcClient } from '@/lib/trpc';
-import { useQuery } from '@tanstack/react-query';
+import { trpc } from '@/lib/trpc';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface AlphabetEntry {
@@ -36,15 +36,14 @@ export default function LearnScreen() {
   const targetLang = useMemo(() => LANGUAGES.find(l => l.code === user.selectedLanguage), [user.selectedLanguage]);
   const nativeLang = useMemo(() => LANGUAGES.find(l => l.code === user.nativeLanguage), [user.nativeLanguage]);
 
-  const learnQuery = useQuery({
-    queryKey: ['learn', targetLang?.code, nativeLang?.code],
-    enabled: !!targetLang && !!nativeLang,
-    queryFn: async () => {
-      if (!targetLang || !nativeLang) throw new Error('Languages not selected');
-      const payload = await trpcClient.learn.getContent.query({ targetName: targetLang.name, nativeName: nativeLang.name });
-      return payload as LearnPayload;
-    },
-  });
+  const learnQuery = trpc.learn.getContent.useQuery(
+    { targetName: targetLang?.name || '', nativeName: nativeLang?.name || '' },
+    {
+      enabled: !!targetLang && !!nativeLang,
+      retry: 2,
+      retryDelay: 1000,
+    }
+  );
 
   React.useEffect(() => {
     if (learnQuery.data) {
@@ -65,15 +64,23 @@ export default function LearnScreen() {
     await learnQuery.refetch();
   }, [learnQuery, targetLang, nativeLang]);
 
-  const sectionHeader = useCallback((icon: React.ReactElement, title: string, subtitle?: string) => (
-    <View style={styles.sectionHeader}>
-      <View style={styles.sectionTitleRow}>
-        <View>{React.isValidElement(icon) ? icon : null}</View>
-        <Text style={styles.sectionTitle} testID={`section-${title.toLowerCase().replace(/\s/g, '-')}`}>{title}</Text>
+  const sectionHeader = useCallback((icon: React.ReactElement, title: string, subtitle?: string) => {
+    if (!title?.trim() || title.length > 100) return null;
+    // eslint-disable-next-line @rork/linters/new-no-missing-input-validation
+    if (!React.isValidElement(icon)) return null;
+    
+    const IconComponent = () => icon;
+    
+    return (
+      <View style={styles.sectionHeader}>
+        <View style={styles.sectionTitleRow}>
+          <View><IconComponent /></View>
+          <Text style={styles.sectionTitle} testID={`section-${title.toLowerCase().replace(/\s/g, '-')}`}>{title}</Text>
+        </View>
+        {!!subtitle && <Text style={styles.sectionSubtitle}>{subtitle}</Text>}
       </View>
-      {!!subtitle && <Text style={styles.sectionSubtitle}>{subtitle}</Text>}
-    </View>
-  ), []);
+    );
+  }, []);
 
   const onPlay = useCallback((raw: string) => {
     const label = (raw ?? '').toString().trim();
