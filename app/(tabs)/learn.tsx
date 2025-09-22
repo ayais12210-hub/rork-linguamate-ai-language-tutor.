@@ -4,13 +4,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useUser } from '@/hooks/user-store';
 import { LANGUAGES } from '@/constants/languages';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import { GraduationCap, Volume2, RefreshCw, ChevronRight, Lightbulb, Sparkles, Grid, Hash, Quote, Trophy, Target, ShieldCheck, Flame, Star, CheckCircle2, XCircle, Shuffle, Play, BookOpen, Waves } from 'lucide-react-native';
+import { GraduationCap, Volume2, RefreshCw, ChevronRight, Lightbulb, Sparkles, Grid, Hash, Quote, Trophy, Target, ShieldCheck, Flame, Star, CheckCircle2, XCircle, Shuffle, Play, BookOpen, Waves, Mic, Square, PlayCircle } from 'lucide-react-native';
 import { trpcClient } from '@/lib/trpc';
 import { useQuery } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Speech from 'expo-speech';
 import { useGamification } from '@/hooks/use-gamification';
 import PhonicsTrainer from '@/components/PhonicsTrainer';
+import { useSpeech } from '@/hooks/use-speech';
 
 interface AlphabetEntry {
   id: string;
@@ -65,6 +66,10 @@ export default function LearnScreen() {
   const [aiTips, setAiTips] = useState<string[]>([]);
   const [aiLoading, setAiLoading] = useState<boolean>(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [practiceText, setPracticeText] = useState<string>('');
+  const [pronunciationScore, setPronunciationScore] = useState<number | null>(null);
+  const [pronunciationFeedback, setPronunciationFeedback] = useState<string>('');
+  const speech = useSpeech();
 
   const targetLang = useMemo(() => LANGUAGES.find(l => l.code === user.selectedLanguage), [user.selectedLanguage]);
   const nativeLang = useMemo(() => LANGUAGES.find(l => l.code === user.nativeLanguage), [user.nativeLanguage]);
@@ -175,6 +180,12 @@ export default function LearnScreen() {
 
   const cards = useMemo(() => (data?.commonWords ?? []).slice(0, 20), [data?.commonWords]);
 
+  const practiceCandidates = useMemo(() => {
+    const fromPhonics = phonics.flatMap(ph => ph.examples.slice(0, 1).map(e => e.word));
+    const fromWords = (data?.commonWords ?? []).slice(0, 10).map(w => w.target);
+    return [...fromPhonics, ...fromWords].filter(Boolean);
+  }, [phonics, data?.commonWords]);
+
   const progressWidthStyle = useMemo(() => ({ width: `${Math.min(100, achievementProgress).toFixed(0)}%` }), [achievementProgress]);
 
   const swipe = useCallback((dir: 'left' | 'right') => {
@@ -203,6 +214,50 @@ export default function LearnScreen() {
       }
     },
   }), [pan, swipe]);
+
+  const computeAccuracy = useCallback((expected: string, actual: string) => {
+    const a = (expected || '').toLowerCase().trim();
+    const b = (actual || '').toLowerCase().trim();
+    if (!a || !b) return 0;
+    const dp: number[][] = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
+    for (let i = 0; i <= a.length; i++) dp[i][0] = i;
+    for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+    for (let i = 1; i <= a.length; i++) {
+      for (let j = 1; j <= b.length; j++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        dp[i][j] = Math.min(
+          dp[i - 1][j] + 1,
+          dp[i][j - 1] + 1,
+          dp[i - 1][j - 1] + cost,
+        );
+      }
+    }
+    const dist = dp[a.length][b.length];
+    const maxLen = Math.max(a.length, b.length) || 1;
+    const score = Math.max(0, 1 - dist / maxLen);
+    return Math.round(score * 100);
+  }, []);
+
+  const handleTranscribeAndScore = useCallback(async () => {
+    if (!practiceText) return;
+    const res = await speech.stopRecording();
+    const tr = await speech.transcribeAudio(undefined, targetLang?.code);
+    if (tr?.text) {
+      const score = computeAccuracy(practiceText, tr.text);
+      setPronunciationScore(score);
+      if (score >= 85) {
+        setPronunciationFeedback('Excellent articulation');
+        updateStats({ xpPoints: (user.stats?.xpPoints || 0) + 8 });
+      } else if (score >= 65) {
+        setPronunciationFeedback('Good, tighten consonants and vowels');
+      } else {
+        setPronunciationFeedback('Practice the mouth shape and stress');
+      }
+    } else {
+      setPronunciationScore(null);
+      setPronunciationFeedback('Could not recognize speech');
+    }
+  }, [practiceText, speech, computeAccuracy, targetLang?.code, updateStats, user.stats?.xpPoints]);
 
   const buildQuiz = useCallback(() => {
     const items: QuizItem[] = [];
@@ -545,7 +600,62 @@ export default function LearnScreen() {
         </View>
 
         <View style={styles.section}>
-          {sectionHeader(<Lightbulb size={20} color="#FCD34D" />, 'Pronunciation & AI Tips', `Personalized strategies for ${targetLang.name}`)}
+          {sectionHeader(<Volume2 size={20} color="#10B981" />, 'Pronunciation', 'Record, transcribe and get instant feedback')}
+          <View style={styles.pronounceCard}>
+            <View style={styles.practicePicker}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.practiceChipsRow}>
+                {practiceCandidates.slice(0, 12).map((t, i) => (
+                  <TouchableOpacity key={`pt_${i}_${t}`} style={[styles.practiceChip, practiceText === t ? styles.practiceChipActive : null]} onPress={() => setPracticeText(t)} testID={`practice-chip-${i}`}>
+                    <Text style={[styles.practiceChipText, practiceText === t ? styles.practiceChipTextActive : null]}>{t}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+            <View style={styles.practiceNow}>
+              <Text style={styles.practiceLabel}>{practiceText || 'Pick a word to practice'}</Text>
+              <View style={styles.practiceControls}>
+                {!speech.recordingState.isRecording ? (
+                  <TouchableOpacity onPress={speech.startRecording} style={styles.micBtn} disabled={!practiceText} testID="pronounce-record">
+                    <Mic size={18} color="#FFFFFF" />
+                    <Text style={styles.micBtnText}>Record</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity onPress={handleTranscribeAndScore} style={[styles.micBtn, styles.stopBtn]} testID="pronounce-stop">
+                    <Square size={18} color="#FFFFFF" />
+                    <Text style={styles.micBtnText}>Stop</Text>
+                  </TouchableOpacity>
+                )}
+                {!!speech.recordingState.uri && (
+                  <TouchableOpacity onPress={speech.playRecording} style={styles.playRecBtn} testID="pronounce-play">
+                    <PlayCircle size={18} color="#111827" />
+                    <Text style={styles.playRecText}>Play</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              {speech.isTranscribing && (
+                <View style={styles.loadingRow}>
+                  <ActivityIndicator color="#10B981" />
+                  <Text style={styles.loadingText}>Analyzing…</Text>
+                </View>
+              )}
+              {!!speech.transcriptionResult && (
+                <View style={styles.transcriptBox}>
+                  <Text style={styles.transcriptLabel}>Heard</Text>
+                  <Text style={styles.transcriptText}>{speech.transcriptionResult.text}</Text>
+                </View>
+              )}
+              {pronunciationScore !== null && (
+                <View style={styles.scoreRow}>
+                  <Text style={styles.scoreValue}>{pronunciationScore}%</Text>
+                  <Text style={styles.scoreFeedback}>{pronunciationFeedback}</Text>
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          {sectionHeader(<Lightbulb size={20} color="#FCD34D" />, 'AI Tips', `Advanced strategies for ${targetLang.name}`)}
           <View style={styles.tipsCard}>
             {(aiTips.length > 0 ? aiTips : data?.tips ?? []).map((tip, i) => (
               <View key={`tip_${i}`} style={styles.tipRow}>
@@ -733,6 +843,28 @@ const styles = StyleSheet.create({
   aiError: { marginTop: 6, color: '#991B1B', fontSize: 12 },
   aiLoadingRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   aiLoadingText: { color: '#92400E', fontSize: 12 },
+
+  pronounceCard: { backgroundColor: 'white', borderRadius: 12, padding: 12 },
+  practicePicker: { marginBottom: 8 },
+  practiceChipsRow: { gap: 8 },
+  practiceChip: { backgroundColor: '#F3F4F6', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 8, marginRight: 8 },
+  practiceChipActive: { backgroundColor: '#DCFCE7' },
+  practiceChipText: { color: '#111827', fontSize: 12, fontWeight: '700' },
+  practiceChipTextActive: { color: '#065F46' },
+  practiceNow: { },
+  practiceLabel: { fontSize: 16, fontWeight: '800', color: '#111827', marginBottom: 8 },
+  practiceControls: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  micBtn: { backgroundColor: '#10B981', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  stopBtn: { backgroundColor: '#EF4444' },
+  micBtnText: { color: 'white', fontWeight: '800', fontSize: 12 },
+  playRecBtn: { backgroundColor: '#FFFFFF', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: '#E5E7EB', flexDirection: 'row', alignItems: 'center', gap: 6 },
+  playRecText: { color: '#111827', fontWeight: '700', fontSize: 12 },
+  transcriptBox: { backgroundColor: '#F9FAFB', borderRadius: 8, padding: 10, marginTop: 10, borderWidth: 1, borderColor: '#E5E7EB' },
+  transcriptLabel: { fontSize: 10, color: '#6B7280', marginBottom: 4 },
+  transcriptText: { fontSize: 14, color: '#111827' },
+  scoreRow: { marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  scoreValue: { fontSize: 18, fontWeight: '800', color: '#065F46' },
+  scoreFeedback: { fontSize: 12, color: '#374151' },
 
   quizCard: { backgroundColor: 'white', borderRadius: 12, padding: 12 },
   quizStartBtn: { backgroundColor: '#ECFDF5', borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
