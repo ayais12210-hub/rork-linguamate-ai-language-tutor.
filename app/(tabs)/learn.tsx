@@ -542,13 +542,13 @@ export default function LearnScreen() {
         </View>
 
         <View style={styles.section}>
-          {sectionHeader(<BookOpen size={20} color="#6366F1" />, 'Vocabulary', 'Organized by theme with quick pronounce')}
+          {sectionHeader(<BookOpen size={20} color="#6366F1" />, 'Vocabulary & Pronunciation', 'Tap to hear words, then record and get feedback')}
           {Object.keys(groupedVocabulary).map((themeKey) => (
             <View key={`group_${themeKey}`} style={styles.groupWrap}>
               <Text style={styles.groupTitle}>{themeKey.toUpperCase()}</Text>
               <View style={styles.wordsGrid}>
                 {groupedVocabulary[themeKey].slice(0, 8).map((w, i) => (
-                  <TouchableOpacity key={`w_${themeKey}_${i}`} style={styles.wordCard} onPress={() => onPlay(w.target)} testID={`vocab-${themeKey}-${i}`}>
+                  <TouchableOpacity key={`w_${themeKey}_${i}`} style={styles.wordCard} onPress={() => { setPracticeText(w.target); onPlay(w.target); }} testID={`vocab-${themeKey}-${i}`}>
                     <Text style={styles.wordTarget}>{w.target}</Text>
                     <Text style={styles.wordNative}>{w.native}</Text>
                   </TouchableOpacity>
@@ -556,51 +556,7 @@ export default function LearnScreen() {
               </View>
             </View>
           ))}
-        </View>
 
-        <View style={styles.section}>
-          {sectionHeader(<Quote size={20} color="#8B5CF6" />, 'Common Phrases', 'Useful, polite, and travel-ready')}
-          <View>
-            {data?.phrases?.slice(0, 16).map((p, i) => (
-              <View key={`p_${i}`} style={styles.phraseRow}>
-                <View style={styles.phraseL}>
-                  <Text style={styles.phraseTarget}>{p.target}</Text>
-                  <Text style={styles.phraseNative}>{p.native}</Text>
-                </View>
-                <TouchableOpacity style={styles.soundIcon} onPress={() => onPlay(p.target)} testID={`phrase-play-${i}`}>
-                  <Volume2 size={18} color="#8B5CF6" />
-                </TouchableOpacity>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          {sectionHeader(<Waves size={20} color="#F43F5E" />, 'Phonics', 'Sound-to-letter mapping with practice drills')}
-          <View>
-            {phonics.slice(0, 12).map((ph, i) => (
-              <View key={`ph_${ph.id}_${i}`} style={styles.phonicsRow}>
-                <View style={styles.phonicsL}>
-                  <Text style={styles.phonicsSound}>{ph.sound} {ph.ipa ? `· ${ph.ipa}` : ''}</Text>
-                  <Text style={styles.phonicsGraphemes}>{ph.graphemes.join(', ')}</Text>
-                  {!!ph.mouthHint && <Text style={styles.mouthHint}>{ph.mouthHint}</Text>}
-                </View>
-                <View style={styles.phonicsR}>
-                  {ph.examples.slice(0, 2).map((ex, j) => (
-                    <TouchableOpacity key={`ex_${j}`} style={styles.phonicsExample} onPress={() => onPlay(ex.word)} testID={`phonics-ex-${i}-${j}`}>
-                      <Text style={styles.exampleWord}>{ex.word}</Text>
-                      <Text style={styles.exampleTrans}>{ex.translation}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-            ))}
-            <PhonicsTrainer items={phonics.slice(0, 8)} targetLangCode={targetLang.code} testIDPrefix="phonics-trainer" />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          {sectionHeader(<Volume2 size={20} color="#10B981" />, 'Pronunciation', 'Record, transcribe and get instant feedback')}
           <View style={styles.pronounceCard}>
             <View style={styles.practicePicker}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.practiceChipsRow}>
@@ -653,6 +609,48 @@ export default function LearnScreen() {
             </View>
           </View>
         </View>
+
+        <View style={styles.section}>
+          {sectionHeader(<Quote size={20} color="#8B5CF6" />, 'Common Phrases', 'Useful, polite, and travel-ready')}
+          <View>
+            {data?.phrases?.slice(0, 16).map((p, i) => (
+              <View key={`p_${i}`} style={styles.phraseRow}>
+                <View style={styles.phraseL}>
+                  <Text style={styles.phraseTarget}>{p.target}</Text>
+                  <Text style={styles.phraseNative}>{p.native}</Text>
+                </View>
+                <TouchableOpacity style={styles.soundIcon} onPress={() => onPlay(p.target)} testID={`phrase-play-${i}`}>
+                  <Volume2 size={18} color="#8B5CF6" />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          {sectionHeader(<Waves size={20} color="#F43F5E" />, 'Phonics', 'Sound-to-letter mapping with practice drills')}
+          <View>
+            {phonics.slice(0, 12).map((ph, i) => (
+              <View key={`ph_${ph.id}_${i}`} style={styles.phonicsRow}>
+                <View style={styles.phonicsL}>
+                  <Text style={styles.phonicsSound}>{ph.sound} {ph.ipa ? `· ${ph.ipa}` : ''}</Text>
+                  <Text style={styles.phonicsGraphemes}>{ph.graphemes.join(', ')}</Text>
+                  {!!ph.mouthHint && <Text style={styles.mouthHint}>{ph.mouthHint}</Text>}
+                </View>
+                <View style={styles.phonicsR}>
+                  {ph.examples.slice(0, 2).map((ex, j) => (
+                    <TouchableOpacity key={`ex_${j}`} style={styles.phonicsExample} onPress={() => onPlay(ex.word)} testID={`phonics-ex-${i}-${j}`}>
+                      <Text style={styles.exampleWord}>{ex.word}</Text>
+                      <Text style={styles.exampleTrans}>{ex.translation}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            ))}
+            <PhonicsTrainer items={phonics.slice(0, 8)} targetLangCode={targetLang.code} testIDPrefix="phonics-trainer" />
+          </View>
+        </View>
+
 
         <View style={styles.section}>
           {sectionHeader(<Lightbulb size={20} color="#FCD34D" />, 'AI Tips', `Advanced strategies for ${targetLang.name}`)}
