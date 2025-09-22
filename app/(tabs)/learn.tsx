@@ -383,7 +383,7 @@ export default function LearnScreen() {
             alphaMode === 'grid' ? (
               <View style={styles.alphabetGrid}>
                 {data.alphabet.map((ch, idx) => (
-                  <View key={ch.id || `alpha_${idx}`} style={styles.alphabetCard} testID={`alpha-${idx}`}>
+                  <View key={`${ch.id || 'alpha'}_${idx}`} style={styles.alphabetCard} testID={`alpha-${idx}`}>
                     <Text style={styles.alphaChar}>{ch.character}</Text>
                     {!!ch.romanization && <Text style={styles.alphaRoma}>{ch.romanization}</Text>}
                     <Text style={styles.alphaPron}>{ch.pronunciation}</Text>
@@ -407,7 +407,7 @@ export default function LearnScreen() {
             ) : (
               <View>
                 {data.alphabet.map((ch, idx) => (
-                  <View key={ch.id || `alpha_list_${idx}`} style={styles.alphaListRow}>
+                  <View key={`${ch.id || 'alpha_list'}_${idx}`} style={styles.alphaListRow}>
                     <Text style={styles.alphaListChar}>{ch.character}</Text>
                     <View style={styles.flex1}>
                       {!!ch.romanization && <Text style={styles.alphaRoma}>{ch.romanization}</Text>}
@@ -437,16 +437,16 @@ export default function LearnScreen() {
           {data?.numbers && (
             <View>
               <View style={styles.numberRow}>
-                {data.numbers.slice(0, 21).map((n) => (
-                  <TouchableOpacity key={`n_${n.value}`} style={styles.numberPill} onPress={() => onPlay(n.target)} testID={`num-${n.value}`}>
+                {data.numbers.slice(0, 21).map((n, idx) => (
+                  <TouchableOpacity key={`n_${n.value}_${idx}`} style={styles.numberPill} onPress={() => onPlay(n.target)} testID={`num-${n.value}`}>
                     <Text style={styles.numberValue}>{n.value}</Text>
                     <Text style={styles.numberTarget}>{n.target}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
               <View style={styles.tensRow}>
-                {data.numbers.filter(n => n.value % 10 === 0 && n.value >= 20).map((n) => (
-                  <TouchableOpacity key={`t_${n.value}`} style={styles.tenCard} onPress={() => onPlay(n.target)} testID={`ten-${n.value}`}>
+                {data.numbers.filter(n => n.value % 10 === 0 && n.value >= 20).map((n, idx) => (
+                  <TouchableOpacity key={`t_${n.value}_${idx}`} style={styles.tenCard} onPress={() => onPlay(n.target)} testID={`ten-${n.value}`}>
                     <Text style={styles.tenValue}>{n.value}</Text>
                     <Text style={styles.tenTarget}>{n.target}</Text>
                   </TouchableOpacity>
