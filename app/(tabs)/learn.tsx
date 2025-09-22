@@ -1,13 +1,15 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Platform, TextInput } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useUser } from '@/hooks/user-store';
 import { LANGUAGES } from '@/constants/languages';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import { GraduationCap, Volume2, RefreshCw, ChevronRight, Lightbulb, Sparkles, Grid, Hash, Quote } from 'lucide-react-native';
+import { GraduationCap, Volume2, RefreshCw, ChevronRight, Lightbulb, Sparkles, Grid, Hash, Quote, Trophy, Target, ShieldCheck, Flame, Star, CheckCircle2, XCircle } from 'lucide-react-native';
 import { trpcClient } from '@/lib/trpc';
 import { useQuery } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Speech from 'expo-speech';
+import { useGamification } from '@/hooks/use-gamification';
 
 interface AlphabetEntry {
   id: string;
@@ -27,11 +29,24 @@ interface LearnPayload {
   tips: string[];
 }
 
+type QuizItem = {
+  prompt: string;
+  correct: string;
+  choices: string[];
+  kind: 'word' | 'phrase' | 'number' | 'alphabet';
+};
+
 export default function LearnScreen() {
-  const { user } = useUser();
+  const { user, updateStats } = useUser();
   const insets = useSafeAreaInsets();
+  const { currentLeague, challenges, unlockedAchievements, achievementProgress, userRank, leaderboard, xpToNextLeague, nextLeague } = useGamification();
   const [data, setData] = useState<LearnPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState<string>('');
+  const [quiz, setQuiz] = useState<QuizItem[]>([]);
+  const [quizIndex, setQuizIndex] = useState<number>(0);
+  const [quizScore, setQuizScore] = useState<number>(0);
+  const [quizAnswered, setQuizAnswered] = useState<boolean>(false);
 
   const targetLang = useMemo(() => LANGUAGES.find(l => l.code === user.selectedLanguage), [user.selectedLanguage]);
   const nativeLang = useMemo(() => LANGUAGES.find(l => l.code === user.nativeLanguage), [user.nativeLanguage]);
@@ -77,13 +92,84 @@ export default function LearnScreen() {
 
   const onPlay = useCallback((raw: string) => {
     const label = (raw ?? '').toString().trim();
-    if (!label || label.length > 120) return;
-    if (Platform.OS === 'web') {
-      console.log('Play audio placeholder:', label);
-    } else {
-      console.log('Play audio placeholder (native):', label);
+    if (!label || label.length > 200) return;
+    try {
+      if (Platform.OS === 'web') {
+        console.log('[Learn] speak web:', label);
+        Speech.speak(label, { language: targetLang?.code, pitch: 1.0, rate: 0.95 });
+      } else {
+        console.log('[Learn] speak native:', label);
+        Speech.speak(label, { language: targetLang?.code, pitch: 1.0, rate: 0.95 });
+      }
+    } catch (e) {
+      console.error('Speech error', e);
     }
-  }, []);
+  }, [targetLang?.code]);
+
+  const filteredWords = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return data?.commonWords ?? [];
+    return (data?.commonWords ?? []).filter(w =>
+      (w.target?.toLowerCase().includes(q)) || (w.native?.toLowerCase().includes(q)) || (w.theme?.toLowerCase().includes(q))
+    );
+  }, [search, data?.commonWords]);
+
+  const buildQuiz = useCallback(() => {
+    const items: QuizItem[] = [];
+    const words = (data?.commonWords ?? []).slice(0, 20);
+    const phrases = (data?.phrases ?? []).slice(0, 12);
+    const numbers = (data?.numbers ?? []).slice(0, 15);
+    const alphabet = (data?.alphabet ?? []).slice(0, 10);
+
+    words.forEach(w => {
+      const distractors = words.filter(v => v !== w).slice(0, 3).map(v => v.native);
+      const choices = [...distractors, w.native].sort(() => Math.random() - 0.5);
+      items.push({ prompt: w.target, correct: w.native, choices, kind: 'word' });
+    });
+    phrases.forEach(p => {
+      const distractors = phrases.filter(v => v !== p).slice(0, 3).map(v => v.native);
+      const choices = [...distractors, p.native].sort(() => Math.random() - 0.5);
+      items.push({ prompt: p.target, correct: p.native, choices, kind: 'phrase' });
+    });
+    numbers.forEach(n => {
+      const distractors = numbers.filter(v => v !== n).slice(0, 3).map(v => String(v.value));
+      const choices = [...distractors, String(n.value)].sort(() => Math.random() - 0.5);
+      items.push({ prompt: n.target, correct: String(n.value), choices, kind: 'number' });
+    });
+    alphabet.forEach(a => {
+      const ex = a.examples?.[0];
+      if (ex) {
+        const pool = (data?.alphabet ?? []).filter(v => v !== a);
+        const distractors = pool.slice(0, 3).map(v => v.examples?.[0]?.translation ?? v.character);
+        const correct = ex.translation ?? a.character;
+        const choices = [...distractors, correct].sort(() => Math.random() - 0.5);
+        items.push({ prompt: `${a.character} · ${a.romanization ?? a.pronunciation}`, correct, choices, kind: 'alphabet' });
+      }
+    });
+
+    const shuffled = items.sort(() => Math.random() - 0.5).slice(0, 10);
+    setQuiz(shuffled);
+    setQuizIndex(0);
+    setQuizScore(0);
+    setQuizAnswered(false);
+  }, [data]);
+
+  const answerQuiz = useCallback((choice: string) => {
+    if (!quiz[quizIndex]) return;
+    if (quizAnswered) return;
+    const isCorrect = choice === quiz[quizIndex].correct;
+    setQuizAnswered(true);
+    if (isCorrect) {
+      setQuizScore(s => s + 1);
+      updateStats({ xpPoints: (user.stats?.xpPoints || 0) + 5, wordsLearned: (user.stats?.wordsLearned || 0) + 1 });
+    }
+    setTimeout(() => {
+      if (quizIndex < quiz.length - 1) {
+        setQuizIndex(i => i + 1);
+        setQuizAnswered(false);
+      }
+    }, 600);
+  }, [quiz, quizIndex, quizAnswered, updateStats, user.stats?.xpPoints, user.stats?.wordsLearned]);
 
   if (!targetLang || !nativeLang) {
     return (
@@ -107,16 +193,46 @@ export default function LearnScreen() {
             <View style={styles.heroLeft}>
               <Text style={styles.heroKicker} testID="learn-kicker">{nativeLang.flag} → {targetLang.flag}</Text>
               <Text style={styles.heroTitle} testID="learn-title">Master {targetLang.name}</Text>
-              <Text style={styles.heroSubtitle}>A beautifully curated reference hub: alphabet, numbers, words, phrases, and pro tips — all in one place.</Text>
+              <Text style={styles.heroSubtitle}>Alphabet, numbers, words, phrases, tips and a smart quiz — crafted for you.</Text>
             </View>
             <View style={styles.heroBadge}>
               <GraduationCap size={28} color="#065F46" />
             </View>
           </View>
+          <View style={styles.heroStatsRow}>
+            <View style={styles.heroStatCard}>
+              <Flame size={16} color="#F97316" />
+              <Text style={styles.heroStatLabel}>Streak</Text>
+              <Text style={styles.heroStatValue}>{user.stats?.streakDays ?? 0}d</Text>
+            </View>
+            <View style={styles.heroStatCard}>
+              <Star size={16} color="#FBBF24" />
+              <Text style={styles.heroStatLabel}>XP</Text>
+              <Text style={styles.heroStatValue}>{user.stats?.xpPoints ?? 0}</Text>
+            </View>
+            <View style={styles.heroStatCard}>
+              <Trophy size={16} color={currentLeague.color} />
+              <Text style={styles.heroStatLabel}>{currentLeague.name}</Text>
+              <Text style={styles.heroStatValue}>{xpToNextLeague > 0 ? `${xpToNextLeague} XP to ${nextLeague?.name ?? ''}` : 'Top tier'}</Text>
+            </View>
+          </View>
         </LinearGradient>
 
         <View style={styles.section}>
-          {sectionHeader(<Grid size={20} color="#10B981" />, 'Alphabet', `Essentials of ${targetLang.name}${targetLang.code.startsWith('en') ? '' : ' with quick romanization'}`)}
+          <View style={styles.searchRow}>
+            <TextInput
+              value={search}
+              onChangeText={setSearch}
+              placeholder={`Search words & phrases in ${targetLang.name} or ${nativeLang.name}`}
+              style={styles.searchInput}
+              placeholderTextColor="#6B7280"
+              testID="learn-search"
+            />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          {sectionHeader(<Grid size={20} color="#10B981" />, 'Alphabet', `Full script with native translations via examples`)}
           {learnQuery.isFetching && (
             <View style={styles.loadingRow}>
               <ActivityIndicator color="#10B981" />
@@ -188,7 +304,7 @@ export default function LearnScreen() {
         <View style={styles.section}>
           {sectionHeader(<Sparkles size={20} color="#F59E0B" />, 'Common Words', 'High-frequency vocabulary with translations')}
           <View style={styles.wordsGrid}>
-            {data?.commonWords?.slice(0, 24).map((w, i) => (
+            {filteredWords?.slice(0, 24).map((w, i) => (
               <View key={`w_${i}`} style={styles.wordCard}>
                 <Text style={styles.wordTarget}>{w.target}</Text>
                 <Text style={styles.wordNative}>{w.native}</Text>
@@ -227,6 +343,76 @@ export default function LearnScreen() {
           </View>
         </View>
 
+        <View style={styles.section}>
+          {sectionHeader(<Target size={20} color="#10B981" />, 'Quick Quiz', 'Answer and earn XP')}
+          <View style={styles.quizCard}>
+            {quiz.length === 0 ? (
+              <TouchableOpacity onPress={buildQuiz} style={styles.quizStartBtn} testID="quiz-start">
+                <Text style={styles.quizStartText}>Start 10-question quiz</Text>
+              </TouchableOpacity>
+            ) : (
+              <View>
+                <Text style={styles.quizProgress}>{quizIndex + 1} / {quiz.length}</Text>
+                <Text style={styles.quizPrompt}>{quiz[quizIndex]?.prompt}</Text>
+                <View style={styles.quizChoices}>
+                  {quiz[quizIndex]?.choices.map((c, i) => {
+                    const isCorrect = quiz[quizIndex]?.correct === c;
+                    return (
+                      <TouchableOpacity
+                        key={`choice_${i}`}
+                        style={[
+                          styles.choiceBtn,
+                          quizAnswered && (isCorrect ? styles.choiceCorrect : styles.choiceNeutral),
+                        ]}
+                        onPress={() => answerQuiz(c)}
+                        disabled={quizAnswered}
+                        testID={`quiz-choice-${i}`}
+                      >
+                        <Text style={styles.choiceText}>{c}</Text>
+                        {quizAnswered && isCorrect && <CheckCircle2 size={16} color="#047857" />}
+                        {quizAnswered && !isCorrect && <XCircle size={16} color="#9CA3AF" />}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+                <View style={styles.quizFooter}>
+                  <Text style={styles.quizScore}>Score: {quizScore}</Text>
+                  {quizIndex === quiz.length - 1 && quizAnswered && (
+                    <TouchableOpacity onPress={buildQuiz} style={styles.quizRestart} testID="quiz-restart">
+                      <RefreshCw size={14} color="#111827" />
+                      <Text style={styles.quizRestartText}>Restart</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            )}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          {sectionHeader(<ShieldCheck size={20} color="#0EA5E9" />, 'Your Progress', 'Achievements & rank')}
+          <View style={styles.progressWrap}>
+            <View style={styles.progressRow}>
+              <View style={styles.progressBarOuter}>
+                <View style={[styles.progressBarInner, { width: `${Math.min(100, achievementProgress).toFixed(0)}%` }]} />
+              </View>
+              <Text style={styles.progressLabel}>{Math.min(100, achievementProgress).toFixed(0)}% achievements</Text>
+            </View>
+            <View style={styles.badgesRow}>
+              {unlockedAchievements.slice(0, 6).map((a, i) => (
+                <View key={`ach_${i}`} style={styles.badgePill}>
+                  <Text style={styles.badgeIcon}>{a.icon}</Text>
+                  <Text style={styles.badgeText}>{a.name}</Text>
+                </View>
+              ))}
+            </View>
+            <View style={styles.rankRow}>
+              <Trophy size={16} color={currentLeague.color} />
+              <Text style={styles.rankText}>Rank #{userRank} in your league · {leaderboard.length} learners</Text>
+            </View>
+          </View>
+        </View>
+
         <TouchableOpacity onPress={fetchLearnData} style={styles.refreshCta} testID="refresh-learn">
           <RefreshCw size={16} color="#111827" />
           <Text style={styles.refreshText}>Refresh content</Text>
@@ -248,12 +434,18 @@ const styles = StyleSheet.create({
   heroTitle: { color: 'white', fontSize: 26, fontWeight: '800', marginTop: 6 },
   heroSubtitle: { color: 'rgba(255,255,255,0.9)', fontSize: 14, marginTop: 6, lineHeight: 20 },
   heroBadge: { backgroundColor: 'white', width: 48, height: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  heroStatsRow: { marginTop: 14, flexDirection: 'row', gap: 8 },
+  heroStatCard: { flex: 1, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 12, paddingVertical: 8, paddingHorizontal: 10 },
+  heroStatLabel: { color: 'white', fontSize: 10, marginTop: 6 },
+  heroStatValue: { color: 'white', fontSize: 12, fontWeight: '800' },
 
   section: { paddingHorizontal: 16, marginTop: 8 },
   sectionHeader: { marginBottom: 12 },
   sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   sectionTitle: { fontSize: 20, fontWeight: '800', color: '#111827', marginLeft: 8 },
   sectionSubtitle: { fontSize: 12, color: '#6B7280', marginTop: 4 },
+  searchRow: { marginBottom: 4 },
+  searchInput: { backgroundColor: 'white', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, borderWidth: 1, borderColor: '#E5E7EB', color: '#111827' },
 
   loadingRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8 },
   loadingText: { fontSize: 12, color: '#6B7280', marginLeft: 8 },
@@ -297,6 +489,33 @@ const styles = StyleSheet.create({
   tipRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   tipDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#F59E0B', marginRight: 8 },
   tipText: { fontSize: 13, color: '#374151', flex: 1 },
+
+  quizCard: { backgroundColor: 'white', borderRadius: 12, padding: 12 },
+  quizStartBtn: { backgroundColor: '#ECFDF5', borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
+  quizStartText: { color: '#065F46', fontWeight: '800' },
+  quizProgress: { fontSize: 12, color: '#6B7280', marginBottom: 6 },
+  quizPrompt: { fontSize: 18, fontWeight: '800', color: '#111827', marginBottom: 10 },
+  quizChoices: { gap: 8 },
+  choiceBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 12 },
+  choiceText: { color: '#111827', fontSize: 14, fontWeight: '600' },
+  choiceCorrect: { backgroundColor: '#F0FDF4', borderColor: '#A7F3D0' },
+  choiceNeutral: { backgroundColor: '#F9FAFB' },
+  quizFooter: { marginTop: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  quizScore: { color: '#111827', fontWeight: '800' },
+  quizRestart: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FFFFFF', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: '#E5E7EB' },
+  quizRestartText: { color: '#111827', fontWeight: '700', fontSize: 12 },
+
+  progressWrap: { backgroundColor: 'white', borderRadius: 12, padding: 12 },
+  progressRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  progressBarOuter: { flex: 1, height: 8, backgroundColor: '#E5E7EB', borderRadius: 999 },
+  progressBarInner: { height: 8, backgroundColor: '#10B981', borderRadius: 999 },
+  progressLabel: { marginLeft: 8, fontSize: 12, color: '#6B7280' },
+  badgesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
+  badgePill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#F3F4F6', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
+  badgeIcon: { fontSize: 14, color: '#111827' },
+  badgeText: { fontSize: 12, color: '#111827', fontWeight: '700' },
+  rankRow: { marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  rankText: { color: '#374151', fontSize: 12 },
 
   refreshCta: { alignSelf: 'center', marginTop: 16, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#FFFFFF', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1, borderColor: '#E5E7EB' },
   refreshText: { fontSize: 12, color: '#111827', fontWeight: '700' },
