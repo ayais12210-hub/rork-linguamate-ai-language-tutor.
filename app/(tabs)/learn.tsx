@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useUser } from '@/hooks/user-store';
 import { LANGUAGES } from '@/constants/languages';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import { GraduationCap, Volume2, RefreshCw, ChevronRight, Lightbulb, Sparkles, Grid, Hash, Quote, Trophy, Target, ShieldCheck, Flame, Star, CheckCircle2, XCircle, Shuffle, Play } from 'lucide-react-native';
+import { GraduationCap, Volume2, RefreshCw, ChevronRight, Lightbulb, Sparkles, Grid, Hash, Quote, Trophy, Target, ShieldCheck, Flame, Star, CheckCircle2, XCircle, Shuffle, Play, BookOpen, Waves } from 'lucide-react-native';
 import { trpcClient } from '@/lib/trpc';
 import { useQuery } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,12 +21,22 @@ interface AlphabetEntry {
   difficulty: number;
 }
 
+interface PhonicsEntry {
+  id: string;
+  sound: string;
+  ipa?: string;
+  graphemes: string[];
+  examples: { word: string; translation: string }[];
+  mouthHint?: string;
+}
+
 interface LearnPayload {
   alphabet: AlphabetEntry[];
   numbers: { value: number; target: string; pronunciation?: string }[];
   commonWords: { target: string; native: string; pronunciation?: string; theme: string }[];
   phrases: { target: string; native: string; pronunciation?: string; context: string }[];
   tips: string[];
+  phonics?: PhonicsEntry[];
 }
 
 type QuizItem = {
@@ -51,6 +61,9 @@ export default function LearnScreen() {
   const [alphaShowTranslation, setAlphaShowTranslation] = useState<boolean>(true);
   const pan = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
   const [cardIndex, setCardIndex] = useState<number>(0);
+  const [aiTips, setAiTips] = useState<string[]>([]);
+  const [aiLoading, setAiLoading] = useState<boolean>(false);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   const targetLang = useMemo(() => LANGUAGES.find(l => l.code === user.selectedLanguage), [user.selectedLanguage]);
   const nativeLang = useMemo(() => LANGUAGES.find(l => l.code === user.nativeLanguage), [user.nativeLanguage]);
@@ -124,7 +137,44 @@ export default function LearnScreen() {
     );
   }, [search, data?.commonWords]);
 
+  const groupedVocabulary = useMemo(() => {
+    const groups: Record<string, { target: string; native: string; pronunciation?: string; theme: string }[]> = {};
+    (filteredWords || []).forEach(w => {
+      const key = w.theme || 'general';
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(w);
+    });
+    return groups;
+  }, [filteredWords]);
+
+  const phonics: PhonicsEntry[] = useMemo(() => {
+    if (data?.phonics && data.phonics.length > 0) return data.phonics;
+    const vowels = (data?.alphabet || []).filter(a => a.type === 'vowel').slice(0, 6);
+    const cons = (data?.alphabet || []).filter(a => a.type === 'consonant').slice(0, 6);
+    const base: PhonicsEntry[] = [
+      ...vowels.map((v, i) => ({
+        id: `v_${i}`,
+        sound: v.pronunciation,
+        ipa: `/${v.pronunciation}/`,
+        graphemes: [v.character].filter(Boolean),
+        examples: (v.examples || []).slice(0, 2).map(e => ({ word: e.word, translation: e.translation })),
+        mouthHint: 'Relaxed jaw, open mouth; keep the tongue low.',
+      })),
+      ...cons.map((c, i) => ({
+        id: `c_${i}`,
+        sound: c.pronunciation,
+        ipa: `/${c.pronunciation}/`,
+        graphemes: [c.character].filter(Boolean),
+        examples: (c.examples || []).slice(0, 2).map(e => ({ word: e.word, translation: e.translation })),
+        mouthHint: 'Touch-and-release with the tip of the tongue; add subtle aspiration.',
+      })),
+    ];
+    return base;
+  }, [data?.phonics, data?.alphabet]);
+
   const cards = useMemo(() => (data?.commonWords ?? []).slice(0, 20), [data?.commonWords]);
+
+  const progressWidthStyle = useMemo(() => ({ width: `${Math.min(100, achievementProgress).toFixed(0)}%` }), [achievementProgress]);
 
   const swipe = useCallback((dir: 'left' | 'right') => {
     Animated.timing(pan, { toValue: { x: dir === 'right' ? 500 : -500, y: 0 }, duration: 200, useNativeDriver: false }).start(() => {
@@ -209,6 +259,35 @@ export default function LearnScreen() {
       }
     }, 600);
   }, [quiz, quizIndex, quizAnswered, updateStats, user.stats?.xpPoints, user.stats?.wordsLearned]);
+
+  const generateAiTips = useCallback(async () => {
+    if (!targetLang || !nativeLang) return;
+    try {
+      setAiError(null);
+      setAiLoading(true);
+      setAiTips([]);
+      const res = await fetch('https://toolkit.rork.com/text/llm/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: 'You are a world-class language coach. Return 6 ultra-actionable tips only.' },
+            { role: 'user', content: `Give advanced pronunciation, phonics and vocabulary acquisition tips for native ${nativeLang.name} learning ${targetLang.name}. Use short bullet points.` },
+          ],
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to fetch AI tips');
+      const json = await res.json() as { completion?: string };
+      const raw = (json?.completion ?? '').toString();
+      const lines = raw.split(/\n|\r/).map(l => l.replace(/^[-•\s]+/, '').trim()).filter(Boolean).slice(0, 8);
+      setAiTips(lines);
+    } catch (e) {
+      console.error('[Learn] AI tips error', e);
+      setAiError('Could not generate AI tips. Try again.');
+    } finally {
+      setAiLoading(false);
+    }
+  }, [targetLang, nativeLang]);
 
   if (!targetLang || !nativeLang) {
     return (
@@ -330,7 +409,7 @@ export default function LearnScreen() {
                 {data.alphabet.map((ch, idx) => (
                   <View key={ch.id || `alpha_list_${idx}`} style={styles.alphaListRow}>
                     <Text style={styles.alphaListChar}>{ch.character}</Text>
-                    <View style={{ flex: 1 }}>
+                    <View style={styles.flex1}>
                       {!!ch.romanization && <Text style={styles.alphaRoma}>{ch.romanization}</Text>}
                       <Text style={styles.alphaPron}>{ch.pronunciation}</Text>
                       {alphaShowTranslation && ch.examples?.[0] && (
@@ -407,16 +486,20 @@ export default function LearnScreen() {
         </View>
 
         <View style={styles.section}>
-          {sectionHeader(<Sparkles size={20} color="#F59E0B" />, 'Common Words', 'High-frequency vocabulary with translations')}
-          <View style={styles.wordsGrid}>
-            {filteredWords?.slice(0, 24).map((w, i) => (
-              <TouchableOpacity key={`w_${i}`} style={styles.wordCard} onPress={() => onPlay(w.target)} testID={`word-${i}`}>
-                <Text style={styles.wordTarget}>{w.target}</Text>
-                <Text style={styles.wordNative}>{w.native}</Text>
-                {!!w.theme && <Text style={styles.wordTheme}>{w.theme}</Text>}
-              </TouchableOpacity>
-            ))}
-          </View>
+          {sectionHeader(<BookOpen size={20} color="#6366F1" />, 'Vocabulary', 'Organized by theme with quick pronounce')}
+          {Object.keys(groupedVocabulary).map((themeKey) => (
+            <View key={`group_${themeKey}`} style={styles.groupWrap}>
+              <Text style={styles.groupTitle}>{themeKey.toUpperCase()}</Text>
+              <View style={styles.wordsGrid}>
+                {groupedVocabulary[themeKey].slice(0, 8).map((w, i) => (
+                  <TouchableOpacity key={`w_${themeKey}_${i}`} style={styles.wordCard} onPress={() => onPlay(w.target)} testID={`vocab-${themeKey}-${i}`}>
+                    <Text style={styles.wordTarget}>{w.target}</Text>
+                    <Text style={styles.wordNative}>{w.native}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          ))}
         </View>
 
         <View style={styles.section}>
@@ -437,14 +520,51 @@ export default function LearnScreen() {
         </View>
 
         <View style={styles.section}>
-          {sectionHeader(<Lightbulb size={20} color="#FCD34D" />, 'Pronunciation & Tips', `Quick wins for ${targetLang.name}`)}
+          {sectionHeader(<Waves size={20} color="#F43F5E" />, 'Phonics', 'Sound-to-letter mapping with examples')}
+          <View>
+            {phonics.slice(0, 12).map((ph, i) => (
+              <View key={`ph_${ph.id}_${i}`} style={styles.phonicsRow}>
+                <View style={styles.phonicsL}>
+                  <Text style={styles.phonicsSound}>{ph.sound} {ph.ipa ? `· ${ph.ipa}` : ''}</Text>
+                  <Text style={styles.phonicsGraphemes}>{ph.graphemes.join(', ')}</Text>
+                  {!!ph.mouthHint && <Text style={styles.mouthHint}>{ph.mouthHint}</Text>}
+                </View>
+                <View style={styles.phonicsR}>
+                  {ph.examples.slice(0, 2).map((ex, j) => (
+                    <TouchableOpacity key={`ex_${j}`} style={styles.phonicsExample} onPress={() => onPlay(ex.word)} testID={`phonics-ex-${i}-${j}`}>
+                      <Text style={styles.exampleWord}>{ex.word}</Text>
+                      <Text style={styles.exampleTrans}>{ex.translation}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          {sectionHeader(<Lightbulb size={20} color="#FCD34D" />, 'Pronunciation & AI Tips', `Personalized strategies for ${targetLang.name}`)}
           <View style={styles.tipsCard}>
-            {data?.tips?.map((tip, i) => (
+            {(aiTips.length > 0 ? aiTips : data?.tips ?? []).map((tip, i) => (
               <View key={`tip_${i}`} style={styles.tipRow}>
                 <View style={styles.tipDot} />
                 <Text style={styles.tipText}>{tip}</Text>
               </View>
             ))}
+            <View style={styles.aiTipsFooter}>
+              {aiLoading ? (
+                <View style={styles.aiLoadingRow}>
+                  <ActivityIndicator color="#F59E0B" />
+                  <Text style={styles.aiLoadingText}>Generating advanced tips…</Text>
+                </View>
+              ) : (
+                <TouchableOpacity onPress={generateAiTips} style={styles.aiBtn} testID="generate-ai-tips">
+                  <Sparkles size={16} color="#7C2D12" />
+                  <Text style={styles.aiBtnText}>Generate advanced AI tips</Text>
+                </TouchableOpacity>
+              )}
+              {!!aiError && <Text style={styles.aiError}>{aiError}</Text>}
+            </View>
           </View>
         </View>
 
@@ -499,7 +619,7 @@ export default function LearnScreen() {
           <View style={styles.progressWrap}>
             <View style={styles.progressRow}>
               <View style={styles.progressBarOuter}>
-                <View style={[styles.progressBarInner, { width: `${Math.min(100, achievementProgress).toFixed(0)}%` }]} />
+                <View style={[styles.progressBarInner, progressWidthStyle]} />
               </View>
               <Text style={styles.progressLabel}>{Math.min(100, achievementProgress).toFixed(0)}% achievements</Text>
             </View>
@@ -583,6 +703,9 @@ const styles = StyleSheet.create({
   wordTarget: { fontSize: 16, color: '#111827', fontWeight: '700' },
   wordNative: { fontSize: 12, color: '#6B7280', marginTop: 4 },
   wordTheme: { marginTop: 6, fontSize: 10, color: '#3B82F6', fontWeight: '700' },
+  groupTitle: { fontSize: 12, color: '#6B7280', fontWeight: '700', marginBottom: 6, marginLeft: 2 },
+  groupWrap: { marginBottom: 8 },
+  flex1: { flex: 1 },
 
   phraseRow: { backgroundColor: 'white', borderRadius: 12, padding: 12, marginBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   phraseL: { flex: 1, paddingRight: 12 },
@@ -590,10 +713,24 @@ const styles = StyleSheet.create({
   phraseNative: { fontSize: 12, color: '#6B7280', marginTop: 2 },
   soundIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F5F3FF' },
 
+  phonicsRow: { backgroundColor: 'white', borderRadius: 12, padding: 12, marginBottom: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  phonicsL: { flex: 1, paddingRight: 10 },
+  phonicsR: { flexDirection: 'row', gap: 8 },
+  phonicsSound: { fontSize: 16, fontWeight: '800', color: '#111827' },
+  phonicsGraphemes: { fontSize: 12, color: '#6B7280', marginTop: 2 },
+  mouthHint: { marginTop: 6, fontSize: 12, color: '#EF4444' },
+  phonicsExample: { backgroundColor: '#F0FDF4', borderColor: '#A7F3D0', borderWidth: 1, borderRadius: 10, paddingVertical: 8, paddingHorizontal: 10 },
+
   tipsCard: { backgroundColor: 'white', borderRadius: 12, padding: 12 },
   tipRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   tipDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#F59E0B', marginRight: 8 },
   tipText: { fontSize: 13, color: '#374151', flex: 1 },
+  aiTipsFooter: { marginTop: 8 },
+  aiBtn: { alignSelf: 'flex-start', backgroundColor: '#FFFBEB', borderWidth: 1, borderColor: '#FDE68A', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  aiBtnText: { color: '#7C2D12', fontWeight: '800', fontSize: 12 },
+  aiError: { marginTop: 6, color: '#991B1B', fontSize: 12 },
+  aiLoadingRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  aiLoadingText: { color: '#92400E', fontSize: 12 },
 
   quizCard: { backgroundColor: 'white', borderRadius: 12, padding: 12 },
   quizStartBtn: { backgroundColor: '#ECFDF5', borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
