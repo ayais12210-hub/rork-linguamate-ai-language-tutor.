@@ -15,11 +15,11 @@ app.use("*", cors({
   credentials: true,
 }));
 
-// Mount tRPC router at /trpc
+// Mount tRPC router at /trpc (note: the app itself is mounted under /api by the host)
 app.use(
   "/trpc/*",
   trpcServer({
-    endpoint: "/api/trpc",
+    endpoint: "/trpc",
     router: appRouter,
     createContext,
   })
