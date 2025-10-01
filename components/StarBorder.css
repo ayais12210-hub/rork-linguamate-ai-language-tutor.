@@ -1,0 +1,6 @@
+.star-border-container{position:relative;display:inline-block;border-radius:12px;overflow:hidden}
+.star-border-container .inner-content{position:relative;z-index:2}
+.border-gradient-bottom,.border-gradient-top{position:absolute;left:-25%;right:-25%;height:2px;opacity:.9;filter:drop-shadow(0 0 8px rgba(255,255,255,.6));background:radial-gradient(circle,#fff,transparent 10%);background-size:20px 20px;animation:twinkle linear infinite;z-index:1}
+.border-gradient-bottom{bottom:0}
+.border-gradient-top{top:0}
+@keyframes twinkle{0%{background-position:0 0}100%{background-position:200% 0}}
