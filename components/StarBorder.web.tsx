@@ -34,20 +34,32 @@ const StarBorder = <T extends React.ElementType = 'button'>({
       data-testid="star-border"
     >
       <div
-        className="border-gradient-bottom"
+        className="border-gradient-bottom animate-star-movement-bottom"
         style={{
           background: `radial-gradient(circle, ${color}, transparent 10%)`,
           animationDuration: speed,
+          width: '300%',
+          height: '50%',
+          opacity: 0.7,
+          bottom: '-11px',
+          right: '-250%'
         }}
       />
       <div
-        className="border-gradient-top"
+        className="border-gradient-top animate-star-movement-top"
         style={{
           background: `radial-gradient(circle, ${color}, transparent 10%)`,
           animationDuration: speed,
+          width: '300%',
+          height: '50%',
+          opacity: 0.7,
+          top: '-10px',
+          left: '-250%'
         }}
       />
-      <div className="inner-content">{children}</div>
+      <div className="inner-content">
+        {children}
+      </div>
     </Component>
   );
 };
