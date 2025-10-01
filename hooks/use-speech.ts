@@ -213,7 +213,8 @@ export const useSpeech = () => {
         if (mediaRecorder.current && mediaRecorder.current.state !== 'inactive') {
           return new Promise((resolve) => {
             mediaRecorder.current!.onstop = async () => {
-              const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' });
+              const type = mediaRecorder.current?.mimeType || 'audio/webm';
+              const audioBlob = new Blob(audioChunks.current, { type });
               const url = URL.createObjectURL(audioBlob);
               setRecordingState({ isRecording: false, isPaused: false, duration: 0, uri: url });
               const stream = mediaRecorder.current!.stream;
@@ -223,8 +224,10 @@ export const useSpeech = () => {
             mediaRecorder.current!.stop();
           });
         }
+        // Already stopped or never started
+        return recordingState.uri ?? null;
       } else {
-        if (!nativeRecording.current) return null;
+        if (!nativeRecording.current) return recordingState.uri ?? null;
         try {
           await nativeRecording.current.stopAndUnloadAsync();
         } catch (e) {
@@ -236,9 +239,6 @@ export const useSpeech = () => {
         setRecordingState({ isRecording: false, isPaused: false, duration: 0, uri: uri ?? undefined });
         return uri;
       }
-
-      setRecordingState({ isRecording: false, isPaused: false, duration: 0 });
-      return null;
     } catch (error) {
       console.error('Failed to stop recording:', error);
       return null;
@@ -260,8 +260,25 @@ export const useSpeech = () => {
   };
 
   const transcribeAudio = async (audioUri?: string, language?: string): Promise<TranscriptionResult | null> => {
-    const uri = audioUri || recordingState.uri;
-    if (!uri) {
+    let effectiveUri = audioUri || recordingState.uri;
+
+    if (!effectiveUri) {
+      if (recordingState.isRecording) {
+        try {
+          effectiveUri = await stopRecording();
+        } catch (e) {
+          console.error('Failed to auto-stop recording before transcription', e);
+        }
+      } else if (Platform.OS === 'web' && mediaRecorder.current && mediaRecorder.current.state !== 'inactive') {
+        try {
+          effectiveUri = await stopRecording();
+        } catch (e) {
+          console.error('Failed to stop active MediaRecorder before transcription', e);
+        }
+      }
+    }
+
+    if (!effectiveUri) {
       console.error('No audio URI available for transcription');
       return null;
     }
@@ -273,15 +290,17 @@ export const useSpeech = () => {
       const formData = new FormData();
       
       if (Platform.OS === 'web') {
-        const response = await fetch(uri);
+        const response = await fetch(effectiveUri);
         const blob = await response.blob();
-        const file = new File([blob], 'recording.webm', { type: 'audio/webm' });
+        const type = (blob.type && blob.type !== '') ? blob.type : 'audio/webm';
+        const extension = type.includes('wav') ? 'wav' : type.includes('mp4') || type.includes('m4a') ? 'm4a' : 'webm';
+        const file = new File([blob], `recording.${extension}` , { type });
         formData.append('audio', file);
       } else {
-        const uriParts = uri.split('.');
+        const uriParts = effectiveUri.split('.');
         const fileType = uriParts[uriParts.length - 1];
         const audioFile: any = {
-          uri,
+          uri: effectiveUri,
           name: `recording.${fileType}`,
           type: `audio/${fileType}`,
         };
@@ -328,6 +347,7 @@ export const useSpeech = () => {
     try {
       if (Platform.OS === 'web') {
         const audioEl = new (window as any).Audio(recordingState.uri);
+        audioEl.preload = 'auto';
         await audioEl.play();
       } else {
         if (nativeSound.current) {
