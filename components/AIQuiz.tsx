@@ -54,19 +54,6 @@ export default function AIQuiz({ visible, moduleType, nativeLangCode, targetLang
   const targetLang = useMemo(() => LANGUAGES.find(l => l.code === targetLangCode), [targetLangCode]);
   const nativeLang = useMemo(() => LANGUAGES.find(l => l.code === nativeLangCode), [nativeLangCode]);
 
-  useEffect(() => {
-    if (visible) {
-      void loadQuiz();
-    } else {
-      setQuestions([]);
-      setIndex(0);
-      setSelected('');
-      setAnswer('');
-      setShowResult(false);
-      setIsCorrect(false);
-      setScore(0);
-    }
-  }, [visible, loadQuiz]);
 
   const loadQuiz = useCallback(async () => {
     setLoading(true);
@@ -100,6 +87,20 @@ Return only JSON.`,
     }
   }, [moduleType, nativeLang?.name, targetLang?.name]);
 
+  useEffect(() => {
+    if (visible) {
+      void loadQuiz();
+    } else {
+      setQuestions([]);
+      setIndex(0);
+      setSelected('');
+      setAnswer('');
+      setShowResult(false);
+      setIsCorrect(false);
+      setScore(0);
+    }
+  }, [visible, loadQuiz]);
+
   const current = questions[index];
 
   const check = () => {
@@ -125,7 +126,7 @@ Return only JSON.`,
     }
   };
 
-  const body = (
+  const RenderBody = () => (
     <View style={styles.sheet}>
       <LinearGradient colors={["#FFFFFF", "#F8FAFC"]} style={styles.header}>
         <Text style={styles.title}>AI Quiz</Text>
@@ -226,21 +227,23 @@ Return only JSON.`,
   if (Platform.OS === 'web') {
     return visible ? (
       <View style={styles.webOverlay} pointerEvents="auto">
-        <View>{body}</View>
+        <RenderBody />
       </View>
     ) : null;
   }
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.overlay}><View>{body}</View></View>
+      <View style={styles.overlay}>
+        <RenderBody />
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center' },
-  webOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', zIndex: 1000 },
+  webOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', zIndex: 1000 },
   sheet: { width: '92%', maxHeight: '86%', backgroundColor: 'white', borderRadius: 16, overflow: 'hidden' },
   header: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#E5E7EB' },
   title: { fontSize: 18, fontWeight: '700', color: '#111827' },
