@@ -8,6 +8,7 @@ import { ChatProvider } from '@/hooks/chat-store';
 import { LearningProgressProvider } from '@/state/learning-progress';
 import { trpc, trpcClient } from '@/lib/trpc';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import SplashCursor from '@/components/SplashCursor';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -43,6 +44,7 @@ export default function RootLayout() {
                 <GestureHandlerRootView style={{ flex: 1 }}>
                   <RootLayoutNav />
                 </GestureHandlerRootView>
+                <SplashCursor />
               </ErrorBoundary>
             </LearningProgressProvider>
           </ChatProvider>
