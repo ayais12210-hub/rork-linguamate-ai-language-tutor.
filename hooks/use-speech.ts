@@ -202,7 +202,7 @@ export const useSpeech = () => {
     }
   };
 
-  const stopRecording = async (): Promise<string | null> => {
+  const stopRecording = async (): Promise<string | undefined> => {
     try {
       if (recordingTimer.current) {
         clearInterval(recordingTimer.current);
@@ -225,23 +225,23 @@ export const useSpeech = () => {
           });
         }
         // Already stopped or never started
-        return recordingState.uri ?? null;
+        return recordingState.uri ?? undefined;
       } else {
-        if (!nativeRecording.current) return recordingState.uri ?? null;
+        if (!nativeRecording.current) return recordingState.uri ?? undefined;
         try {
           await nativeRecording.current.stopAndUnloadAsync();
         } catch (e) {
           console.error('stopAndUnloadAsync error', e);
         }
         await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
-        const uri = nativeRecording.current.getURI() ?? null;
+        const uri = nativeRecording.current.getURI() ?? undefined;
         nativeRecording.current = null;
         setRecordingState({ isRecording: false, isPaused: false, duration: 0, uri: uri ?? undefined });
-        return uri;
+        return uri ?? undefined;
       }
     } catch (error) {
       console.error('Failed to stop recording:', error);
-      return null;
+      return undefined;
     }
   };
 
