@@ -90,6 +90,7 @@ export default function LearnScreen() {
   const [practiceText, setPracticeText] = useState<string>('');
   const [pronunciationScore, setPronunciationScore] = useState<number | null>(null);
   const [pronunciationFeedback, setPronunciationFeedback] = useState<string>('');
+  const [fixingLang, setFixingLang] = useState<boolean>(false);
   const speech = useSpeech();
 
   const targetLang = useMemo(() => LANGUAGES.find(l => l.code === user.selectedLanguage), [user.selectedLanguage]);
@@ -139,6 +140,63 @@ export default function LearnScreen() {
       {!!subtitle && <Text style={styles.sectionSubtitle}>{subtitle}</Text>}
     </View>
   ), []);
+
+  const needsFix = useMemo(() => {
+    const cw = data?.commonWords ?? [];
+    if (cw.length === 0) return false;
+    const same = cw.filter(w => (w.target || '').toLowerCase() === (w.native || '').toLowerCase());
+    return same.length >= Math.max(6, Math.floor(cw.length * 0.6));
+  }, [data]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    async function runFix() {
+      if (!data || !targetLang || !nativeLang) return;
+      if (!needsFix) return;
+      try {
+        setFixingLang(true);
+        const pack = {
+          numbers: data.numbers?.slice(0, 30) ?? [],
+          words: (data.commonWords ?? []).slice(0, 40).map(w => w.native),
+          phrases: (data.phrases ?? []).slice(0, 30).map(p => p.native),
+        };
+        const prompt = `Translate the provided items from ${nativeLang.name} into ${targetLang.name}. Return ONLY JSON with keys numbers, words, phrases.
+- numbers: map each value to its target string: [{value, target}]
+- words: array of translated strings in same order
+- phrases: array of translated strings in same order`;
+        const res = await fetch('https://toolkit.rork.com/text/llm/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: [
+            { role: 'system', content: 'You are a precise translator. Keep output terse. No markdown.' },
+            { role: 'user', content: `${prompt}\nSOURCE JSON:\n${JSON.stringify(pack)}` },
+          ]}),
+        });
+        if (!res.ok) throw new Error('translate_failed');
+        const j = await res.json() as { completion?: string };
+        let content = String(j.completion ?? '').trim();
+        const match = content.match(/\{[\s\S]*\}/);
+        if (match) content = match[0];
+        const parsed = JSON.parse(content) as { numbers?: Array<{ value: number; target: string }>; words?: string[]; phrases?: string[] };
+        const fixed: LearnPayload = {
+          ...data,
+          numbers: (data.numbers ?? []).map(n => {
+            const f = parsed.numbers?.find(x => x.value === n.value);
+            return { ...n, target: f?.target ?? n.target };
+          }),
+          commonWords: (data.commonWords ?? []).map((w, i) => ({ ...w, target: parsed.words?.[i] ?? w.target })),
+          phrases: (data.phrases ?? []).map((p, i) => ({ ...p, target: parsed.phrases?.[i] ?? p.target })),
+        };
+        if (!cancelled) setData(fixed);
+      } catch (e) {
+        console.log('[Learn] translate fallback failed', e);
+      } finally {
+        if (!cancelled) setFixingLang(false);
+      }
+    }
+    runFix();
+    return () => { cancelled = true; };
+  }, [needsFix, data, targetLang, nativeLang]);
 
   const onPlay = useCallback((raw: string) => {
     const label = (raw ?? '').toString().trim();
@@ -427,7 +485,7 @@ export default function LearnScreen() {
         </View>
 
         <View style={styles.section}>
-          {sectionHeader(<Grid size={20} color="#10B981" />, 'Alphabet', `Full script with native translations via examples`)}
+          {sectionHeader(<Grid size={20} color="#10B981" />, 'Alphabet', `Full script with ${nativeLang.name} translations via examples`) }
           {learnQuery.isFetching && (
             <View style={styles.loadingRow}>
               <ActivityIndicator color="#10B981" />
@@ -563,7 +621,7 @@ export default function LearnScreen() {
         </View>
 
         <View style={styles.section}>
-          {sectionHeader(<BookOpen size={20} color="#6366F1" />, 'Vocabulary & Pronunciation', 'Tap to hear words, then record and get feedback')}
+          {sectionHeader(<BookOpen size={20} color="#6366F1" />, 'Vocabulary & Pronunciation', fixingLang ? 'Translating vocabulary…' : 'Tap to hear words, then record and get feedback')}
           {Object.keys(groupedVocabulary).map((themeKey) => (
             <View key={`group_${themeKey}`} style={styles.groupWrap}>
               <Text style={styles.groupTitle}>{themeKey.toUpperCase()}</Text>
