@@ -32,6 +32,25 @@ interface PhonicsEntry {
   mouthHint?: string;
 }
 
+interface GrammarEntry {
+  id: string;
+  title: string;
+  explanation: string;
+  examples: { target: string; native: string }[];
+}
+
+interface DialogueTurn {
+  speaker: string;
+  target: string;
+  native: string;
+}
+
+interface DialogueEntry {
+  id: string;
+  scene: string;
+  turns: DialogueTurn[];
+}
+
 interface LearnPayload {
   alphabet: AlphabetEntry[];
   numbers: { value: number; target: string; pronunciation?: string }[];
@@ -39,6 +58,8 @@ interface LearnPayload {
   phrases: { target: string; native: string; pronunciation?: string; context: string }[];
   tips: string[];
   phonics?: PhonicsEntry[];
+  grammar?: GrammarEntry[];
+  dialogues?: DialogueEntry[];
 }
 
 type QuizItem = {
@@ -628,6 +649,47 @@ export default function LearnScreen() {
         </View>
 
         <View style={styles.section}>
+          {sectionHeader(<BookOpen size={20} color="#0EA5E9" />, 'Grammar', `Core patterns optimized for ${nativeLang.name} → ${targetLang.name}`)}
+          <View>
+            {(data?.grammar ?? []).slice(0, 6).map((g, i) => (
+              <View key={`g_${g.id}_${i}`} style={styles.grammarCard}>
+                <Text style={styles.grammarTitle}>{g.title}</Text>
+                <Text style={styles.grammarExplain}>{g.explanation}</Text>
+                {g.examples.slice(0, 3).map((ex, j) => (
+                  <View key={`gx_${j}`} style={styles.exampleRow}>
+                    <Text style={styles.exampleWord}>{ex.target}</Text>
+                    <Text style={styles.exampleTrans}>{ex.native}</Text>
+                  </View>
+                ))}
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          {sectionHeader(<Quote size={20} color="#10B981" />, 'Dialogue', 'Contextual conversations you can replay')}
+          <View>
+            {(data?.dialogues ?? []).slice(0, 3).map((d, i) => (
+              <View key={`d_${d.id}_${i}`} style={styles.dialogueCard}>
+                <Text style={styles.dialogueScene}>{d.scene}</Text>
+                {d.turns.slice(0, 6).map((t, j) => (
+                  <View key={`dt_${j}`} style={styles.dialogueTurn}>
+                    <Text style={styles.dialogueSpeaker}>{t.speaker}</Text>
+                    <View style={styles.dialogueTexts}>
+                      <Text style={styles.dialogueTarget}>{t.target}</Text>
+                      <Text style={styles.dialogueNative}>{t.native}</Text>
+                    </View>
+                    <TouchableOpacity style={styles.soundIcon} onPress={() => onPlay(t.target)} testID={`dialogue-play-${i}-${j}`}>
+                      <Volume2 size={16} color="#10B981" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
           {sectionHeader(<Waves size={20} color="#F43F5E" />, 'Phonics', 'Sound-to-letter mapping with practice drills')}
           <View>
             {phonics.slice(0, 12).map((ph, i) => (
@@ -831,6 +893,18 @@ const styles = StyleSheet.create({
   mouthHint: { marginTop: 6, fontSize: 12, color: '#EF4444' },
   phonicsExample: { backgroundColor: '#F0FDF4', borderColor: '#A7F3D0', borderWidth: 1, borderRadius: 10, paddingVertical: 8, paddingHorizontal: 10 },
 
+  grammarCard: { backgroundColor: 'white', borderRadius: 12, padding: 12, marginBottom: 10, borderWidth: 1, borderColor: '#E5E7EB' },
+  grammarTitle: { fontSize: 16, fontWeight: '800', color: '#111827' },
+  grammarExplain: { fontSize: 12, color: '#6B7280', marginTop: 4, marginBottom: 6 },
+
+  dialogueCard: { backgroundColor: 'white', borderRadius: 12, padding: 12, marginBottom: 10 },
+  dialogueScene: { fontSize: 14, color: '#111827', fontWeight: '800', marginBottom: 6 },
+  dialogueTurn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6 },
+  dialogueSpeaker: { width: 64, color: '#6B7280', fontSize: 12, fontWeight: '700' },
+  dialogueTexts: { flex: 1, paddingRight: 8 },
+  dialogueTarget: { color: '#111827', fontWeight: '700' },
+  dialogueNative: { color: '#6B7280', marginTop: 2, fontSize: 12 },
+
   tipsCard: { backgroundColor: 'white', borderRadius: 12, padding: 12 },
   tipRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   tipDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#F59E0B', marginRight: 8 },
@@ -930,7 +1004,7 @@ function buildFallbackContent(nativeName: string, targetName: string): LearnPayl
     difficulty: 1,
   }));
 
-  const presets: Record<string, { numbers: { value: number; target: string; pronunciation?: string }[]; commonWords: { target: string; native: string; pronunciation?: string; theme: string }[]; phrases: { target: string; native: string; pronunciation?: string; context: string }[]; tips: string[]; phonics?: PhonicsEntry[]; }> = {
+  const presets: Record<string, { numbers: { value: number; target: string; pronunciation?: string }[]; commonWords: { target: string; native: string; pronunciation?: string; theme: string }[]; phrases: { target: string; native: string; pronunciation?: string; context: string }[]; tips: string[]; phonics?: PhonicsEntry[]; grammar?: GrammarEntry[]; dialogues?: DialogueEntry[]; }> = {
     Spanish: {
       numbers: [
         { value: 0, target: 'cero' }, { value: 1, target: 'uno' }, { value: 2, target: 'dos' }, { value: 3, target: 'tres' }, { value: 4, target: 'cuatro' },
@@ -985,6 +1059,38 @@ function buildFallbackContent(nativeName: string, targetName: string): LearnPayl
         'Género y número concuerdan: el/la; -o/-a',
         'Pronombres clíticos: lo, la, le con verbos',
         'Practica chunks: “¿Puedo tener…?”, “Quisiera…”',
+      ],
+      grammar: [
+        {
+          id: 'es_g_gender',
+          title: 'Noun Gender & Agreement',
+          explanation: 'Most nouns are masculine (-o) or feminine (-a). Articles and adjectives agree: el gato negro / la casa blanca.',
+          examples: [
+            { target: 'el perro grande', native: 'the big dog' },
+            { target: 'la mesa pequeña', native: 'the small table' },
+          ],
+        },
+        {
+          id: 'es_g_ser_estar',
+          title: 'Ser vs. Estar',
+          explanation: 'Ser for identity/time/origin; Estar for states/location.',
+          examples: [
+            { target: 'Soy estudiante', native: 'I am a student' },
+            { target: 'Estoy cansado', native: 'I am tired' },
+          ],
+        },
+      ],
+      dialogues: [
+        {
+          id: 'es_d_cafe',
+          scene: 'En la cafetería',
+          turns: [
+            { speaker: 'A', target: 'Hola, ¿qué deseas?', native: 'Hi, what would you like?' },
+            { speaker: 'B', target: 'Un café con leche, por favor.', native: 'A latte, please.' },
+            { speaker: 'A', target: '¿Algo más?', native: 'Anything else?' },
+            { speaker: 'B', target: 'No, gracias.', native: 'No, thank you.' },
+          ],
+        },
       ],
       phonics: [
         {
@@ -1132,6 +1238,37 @@ function buildFallbackContent(nativeName: string, targetName: string): LearnPayl
         'Groupes: ou= /u/, eu= /ø/ ~ /œ/',
         'Imite prosodie de locuteurs natifs',
       ],
+      grammar: [
+        {
+          id: 'fr_g_articles',
+          title: 'Articles & Gender',
+          explanation: 'Le (m), la (f), les (pl). L’ before vowel sound. Adjectives agree with the noun.',
+          examples: [
+            { target: 'le petit chien', native: 'the small dog (masc.)' },
+            { target: 'la grande maison', native: 'the big house (fem.)' },
+          ],
+        },
+        {
+          id: 'fr_g_negation',
+          title: 'Negation: ne ... pas',
+          explanation: 'Wrap the verb with ne ... pas. In speech, “ne” may drop: Je (ne) parle pas.',
+          examples: [
+            { target: "Je ne comprends pas", native: "I don't understand" },
+            { target: 'Il ne vient pas', native: 'He is not coming' },
+          ],
+        },
+      ],
+      dialogues: [
+        {
+          id: 'fr_d_hotel',
+          scene: 'À la réception de l’hôtel',
+          turns: [
+            { speaker: 'A', target: 'Bonjour, vous avez une réservation ?', native: 'Hello, do you have a reservation?' },
+            { speaker: 'B', target: 'Oui, au nom de Martin.', native: 'Yes, under the name Martin.' },
+            { speaker: 'A', target: 'Très bien, voici la clé.', native: 'Very well, here is the key.' },
+          ],
+        },
+      ],
       phonics: [
         {
           id: 'fr_v_on',
@@ -1265,5 +1402,13 @@ function buildFallbackContent(nativeName: string, targetName: string): LearnPayl
     { id: 'en_th_voiced', sound: 'th', ipa: '/ð/', graphemes: ['th'], examples: [ { word: 'this', translation: 'this' }, { word: 'mother', translation: 'mother' } ], mouthHint: 'Same as /θ/ but vibrate vocal cords.' },
   ];
 
-  return { alphabet, numbers, commonWords, phrases, tips, phonics };
+  const grammar = preset?.grammar ?? [
+    { id: 'base_word_order', title: 'Basic Word Order', explanation: `${targetName}: Subject–Verb–Object in simple sentences.`, examples: [ { target: 'I eat apples', native: 'I eat apples' } ] },
+  ];
+
+  const dialogues = preset?.dialogues ?? [
+    { id: 'base_greet', scene: 'Greeting', turns: [ { speaker: 'A', target: 'Hello!', native: 'Hello!' }, { speaker: 'B', target: 'Hi, how are you?', native: 'Hi, how are you?' } ] },
+  ];
+
+  return { alphabet, numbers, commonWords, phrases, tips, phonics, grammar, dialogues };
 }
