@@ -709,7 +709,7 @@ export default function LearnScreen() {
         <View style={styles.section}>
           {sectionHeader(<BookOpen size={20} color="#0EA5E9" />, 'Grammar', `Core patterns optimized for ${nativeLang.name} → ${targetLang.name}`)}
           <View>
-            {(data?.grammar ?? []).slice(0, 6).map((g, i) => (
+            {(data?.grammar ?? []).slice(0, 10).map((g, i) => (
               <View key={`g_${g.id}_${i}`} style={styles.grammarCard}>
                 <Text style={styles.grammarTitle}>{g.title}</Text>
                 <Text style={styles.grammarExplain}>{g.explanation}</Text>
@@ -1137,6 +1137,60 @@ function buildFallbackContent(nativeName: string, targetName: string): LearnPayl
             { target: 'Estoy cansado', native: 'I am tired' },
           ],
         },
+        {
+          id: 'es_g_word_order',
+          title: 'Basic Word Order (SVO)',
+          explanation: 'Spanish uses Subject–Verb–Object in simple sentences; subjects can drop when clear from verb endings.',
+          examples: [
+            { target: 'Yo como manzanas', native: 'I eat apples' },
+            { target: 'Como pan', native: 'I eat bread' },
+          ],
+        },
+        {
+          id: 'es_g_present_regular',
+          title: 'Present Tense: Regular -ar/-er/-ir',
+          explanation: 'Conjugate based on endings: hablar → hablo/hablas/habla, comer → como/comes, vivir → vivo/vives.',
+          examples: [
+            { target: 'Ella habla español', native: 'She speaks Spanish' },
+            { target: 'Nosotros vivimos aquí', native: 'We live here' },
+          ],
+        },
+        {
+          id: 'es_g_plural',
+          title: 'Plurals',
+          explanation: 'Add -s to vowels, -es to consonants: libro → libros; ciudad → ciudades.',
+          examples: [
+            { target: 'los libros', native: 'the books' },
+            { target: 'las ciudades', native: 'the cities' },
+          ],
+        },
+        {
+          id: 'es_g_negation',
+          title: 'Negation with no',
+          explanation: 'Place “no” before the verb. Double negatives are common: No tengo nada.',
+          examples: [
+            { target: 'No entiendo', native: "I don’t understand" },
+            { target: 'No tengo tiempo', native: 'I don’t have time' },
+          ],
+        },
+        {
+          id: 'es_g_questions',
+          title: 'Questions & Inversion',
+          explanation: 'Use rising intonation or inversion; add question marks: ¿Dónde vives?',
+          examples: [
+            { target: '¿Hablas inglés?', native: 'Do you speak English?' },
+            { target: '¿Dónde está el baño?', native: 'Where is the bathroom?' },
+          ],
+        },
+        {
+          id: 'es_g_adjectives_position',
+          title: 'Adjective Position',
+          explanation: 'Most adjectives follow the noun: coche rojo. Some can precede to change nuance: gran ciudad.',
+          examples: [
+            { target: 'una casa grande', native: 'a big house' },
+            { target: 'un gran amigo', native: 'a great friend' },
+          ],
+        },
       ],
       dialogues: [
         {
@@ -1315,6 +1369,51 @@ function buildFallbackContent(nativeName: string, targetName: string): LearnPayl
             { target: 'Il ne vient pas', native: 'He is not coming' },
           ],
         },
+        {
+          id: 'fr_g_word_order',
+          title: 'Basic Word Order (SVO)',
+          explanation: 'French favors Subject–Verb–Object; subject pronouns are obligatory.',
+          examples: [
+            { target: 'Je mange une pomme', native: 'I eat an apple' },
+            { target: 'Ils regardent la télé', native: 'They watch TV' },
+          ],
+        },
+        {
+          id: 'fr_g_present',
+          title: 'Present Tense: -er Verbs',
+          explanation: 'Parler → je parle, tu parles, il/elle parle, nous parlons, vous parlez, ils/elles parlent.',
+          examples: [
+            { target: 'Nous parlons français', native: 'We speak French' },
+            { target: 'Vous travaillez ici', native: 'You work here' },
+          ],
+        },
+        {
+          id: 'fr_g_plural',
+          title: 'Plurals & Liaison',
+          explanation: 'Add -s (often silent). Liaison links sounds: les_amis [lezami].',
+          examples: [
+            { target: 'les maisons', native: 'the houses' },
+            { target: 'les amis', native: 'the friends' },
+          ],
+        },
+        {
+          id: 'fr_g_questions',
+          title: 'Questions: Est-ce que, Inversion, Intonation',
+          explanation: 'Three ways to ask: Est-ce que tu viens? Viens-tu? Tu viens?',
+          examples: [
+            { target: 'Est-ce que vous avez du pain ?', native: 'Do you have bread?' },
+            { target: 'Parlez-vous anglais ?', native: 'Do you speak English?' },
+          ],
+        },
+        {
+          id: 'fr_g_adjectives',
+          title: 'Adjective Position (BANGS)',
+          explanation: 'Beauty, Age, Number, Goodness, Size often go before nouns: une grande maison; others follow.',
+          examples: [
+            { target: 'un petit café', native: 'a small coffee' },
+            { target: 'une robe rouge', native: 'a red dress' },
+          ],
+        },
       ],
       dialogues: [
         {
@@ -1462,6 +1561,10 @@ function buildFallbackContent(nativeName: string, targetName: string): LearnPayl
 
   const grammar = preset?.grammar ?? [
     { id: 'base_word_order', title: 'Basic Word Order', explanation: `${targetName}: Subject–Verb–Object in simple sentences.`, examples: [ { target: 'I eat apples', native: 'I eat apples' } ] },
+    { id: 'base_questions', title: 'Asking Questions', explanation: 'Use rising intonation, question particles, or inversion depending on the language.', examples: [ { target: 'You are fine?', native: 'Are you okay?' } ] },
+    { id: 'base_negation', title: 'Negation', explanation: 'Place a negator before/around the verb; compare with your native language.', examples: [ { target: 'I do not know', native: "I don’t know" } ] },
+    { id: 'base_plurals', title: 'Plurals', explanation: 'Most languages mark plural via suffix or article changes; note irregulars.', examples: [ { target: 'two books', native: 'two books' } ] },
+    { id: 'base_adjectives', title: 'Adjectives & Agreement', explanation: 'Adjectives may agree and can appear before or after nouns depending on language.', examples: [ { target: 'red car', native: 'red car' } ] },
   ];
 
   const dialogues = preset?.dialogues ?? [
