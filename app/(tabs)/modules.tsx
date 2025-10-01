@@ -40,6 +40,7 @@ import SentenceModule from '@/modules/sentence/SentenceModule';
 import PronunciationModule from '@/modules/pronunciation/PronunciationModule';
 import CultureModule from '@/modules/culture/CultureModule';
 import type { LearningModule, ModuleType } from '@/modules/types';
+import AIQuiz from '@/components/AIQuiz';
 
 export default function ModulesScreen() {
   const [modules, setModules] = useState<LearningModule[]>([]);
@@ -47,6 +48,8 @@ export default function ModulesScreen() {
   const [activeModuleComponent, setActiveModuleComponent] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [challengeView, setChallengeView] = useState<'daily' | 'weekly'>('daily');
+  const [quizVisible, setQuizVisible] = useState<boolean>(false);
+  const [quizModuleType, setQuizModuleType] = useState<ModuleType | null>(null);
 
   const { user, updateStats } = useUser();
   const { skills } = useLearningProgress();
@@ -239,9 +242,14 @@ export default function ModulesScreen() {
         xpPoints: (user.stats?.xpPoints ?? 0) + reward,
       });
     }
+    const completedType = selectedModule?.type ?? null;
     setActiveModuleComponent(null);
     setSelectedModule(null);
     calculateProgress();
+    if (completedType && user.selectedLanguage) {
+      setQuizModuleType(completedType);
+      setQuizVisible(true);
+    }
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -545,6 +553,19 @@ export default function ModulesScreen() {
           )}
         </View>
       </ScrollView>
+      {quizVisible && quizModuleType && (
+        <AIQuiz
+          visible={quizVisible}
+          moduleType={quizModuleType}
+          nativeLangCode={user.nativeLanguage ?? 'en'}
+          targetLangCode={user.selectedLanguage ?? 'es'}
+          onClose={() => setQuizVisible(false)}
+          onFinished={(bonusXp) => {
+            updateStats({ xpPoints: (user.stats?.xpPoints ?? 0) + bonusXp });
+            setQuizVisible(false);
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 }
