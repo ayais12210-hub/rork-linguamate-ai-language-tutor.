@@ -9,7 +9,7 @@ const app = new Hono();
 
 // Enable CORS for all routes (dev-friendly)
 app.use("*", cors({
-  origin: "*",
+  origin: (origin) => origin ?? "*",
   allowHeaders: ["Content-Type", "Authorization"],
   allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   credentials: true,

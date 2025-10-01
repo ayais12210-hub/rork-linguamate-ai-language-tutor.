@@ -22,8 +22,10 @@ const getBaseUrl = () => {
 
   const hostUri = (Constants?.expoConfig as any)?.hostUri || (Constants as any)?.manifest2?.extra?.expoClient?.hostUri;
   if (hostUri && typeof hostUri === 'string') {
-    const hasProtocol = /^https?:\/\//i.test(hostUri);
-    const base = hasProtocol ? hostUri : `http://${hostUri}`;
+    let cleaned = hostUri.trim();
+    cleaned = cleaned.replace(/^exp:\/\//i, '').replace(/^ws:\/\//i, '').replace(/^wss:\/\//i, '');
+    const hasProtocol = /^https?:\/\//i.test(cleaned);
+    const base = hasProtocol ? cleaned : `http://${cleaned}`;
     console.log('[tRPC] Using Expo hostUri for native:', base);
     return base;
   }
@@ -32,10 +34,13 @@ const getBaseUrl = () => {
   return "http://localhost:8081";
 };
 
+const apiUrl = `${getBaseUrl()}/api/trpc`;
+console.log('[tRPC] Final API URL:', apiUrl);
+
 export const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
-      url: `${getBaseUrl()}/api/trpc`,
+      url: apiUrl,
       transformer: superjson,
       fetch(url, options) {
         return fetch(url, {
