@@ -930,7 +930,7 @@ function buildFallbackContent(nativeName: string, targetName: string): LearnPayl
     difficulty: 1,
   }));
 
-  const presets: Record<string, { numbers: { value: number; target: string; pronunciation?: string }[]; commonWords: { target: string; native: string; pronunciation?: string; theme: string }[]; phrases: { target: string; native: string; pronunciation?: string; context: string }[]; tips: string[]; }> = {
+  const presets: Record<string, { numbers: { value: number; target: string; pronunciation?: string }[]; commonWords: { target: string; native: string; pronunciation?: string; theme: string }[]; phrases: { target: string; native: string; pronunciation?: string; context: string }[]; tips: string[]; phonics?: PhonicsEntry[]; }> = {
     Spanish: {
       numbers: [
         { value: 0, target: 'cero' }, { value: 1, target: 'uno' }, { value: 2, target: 'dos' }, { value: 3, target: 'tres' }, { value: 4, target: 'cuatro' },
@@ -985,6 +985,96 @@ function buildFallbackContent(nativeName: string, targetName: string): LearnPayl
         'Género y número concuerdan: el/la; -o/-a',
         'Pronombres clíticos: lo, la, le con verbos',
         'Practica chunks: “¿Puedo tener…?”, “Quisiera…”',
+      ],
+      phonics: [
+        {
+          id: 'es_v_a',
+          sound: 'a',
+          ipa: '/a/',
+          graphemes: ['a'],
+          examples: [
+            { word: 'casa', translation: 'house' },
+            { word: 'agua', translation: 'water' },
+          ],
+          mouthHint: 'Boca abierta, mandíbula relajada; lengua baja y adelantada.',
+        },
+        {
+          id: 'es_v_e',
+          sound: 'e',
+          ipa: '/e/',
+          graphemes: ['e'],
+          examples: [
+            { word: 'mesa', translation: 'table' },
+            { word: 'verde', translation: 'green' },
+          ],
+          mouthHint: 'Sonido medio-frontal; sonríe ligeramente para clarificar.',
+        },
+        {
+          id: 'es_v_i',
+          sound: 'i',
+          ipa: '/i/',
+          graphemes: ['i'],
+          examples: [
+            { word: 'vino', translation: 'wine' },
+            { word: 'familia', translation: 'family' },
+          ],
+          mouthHint: 'Labios estirados; lengua alta y adelantada.',
+        },
+        {
+          id: 'es_v_o',
+          sound: 'o',
+          ipa: '/o/',
+          graphemes: ['o'],
+          examples: [
+            { word: 'sol', translation: 'sun' },
+            { word: 'corto', translation: 'short' },
+          ],
+          mouthHint: 'Redondea suavemente los labios; sonido medio-posterior.',
+        },
+        {
+          id: 'es_v_u',
+          sound: 'u',
+          ipa: '/u/',
+          graphemes: ['u'],
+          examples: [
+            { word: 'luna', translation: 'moon' },
+            { word: 'uno', translation: 'one' },
+          ],
+          mouthHint: 'Labios redondeados; lengua alta y posterior.',
+        },
+        {
+          id: 'es_c_rr',
+          sound: 'rr',
+          ipa: '/r̄/ ~ /rː/',
+          graphemes: ['rr', 'r (inicio)'],
+          examples: [
+            { word: 'perro', translation: 'dog' },
+            { word: 'rojo', translation: 'red' },
+          ],
+          mouthHint: 'Vibración múltiple de la punta de la lengua contra los alveolos.',
+        },
+        {
+          id: 'es_c_j',
+          sound: 'j',
+          ipa: '/x/',
+          graphemes: ['j', 'g+e/i'],
+          examples: [
+            { word: 'jamón', translation: 'ham' },
+            { word: 'gente', translation: 'people' },
+          ],
+          mouthHint: 'Fricativa velar; aire áspero por la parte posterior de la boca.',
+        },
+        {
+          id: 'es_c_ll',
+          sound: 'll',
+          ipa: '/ʎ/ ~ /ʝ/ (yeísmo)',
+          graphemes: ['ll'],
+          examples: [
+            { word: 'llave', translation: 'key' },
+            { word: 'lluvia', translation: 'rain' },
+          ],
+          mouthHint: 'Aproximante palatal; coloca la lengua alta, cerca del paladar duro.',
+        },
       ],
     },
     French: {
@@ -1041,6 +1131,74 @@ function buildFallbackContent(nativeName: string, targetName: string): LearnPayl
         'Tu/vous: politesse selon contexte',
         'Groupes: ou= /u/, eu= /ø/ ~ /œ/',
         'Imite prosodie de locuteurs natifs',
+      ],
+      phonics: [
+        {
+          id: 'fr_v_on',
+          sound: 'on',
+          ipa: '/ɔ̃/',
+          graphemes: ['on', 'om'],
+          examples: [
+            { word: 'bonjour', translation: 'hello' },
+            { word: 'nom', translation: 'name' },
+          ],
+          mouthHint: 'Voyelle nasale: baissez le voile du palais; ne prononcez pas la consonne n/m finale.',
+        },
+        {
+          id: 'fr_v_an',
+          sound: 'an',
+          ipa: '/ɑ̃/',
+          graphemes: ['an', 'am', 'en (devant m/n)'],
+          examples: [
+            { word: 'enfant', translation: 'child' },
+            { word: 'temps', translation: 'time' },
+          ],
+          mouthHint: 'Ouvrez la bouche; laissez passer l’air par le nez légèrement.',
+        },
+        {
+          id: 'fr_v_in',
+          sound: 'in',
+          ipa: '/ɛ̃/',
+          graphemes: ['in', 'im', 'ain', 'ein'],
+          examples: [
+            { word: 'vin', translation: 'wine' },
+            { word: 'pain', translation: 'bread' },
+          ],
+          mouthHint: 'Voyelle nasale antérieure; lèvres peu arrondies.',
+        },
+        {
+          id: 'fr_v_u',
+          sound: 'u',
+          ipa: '/y/',
+          graphemes: ['u'],
+          examples: [
+            { word: 'lune', translation: 'moon' },
+            { word: 'tu', translation: 'you (singular)' },
+          ],
+          mouthHint: 'Arrondissez fort les lèvres tout en gardant la langue en position de /i/.',
+        },
+        {
+          id: 'fr_g_graphemes',
+          sound: 'eu/œu',
+          ipa: '/ø/ ~ /œ/',
+          graphemes: ['eu', 'œu'],
+          examples: [
+            { word: 'peur', translation: 'fear' },
+            { word: 'feu', translation: 'fire' },
+          ],
+          mouthHint: 'Position intermediaire; jouez sur l’ouverture pour /ø/ vs /œ/.',
+        },
+        {
+          id: 'fr_c_r',
+          sound: 'r',
+          ipa: '/ʁ/',
+          graphemes: ['r'],
+          examples: [
+            { word: 'rouge', translation: 'red' },
+            { word: 'Paris', translation: 'Paris' },
+          ],
+          mouthHint: 'Fricative uvulaire légère; évitez de rouler.',
+        },
       ],
     },
   };
@@ -1101,5 +1259,11 @@ function buildFallbackContent(nativeName: string, targetName: string): LearnPayl
     'Celebrate small wins to keep streaks',
   ]);
 
-  return { alphabet, numbers, commonWords, phrases, tips };
+  const phonics = preset?.phonics ?? [
+    { id: 'en_sh', sound: 'sh', ipa: '/ʃ/', graphemes: ['sh'], examples: [ { word: 'ship', translation: 'ship' }, { word: 'shoe', translation: 'shoe' } ], mouthHint: 'Round lips slightly; tongue close to palate with steady airflow.' },
+    { id: 'en_th_voiceless', sound: 'th', ipa: '/θ/', graphemes: ['th'], examples: [ { word: 'think', translation: 'think' }, { word: 'thumb', translation: 'thumb' } ], mouthHint: 'Place tongue lightly between teeth; push air without voice.' },
+    { id: 'en_th_voiced', sound: 'th', ipa: '/ð/', graphemes: ['th'], examples: [ { word: 'this', translation: 'this' }, { word: 'mother', translation: 'mother' } ], mouthHint: 'Same as /θ/ but vibrate vocal cords.' },
+  ];
+
+  return { alphabet, numbers, commonWords, phrases, tips, phonics };
 }
