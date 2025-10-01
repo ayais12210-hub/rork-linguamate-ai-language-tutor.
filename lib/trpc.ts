@@ -14,17 +14,34 @@ const getNativeBaseFromHostUri = (hostUri: string) => {
   return cleaned;
 };
 
-const getBaseUrl = () => {
-  const envUrl = process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
-  if (envUrl && envUrl.length > 0) {
-    console.log('[tRPC] Using EXPO_PUBLIC_RORK_API_BASE_URL:', envUrl);
-    return envUrl.replace(/\/$/, '');
+const getEnvBaseUrl = () => {
+  const candidates = [
+    process.env.EXPO_PUBLIC_BACKEND_URL,
+    process.env.EXPO_PUBLIC_API_BASE_URL,
+    process.env.EXPO_PUBLIC_RORK_API_BASE_URL,
+  ];
+  for (const url of candidates) {
+    if (url && url.length > 0) {
+      console.log('[tRPC] Using env base URL:', url);
+      return url.replace(/\/$/, '');
+    }
   }
+  return null;
+};
+
+const getBaseUrl = () => {
+  const envUrl = getEnvBaseUrl();
+  if (envUrl) return envUrl;
 
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    // Use relative path on web to avoid cross-origin and tunnel hostname issues
-    console.log('[tRPC] Using relative URL on web');
-    return '';
+    const host = window.location.hostname;
+    const isLocal = /^(localhost|127\.0\.0\.1|192\.168\.|10\.)/.test(host);
+    if (isLocal) {
+      console.log('[tRPC] Web local dev detected, using http://localhost:8081');
+      return 'http://localhost:8081';
+    }
+    console.log('[tRPC] Web production detected, using same-origin relative');
+    return window.location.origin.replace(/\/$/, '');
   }
 
   const hostUri = (Constants?.expoConfig as any)?.hostUri || (Constants as any)?.manifest2?.extra?.expoClient?.hostUri;
@@ -39,7 +56,7 @@ const getBaseUrl = () => {
 };
 
 const base = getBaseUrl();
-const apiUrl = Platform.OS === 'web' ? `/api/trpc` : `${base}/api/trpc`;
+const apiUrl = `${base}/api/trpc`;
 console.log('[tRPC] Final API URL:', apiUrl);
 
 export const trpcClient = trpc.createClient({
@@ -47,16 +64,26 @@ export const trpcClient = trpc.createClient({
     httpBatchLink({
       url: apiUrl,
       transformer: superjson,
-      fetch(url, options) {
+      fetch: async (url, options) => {
         const controller = new AbortController();
         const id = setTimeout(() => controller.abort(), 15000);
-        return fetch(url, {
-          ...options,
-          signal: controller.signal,
-          headers: {
-            ...(options?.headers || {}),
-          },
-        }).finally(() => clearTimeout(id));
+        try {
+          const res = await fetch(url, {
+            ...options,
+            signal: controller.signal,
+            headers: {
+              ...(options?.headers || {}),
+            },
+          });
+          const ct = res.headers.get('content-type') ?? '';
+          if (ct.includes('text/html')) {
+            console.error('[tRPC] HTML response received at', url, '— likely frontend index. Check backend base URL.');
+            throw new Error('Backend endpoint not found at ' + url + '. Set EXPO_PUBLIC_BACKEND_URL to your API origin.');
+          }
+          return res;
+        } finally {
+          clearTimeout(id);
+        }
       },
     }),
   ],
