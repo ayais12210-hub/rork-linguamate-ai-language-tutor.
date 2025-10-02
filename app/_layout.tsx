@@ -9,6 +9,7 @@ import { LearningProgressProvider } from '@/state/learning-progress';
 import { trpc, trpcClient } from '@/lib/trpc';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import SplashCursor from '@/components/SplashCursor';
+import LiquidEther from '@/components/LiquidEther';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -44,6 +45,24 @@ export default function RootLayout() {
                 <GestureHandlerRootView style={{ flex: 1 }}>
                   <RootLayoutNav />
                 </GestureHandlerRootView>
+                <LiquidEther
+                  colors={['#5227FF', '#FF9FFC', '#B19EEF']}
+                  mouseForce={20}
+                  cursorSize={100}
+                  isViscous={false}
+                  viscous={30}
+                  iterationsViscous={32}
+                  iterationsPoisson={32}
+                  resolution={0.5}
+                  isBounce={false}
+                  autoDemo={true}
+                  autoSpeed={0.5}
+                  autoIntensity={2.2}
+                  takeoverDuration={0.25}
+                  autoResumeDelay={3000}
+                  autoRampDuration={0.6}
+                  style={{ zIndex: 0 }}
+                />
                 <SplashCursor />
               </ErrorBoundary>
             </LearningProgressProvider>
