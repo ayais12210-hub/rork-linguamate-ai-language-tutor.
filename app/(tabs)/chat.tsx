@@ -462,11 +462,7 @@ Return ONLY JSON. Fields: translation, explanation, culturalContext, grammarInsi
         </View>
       )}
 
-      {!user.isPremium && (
-        <View style={styles.adBanner}>
-          <Text style={styles.adText}>📱 Ad Banner Placeholder</Text>
-        </View>
-      )}
+
 
       {activeTab === 'coach' && (
       <KeyboardAvoidingView
@@ -612,18 +608,7 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     fontStyle: 'italic',
   },
-  adBanner: {
-    backgroundColor: '#FEF3C7',
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-  },
-  adText: {
-    color: '#92400E',
-    fontSize: 14,
-    fontWeight: '500',
-  },
+
   suggestionsBlock: {
     marginBottom: 8,
   },
