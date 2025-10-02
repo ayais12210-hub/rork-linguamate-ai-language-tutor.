@@ -2,22 +2,31 @@ import { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { z } from "zod";
+import { verifyJwt } from "@/backend/validation/jwt";
 
-// Context creation function
 export const createContext = async (opts: FetchCreateContextFnOptions) => {
   const authHeader = opts.req.headers.get('authorization');
-  const userId = authHeader?.replace('Bearer ', '') || null;
-  
+  let userId: string | null = null;
+  let sessionId: string | null = null;
+
+  if (authHeader?.startsWith('Bearer ')) {
+    const token = authHeader.replace('Bearer ', '');
+    const res = verifyJwt(token);
+    if (res.valid && res.payload?.type === 'access') {
+      userId = (res.payload.sub as string) ?? null;
+      sessionId = (res.payload.sid as string) ?? null;
+    }
+  }
+
   return {
     req: opts.req,
     userId,
-    // Add database connections, auth services, etc. here
+    sessionId,
   };
 };
 
 export type Context = Awaited<ReturnType<typeof createContext>>;
 
-// Initialize tRPC
 const t = initTRPC.context<Context>().create({
   transformer: superjson,
   errorFormatter({ shape, error }) {
@@ -35,7 +44,6 @@ const t = initTRPC.context<Context>().create({
 export const createTRPCRouter = t.router;
 export const publicProcedure = t.procedure;
 
-// Middleware for authenticated procedures
 const isAuthed = t.middleware(({ ctx, next }) => {
   if (!ctx.userId) {
     throw new TRPCError({ code: 'UNAUTHORIZED' });

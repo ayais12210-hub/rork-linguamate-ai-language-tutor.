@@ -9,6 +9,7 @@ import {
   RateLimiter,
   SECURITY_CONFIG 
 } from '@/lib/security';
+import { signJwt } from '@/backend/validation/jwt';
 import {
   SignInSchema,
   SignUpSchema,
@@ -24,9 +25,6 @@ const users = new Map<string, any>();
 const sessions = new Map<string, any>();
 
 // Helper functions
-const generateToken = () => {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36);
-};
 
 const hashPassword = async (password: string): Promise<string> => {
   // Simple hash for demo - use bcrypt in production
@@ -128,15 +126,14 @@ export const loginProcedure = publicProcedure
       });
     }
     
-    // Generate secure tokens
-    const accessToken = SecurityUtils.generateSecureId(64);
-    const refreshToken = SecurityUtils.generateSecureId(64);
+    // Generate signed JWT tokens
     const sessionId = SecurityUtils.generateSecureId(32);
+    const accessToken = signJwt({ sub: user.id, sid: sessionId, type: 'access', expInSec: Math.floor(SECURITY_CONFIG.ACCESS_TOKEN_EXPIRY/1000) });
+    const refreshToken = signJwt({ sub: user.id, sid: sessionId, type: 'refresh', expInSec: Math.floor(SECURITY_CONFIG.REFRESH_TOKEN_EXPIRY/1000) });
     
     // Store session with enhanced security
     sessions.set(sessionId, {
       userId: user.id,
-      accessToken,
       refreshToken,
       createdAt: Date.now(),
       expiresAt: Date.now() + SECURITY_CONFIG.REFRESH_TOKEN_EXPIRY,
@@ -145,34 +142,15 @@ export const loginProcedure = publicProcedure
       lastActivity: Date.now(),
     });
     
-    // Add session to user's active sessions
     await AdvancedSecurity.addSession(user.id, sessionId);
-    
-    // Track successful login
     await AdvancedSecurity.trackLoginAttempt(sanitizedEmail, true, clientIp);
-    
-    // Log successful authentication
     await SecurityAudit.logSecurityEvent(
       'user_authenticated_successfully',
-      { 
-        userId: user.id, 
-        email: sanitizedEmail, 
-        ip: clientIp,
-        deviceFingerprint 
-      },
+      { userId: user.id, email: sanitizedEmail, ip: clientIp, deviceFingerprint },
       'low'
     );
-    
-    // Return user data and tokens
     const { passwordHash, ...userData } = user;
-    
-    return {
-      user: userData,
-      accessToken,
-      refreshToken,
-      sessionId,
-      securityLevel: 'medium',
-    };
+    return { user: userData, accessToken, refreshToken, sessionId, securityLevel: 'medium' };
   });
 
 // Signup procedure with enhanced security
@@ -291,15 +269,14 @@ export const signupProcedure = publicProcedure
     // Store user
     users.set(userId, user);
     
-    // Generate secure tokens
-    const accessToken = SecurityUtils.generateSecureId(64);
-    const refreshToken = SecurityUtils.generateSecureId(64);
+    // Generate signed JWT tokens
     const sessionId = SecurityUtils.generateSecureId(32);
+    const accessToken = signJwt({ sub: userId, sid: sessionId, type: 'access', expInSec: Math.floor(SECURITY_CONFIG.ACCESS_TOKEN_EXPIRY/1000) });
+    const refreshToken = signJwt({ sub: userId, sid: sessionId, type: 'refresh', expInSec: Math.floor(SECURITY_CONFIG.REFRESH_TOKEN_EXPIRY/1000) });
     
     // Store session with enhanced security
     sessions.set(sessionId, {
       userId,
-      accessToken,
       refreshToken,
       createdAt: Date.now(),
       expiresAt: Date.now() + SECURITY_CONFIG.REFRESH_TOKEN_EXPIRY,
@@ -367,13 +344,8 @@ export const refreshTokenProcedure = publicProcedure
     }
     
     // Generate new access token
-    const newAccessToken = generateToken();
-    session.accessToken = newAccessToken;
-    
-    return {
-      accessToken: newAccessToken,
-      refreshToken: session.refreshToken,
-    };
+    const newAccessToken = signJwt({ sub: session.userId, sid: undefined as any, type: 'access', expInSec: Math.floor(SECURITY_CONFIG.ACCESS_TOKEN_EXPIRY/1000) });
+    return { accessToken: newAccessToken, refreshToken: session.refreshToken };
   });
 
 // Verify email procedure
