@@ -7,7 +7,9 @@ import {
   ViewStyle,
   TextStyle,
   TouchableOpacityProps,
+  View,
 } from 'react-native';
+import StarBorder from '@/components/StarBorder';
 
 interface ButtonProps extends TouchableOpacityProps {
   title: string;
@@ -37,7 +39,7 @@ export const Button: React.FC<ButtonProps> = ({
 }) => {
   const isDisabled = disabled || loading;
 
-  return (
+  const content = (
     <TouchableOpacity
       style={[
         styles.base,
@@ -50,6 +52,8 @@ export const Button: React.FC<ButtonProps> = ({
       onPress={onPress}
       disabled={isDisabled}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      testID="app-button"
       {...props}
     >
       {loading ? (
@@ -74,6 +78,24 @@ export const Button: React.FC<ButtonProps> = ({
       )}
     </TouchableOpacity>
   );
+
+  if (variant === 'outline' || variant === 'ghost') {
+    return (
+      <StarBorder
+        color={variant === 'ghost' ? '#00FFFF' : '#007AFF'}
+        speed="6s"
+        thickness={1}
+        style={fullWidth ? styles.fullWidth : undefined}
+        testID="star-border-wrapper"
+      >
+        <>
+          {content}
+        </>
+      </StarBorder>
+    );
+  }
+
+  return content;
 };
 
 const styles = StyleSheet.create({
