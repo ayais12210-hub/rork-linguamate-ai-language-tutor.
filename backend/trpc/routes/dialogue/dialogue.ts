@@ -47,7 +47,7 @@ export const dialogueRouter = createTRPCRouter({
       z.object({
         sessionId: z.string().uuid(),
         text: z.string().min(1),
-        meta: z.record(z.unknown()).optional(),
+        meta: z.record(z.string(), z.unknown()).optional(),
       })
     )
     .mutation(({ input }) => {
