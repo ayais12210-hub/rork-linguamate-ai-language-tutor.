@@ -114,10 +114,18 @@ export default function SettingsScreen() {
     Alert.alert('Success', 'Native language updated successfully!');
   };
 
-  const handleDailyGoalChange = () => {
-    if (Platform.OS !== 'web') {
-      Haptics.selectionAsync();
+  const triggerHaptic = (type: 'selection' | 'success' = 'selection') => {
+    if (Platform.OS !== 'web' && currentSettings.hapticsEnabled) {
+      if (type === 'success') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else {
+        Haptics.selectionAsync();
+      }
     }
+  };
+
+  const handleDailyGoalChange = () => {
+    triggerHaptic();
     Alert.alert(
       'Daily Learning Goal',
       'How many minutes would you like to study each day?',
@@ -136,9 +144,7 @@ export default function SettingsScreen() {
   const updateDailyGoal = (minutes: number) => {
     updateUser({ dailyGoalMinutes: minutes });
     
-    if (Platform.OS !== 'web') {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }
+    triggerHaptic('success');
     
     // Provide encouraging feedback based on goal
     let message = `Daily goal set to ${minutes} minutes!`;
@@ -154,9 +160,7 @@ export default function SettingsScreen() {
   };
 
   const handleDifficultyChange = () => {
-    if (Platform.OS !== 'web') {
-      Haptics.selectionAsync();
-    }
+    triggerHaptic();
     const currentLevel = user.proficiencyLevel;
     Alert.alert(
       'Learning Difficulty',
@@ -183,9 +187,7 @@ export default function SettingsScreen() {
     const previousLevel = user.proficiencyLevel;
     updateUser({ proficiencyLevel: level });
     
-    if (Platform.OS !== 'web') {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }
+    triggerHaptic('success');
     
     let message = `Difficulty updated to ${level}!`;
     
@@ -204,9 +206,7 @@ export default function SettingsScreen() {
 
   const handleReminderTimeChange = () => {
     console.log('[Settings] Opening reminder time selector');
-    if (Platform.OS !== 'web') {
-      Haptics.selectionAsync();
-    }
+    triggerHaptic();
     const currentTime = currentSettings.reminderTime || 'Not set';
     Alert.alert(
       'Daily Study Reminders',
@@ -248,9 +248,7 @@ export default function SettingsScreen() {
       }
       setReminderTimeDisplay(sanitizedTime);
       
-      if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
+      triggerHaptic('success');
       
       if (sanitizedTime === 'Disabled') {
         Alert.alert('Reminders Disabled', '🔕 You won\'t receive daily study reminders anymore.');
@@ -441,9 +439,7 @@ export default function SettingsScreen() {
       },
     });
     
-    if (Platform.OS !== 'web') {
-      Haptics.selectionAsync();
-    }
+    triggerHaptic();
     
     Alert.alert('Theme Updated', `Dark mode ${value ? 'enabled' : 'disabled'}`);
   };
@@ -457,9 +453,7 @@ export default function SettingsScreen() {
       },
     });
     
-    if (Platform.OS !== 'web') {
-      Haptics.selectionAsync();
-    }
+    triggerHaptic();
   };
 
   const toggleNotifications = (value: boolean) => {
@@ -477,9 +471,7 @@ export default function SettingsScreen() {
       console.log('[Settings] notifications toggle error', e);
     }
     
-    if (Platform.OS !== 'web') {
-      Haptics.selectionAsync();
-    }
+    triggerHaptic();
     
     Alert.alert(
       'Notifications Updated', 
@@ -511,9 +503,7 @@ export default function SettingsScreen() {
       },
     });
     
-    if (Platform.OS !== 'web') {
-      Haptics.selectionAsync();
-    }
+    triggerHaptic();
   };
 
   // Calculate daily goal progress
@@ -836,9 +826,7 @@ export default function SettingsScreen() {
                       onPress={() => {
                         if (isDisabled) return;
                         
-                        if (Platform.OS !== 'web') {
-                          Haptics.selectionAsync();
-                        }
+                        triggerHaptic();
                         
                         if (item.isSwitch && typeof item.onPress === 'function') {
                           item.onPress(!(item.value as boolean));
