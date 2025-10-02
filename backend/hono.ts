@@ -3,14 +3,24 @@ import { trpcServer } from "@hono/trpc-server";
 import { cors } from "hono/cors";
 import { appRouter } from "@/backend/trpc/app-router";
 import { createContext } from "@/backend/trpc/create-context";
+import { correlationMiddleware } from "@/backend/middleware/correlation";
+import { requestLoggerMiddleware } from "@/backend/middleware/requestLogger";
+import { securityHeadersMiddleware } from "@/backend/middleware/securityHeaders";
+import ingestLogsApp from "@/backend/routes/ingestLogs";
+import healthApp from "@/backend/routes/health";
 
 // app will be mounted at /api
 const app = new Hono();
 
+// Global middleware
+app.use("*", correlationMiddleware);
+app.use("*", securityHeadersMiddleware);
+app.use("*", requestLoggerMiddleware);
+
 // Enable CORS for all routes (dev-friendly)
 app.use("*", cors({
   origin: (origin) => origin ?? "*",
-  allowHeaders: ["Content-Type", "Authorization"],
+  allowHeaders: ["Content-Type", "Authorization", "x-correlation-id", "x-session-id"],
   allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   credentials: true,
 }));
@@ -43,9 +53,14 @@ app.get("/info", (c) => {
     endpoints: {
       trpc: "/api/trpc",
       health: "/api",
-      info: "/api/info"
+      info: "/api/info",
+      ingestLogs: "/api/ingest/logs"
     }
   });
 });
+
+// Mount logging routes
+app.route("/", ingestLogsApp);
+app.route("/", healthApp);
 
 export default app;
