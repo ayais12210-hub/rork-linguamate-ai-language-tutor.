@@ -1,5 +1,6 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { createQueryClient, OnlineStatusSync } from '@/lib/react-query';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
@@ -13,10 +14,11 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import SplashCursor from '@/components/SplashCursor';
 import { MonitoringUtils } from '@/lib/monitoring';
 import RatingPrompt from '@/components/RatingPrompt';
+import NetworkStatusBanner from '@/components/NetworkStatusBanner';
 
 SplashScreen.preventAutoHideAsync();
 
-const queryClient = new QueryClient();
+const queryClient = createQueryClient();
 
 function RootLayoutNav() {
   return (
@@ -62,8 +64,10 @@ export default function RootLayout() {
               <ErrorBoundary>
                 <GestureHandlerRootView style={{ flex: 1 }} testID="root-gesture-container">
                   <MonitoringInitializer />
+                  <OnlineStatusSync />
                   <RootLayoutNav />
                   <RatingPrompt />
+                  <NetworkStatusBanner />
                 </GestureHandlerRootView>
                 <SplashCursor />
               </ErrorBoundary>
