@@ -41,9 +41,11 @@ import {
   Calendar,
 } from 'lucide-react-native';
 import { useUser } from '@/hooks/user-store';
+import type { UserSettings, UserStats } from '@/types/user';
 import { LANGUAGES } from '@/constants/languages';
 import LanguageSelector from '@/components/LanguageSelector';
 import UpgradeModal from '@/components/UpgradeModal';
+import { useNotifications } from '@/hooks/use-notifications';
 
 type SettingItem = {
   icon: LucideIcon;
@@ -62,6 +64,30 @@ export default function SettingsScreen() {
   const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
   const [showNativeLanguageSelector, setShowNativeLanguageSelector] = useState<boolean>(false);
   const { user, updateUser, upgradeToPremium } = useUser();
+  const notifications = useNotifications();
+
+  const defaultSettings: UserSettings = {
+    darkMode: false,
+    soundEnabled: true,
+    notificationsEnabled: true,
+    hapticsEnabled: false,
+    autoPlayAudio: false,
+    reminderTime: 'Daily at 7:00 PM',
+  };
+  const currentSettings: UserSettings = { ...(user.settings ?? defaultSettings), darkMode: (user.settings?.darkMode ?? defaultSettings.darkMode), soundEnabled: (user.settings?.soundEnabled ?? defaultSettings.soundEnabled), notificationsEnabled: (user.settings?.notificationsEnabled ?? defaultSettings.notificationsEnabled), hapticsEnabled: (user.settings?.hapticsEnabled ?? defaultSettings.hapticsEnabled), autoPlayAudio: (user.settings?.autoPlayAudio ?? defaultSettings.autoPlayAudio), reminderTime: (user.settings?.reminderTime ?? defaultSettings.reminderTime) };
+
+  const defaultStats: UserStats = {
+    totalChats: 0,
+    streakDays: 0,
+    wordsLearned: 0,
+    xpPoints: 0,
+    lastActiveDate: '',
+    messagesUsedToday: 0,
+    lastMessageDate: '',
+    badges: [],
+  };
+  const currentStats: UserStats = { ...(user.stats ?? defaultStats) };
+  const dailyGoalMinutes = user.dailyGoalMinutes ?? 15;
 
   const selectedLanguage = LANGUAGES.find(lang => lang.code === user.selectedLanguage);
   const nativeLanguage = LANGUAGES.find(lang => lang.code === user.nativeLanguage);
@@ -170,10 +196,11 @@ export default function SettingsScreen() {
   };
 
   const handleReminderTimeChange = () => {
+    console.log('[Settings] Opening reminder time selector');
     if (Platform.OS !== 'web') {
       Haptics.selectionAsync();
     }
-    const currentTime = user.settings.reminderTime || 'Not set';
+    const currentTime = currentSettings.reminderTime || 'Not set';
     Alert.alert(
       'Daily Study Reminders',
       `Current: ${currentTime}\n\nWhen would you like to be reminded to practice?`,
@@ -190,6 +217,7 @@ export default function SettingsScreen() {
   };
 
   const setReminderTime = async (time: string) => {
+    console.log('[Settings] setReminderTime', time);
     if (!time.trim() || time.length > 50) return;
     const sanitizedTime = time.trim();
     
@@ -197,11 +225,20 @@ export default function SettingsScreen() {
       // Store reminder time in user settings
       updateUser({
         settings: {
-          ...user.settings,
+          ...currentSettings,
           reminderTime: sanitizedTime,
-          notificationsEnabled: sanitizedTime !== 'Disabled' ? true : user.settings.notificationsEnabled,
+          notificationsEnabled: sanitizedTime !== 'Disabled' ? true : currentSettings.notificationsEnabled,
         },
       });
+      try {
+        notifications.updateSettings({
+          enabled: sanitizedTime !== 'Disabled',
+          dailyReminder: sanitizedTime !== 'Disabled',
+          reminderTime: sanitizedTime.replace('Daily at ', '').replace('daily at ', ''),
+        } as any);
+      } catch (e) {
+        console.log('[Settings] notifications.updateSettings error', e);
+      }
       setReminderTimeDisplay(sanitizedTime);
       
       if (Platform.OS !== 'web') {
@@ -378,9 +415,9 @@ export default function SettingsScreen() {
   const [reminderTime, setReminderTimeDisplay] = useState<string>('Daily at 7:00 PM');
 
   React.useEffect(() => {
-    const storedTime = user.settings.reminderTime || 'Daily at 7:00 PM';
+    const storedTime = currentSettings.reminderTime || 'Daily at 7:00 PM';
     setReminderTimeDisplay(storedTime);
-  }, [user.settings]);
+  }, [currentSettings.reminderTime]);
 
   const handleUpgrade = () => {
     setShowUpgradeModal(false);
@@ -389,9 +426,10 @@ export default function SettingsScreen() {
   };
 
   const toggleDarkMode = (value: boolean) => {
+    console.log('[Settings] toggleDarkMode', value);
     updateUser({
       settings: {
-        ...user.settings,
+        ...currentSettings,
         darkMode: value,
       },
     });
@@ -404,9 +442,10 @@ export default function SettingsScreen() {
   };
 
   const toggleSound = (value: boolean) => {
+    console.log('[Settings] toggleSound', value);
     updateUser({
       settings: {
-        ...user.settings,
+        ...currentSettings,
         soundEnabled: value,
       },
     });
@@ -417,12 +456,19 @@ export default function SettingsScreen() {
   };
 
   const toggleNotifications = (value: boolean) => {
+    console.log('[Settings] toggleNotifications', value);
     updateUser({
       settings: {
-        ...user.settings,
+        ...currentSettings,
         notificationsEnabled: value,
       },
     });
+    try {
+      notifications.updateSettings({ enabled: value });
+      if (!value) notifications.cancelAllNotifications();
+    } catch (e) {
+      console.log('[Settings] notifications toggle error', e);
+    }
     
     if (Platform.OS !== 'web') {
       Haptics.selectionAsync();
@@ -435,9 +481,10 @@ export default function SettingsScreen() {
   };
 
   const toggleHaptics = (value: boolean) => {
+    console.log('[Settings] toggleHaptics', value);
     updateUser({
       settings: {
-        ...user.settings,
+        ...currentSettings,
         hapticsEnabled: value,
       },
     });
@@ -449,9 +496,10 @@ export default function SettingsScreen() {
   };
 
   const toggleAutoPlay = (value: boolean) => {
+    console.log('[Settings] toggleAutoPlay', value);
     updateUser({
       settings: {
-        ...user.settings,
+        ...currentSettings,
         autoPlayAudio: value,
       },
     });
@@ -463,9 +511,9 @@ export default function SettingsScreen() {
 
   // Calculate daily goal progress
   const today = new Date().toDateString();
-  const isActiveToday = user.stats.lastActiveDate === today;
-  const dailyProgress = isActiveToday ? Math.min((user.stats.messagesUsedToday * 2), user.dailyGoalMinutes) : 0;
-  const progressPercentage = Math.round((dailyProgress / user.dailyGoalMinutes) * 100);
+  const isActiveToday = currentStats.lastActiveDate === today;
+  const dailyProgress = isActiveToday ? Math.min((currentStats.messagesUsedToday * 2), dailyGoalMinutes) : 0;
+  const progressPercentage = Math.round((dailyProgress / dailyGoalMinutes) * 100);
 
   const settingSections: { title: string; items: SettingItem[] }[] = [
     {
@@ -490,8 +538,8 @@ export default function SettingsScreen() {
         {
           icon: Target,
           label: 'Daily Goal',
-          description: `${user.dailyGoalMinutes >= 30 ? 'Ambitious learner!' : user.dailyGoalMinutes >= 15 ? 'Consistent practice' : 'Building habits'}`,
-          value: `${user.dailyGoalMinutes} minutes/day`,
+          description: `${dailyGoalMinutes >= 30 ? 'Ambitious learner!' : dailyGoalMinutes >= 15 ? 'Consistent practice' : 'Building habits'}`,
+          value: `${dailyGoalMinutes} minutes/day`,
           onPress: handleDailyGoalChange,
           showChevron: true,
         },
@@ -512,7 +560,7 @@ export default function SettingsScreen() {
           icon: Volume2,
           label: 'Sound Effects',
           description: 'Play sounds for interactions',
-          value: user.settings.soundEnabled,
+          value: currentSettings.soundEnabled,
           onPress: toggleSound,
           isSwitch: true,
         },
@@ -520,7 +568,7 @@ export default function SettingsScreen() {
           icon: Vibrate,
           label: 'Haptic Feedback',
           description: 'Vibration for interactions',
-          value: user.settings.hapticsEnabled || false,
+          value: currentSettings.hapticsEnabled || false,
           onPress: toggleHaptics,
           isSwitch: true,
         },
@@ -528,7 +576,7 @@ export default function SettingsScreen() {
           icon: Zap,
           label: 'Auto-play Audio',
           description: 'Automatically play pronunciation',
-          value: user.settings.autoPlayAudio || false,
+          value: currentSettings.autoPlayAudio || false,
           onPress: toggleAutoPlay,
           isSwitch: true,
         },
@@ -541,7 +589,7 @@ export default function SettingsScreen() {
           icon: Bell,
           label: 'Push Notifications',
           description: 'Reminders and updates',
-          value: user.settings.notificationsEnabled,
+          value: currentSettings.notificationsEnabled,
           onPress: toggleNotifications,
           isSwitch: true,
         },
@@ -562,7 +610,7 @@ export default function SettingsScreen() {
           icon: Moon,
           label: 'Dark Mode',
           description: 'Use dark theme',
-          value: user.settings.darkMode,
+          value: currentSettings.darkMode,
           onPress: toggleDarkMode,
           isSwitch: true,
         },
@@ -707,7 +755,7 @@ export default function SettingsScreen() {
           },
         }} 
       />
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} testID="settings-screen-root">
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* Daily Progress Summary */}
           <View style={styles.progressCard}>
@@ -718,7 +766,7 @@ export default function SettingsScreen() {
               <View style={styles.progressInfo}>
                 <Text style={styles.progressTitle}>Today&apos;s Progress</Text>
                 <Text style={styles.progressSubtitle}>
-                  {dailyProgress} of {user.dailyGoalMinutes} minutes
+                  {dailyProgress} of {dailyGoalMinutes} minutes
                 </Text>
               </View>
               <View style={styles.progressBadge}>
@@ -738,8 +786,8 @@ export default function SettingsScreen() {
             <View style={styles.streakContainer}>
               <Calendar size={16} color="#6B7280" />
               <Text style={styles.streakText}>
-                {user.stats.streakDays > 0 
-                  ? `🔥 ${user.stats.streakDays} day streak!` 
+                {currentStats.streakDays > 0 
+                  ? `🔥 ${currentStats.streakDays} day streak!` 
                   : 'Start your learning streak today!'}
               </Text>
             </View>
@@ -754,6 +802,7 @@ export default function SettingsScreen() {
                   
                   return (
                     <TouchableOpacity
+                      testID={`settings-item-${item.label.replace(/\s+/g, '-').toLowerCase()}`}
                       key={item.label}
                       style={[
                         styles.settingItem,
@@ -822,6 +871,7 @@ export default function SettingsScreen() {
                       <View style={styles.settingRight}>
                         {item.isSwitch ? (
                           <Switch
+                            testID={`settings-switch-${item.label.replace(/\s+/g, '-').toLowerCase()}`}
                             value={item.value as boolean}
                             onValueChange={(value) => {
                               if (item.onPress && !isDisabled) {
