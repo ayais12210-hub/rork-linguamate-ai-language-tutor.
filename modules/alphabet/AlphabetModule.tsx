@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -25,6 +25,7 @@ import {
   RefreshCw,
   Play,
 } from 'lucide-react-native';
+import * as Speech from 'expo-speech';
 import { useUser } from '@/hooks/user-store';
 import { useLearningProgress } from '@/state/learning-progress';
 import { LANGUAGES } from '@/constants/languages';
@@ -51,10 +52,22 @@ export default function AlphabetModule({ languageCode, onComplete, onBack }: Pro
   const pathAnimation = useRef(new Animated.Value(0)).current;
   
   const { user, updateStats } = useUser();
+  const safeXP = (user.stats?.xpPoints ?? 0);
+  const safeWords = (user.stats?.wordsLearned ?? 0);
   const { upsertSkill, recordResult } = useLearningProgress();
   
   const selectedLanguage = LANGUAGES.find(lang => lang.code === languageCode);
   const nativeLanguage = LANGUAGES.find(lang => lang.code === user.nativeLanguage);
+
+  const speak = useCallback((text: string) => {
+    const t = (text ?? '').toString().trim();
+    if (!t || t.length > 120) return;
+    try {
+      Speech.speak(t, { language: selectedLanguage?.code, rate: 0.95, pitch: 1.0 });
+    } catch (e) {
+      console.log('speech_error', e);
+    }
+  }, [selectedLanguage?.code]);
 
   useEffect(() => {
     loadAlphabetData();
@@ -102,7 +115,6 @@ export default function AlphabetModule({ languageCode, onComplete, onBack }: Pro
       const data = await response.json();
       let content = data.completion.trim();
       
-      // Clean response
       if (content.includes('```')) {
         content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '');
       }
@@ -113,7 +125,6 @@ export default function AlphabetModule({ languageCode, onComplete, onBack }: Pro
       const parsed = JSON.parse(content);
       setCharacters(parsed.characters || []);
       
-      // Initialize learning progress for each character
       parsed.characters?.forEach((char: AlphabetCharacter) => {
         upsertSkill({
           id: `alphabet_${languageCode}_${char.id}`,
@@ -141,7 +152,6 @@ export default function AlphabetModule({ languageCode, onComplete, onBack }: Pro
         setIsTracing(true);
       },
       onPanResponderMove: (evt) => {
-        // Track finger movement for tracing
         const { locationX, locationY } = evt.nativeEvent;
         setTracingPaths(prev => [...prev, `${locationX},${locationY}`]);
       },
@@ -153,8 +163,7 @@ export default function AlphabetModule({ languageCode, onComplete, onBack }: Pro
   ).current;
 
   const evaluateTracing = () => {
-    // Simple evaluation - in production, compare with actual stroke data
-    const isCorrect = tracingPaths.length > 10; // Simplified check
+    const isCorrect = tracingPaths.length > 10;
     
     if (isCorrect) {
       setScore(prev => prev + 10);
@@ -175,8 +184,8 @@ export default function AlphabetModule({ languageCode, onComplete, onBack }: Pro
       ]).start();
       
       updateStats({
-        xpPoints: user.stats.xpPoints + 5,
-        wordsLearned: user.stats.wordsLearned + 1,
+        xpPoints: safeXP + 5,
+        wordsLearned: safeWords + 1,
       });
     } else {
       setStreak(0);
@@ -186,9 +195,9 @@ export default function AlphabetModule({ languageCode, onComplete, onBack }: Pro
     setTracingPaths([]);
   };
 
-  const playAudio = async () => {
-    // In production, play actual audio
-    Alert.alert('Audio', `Playing pronunciation for: ${characters[currentIndex]?.character}`);
+  const playAudio = () => {
+    const ch = characters[currentIndex]?.character ?? '';
+    speak(ch);
   };
 
   const nextCharacter = () => {
@@ -211,7 +220,7 @@ export default function AlphabetModule({ languageCode, onComplete, onBack }: Pro
 
   const completeModule = () => {
     updateStats({
-      xpPoints: user.stats.xpPoints + 50,
+      xpPoints: safeXP + 50,
     });
     
     Alert.alert(
@@ -276,7 +285,7 @@ export default function AlphabetModule({ languageCode, onComplete, onBack }: Pro
                 )}
                 <Text style={styles.pronunciation}>{currentChar.pronunciation}</Text>
                 
-                <TouchableOpacity onPress={playAudio} style={styles.audioButton}>
+                <TouchableOpacity onPress={playAudio} style={styles.audioButton} testID="alphabet-play-character">
                   <Volume2 size={24} color="#10B981" />
                   <Text style={styles.audioButtonText}>Play Sound</Text>
                 </TouchableOpacity>
@@ -324,7 +333,7 @@ export default function AlphabetModule({ languageCode, onComplete, onBack }: Pro
                       </Text>
                     )}
                   </View>
-                  <TouchableOpacity style={styles.exampleAudioButton}>
+                  <TouchableOpacity style={styles.exampleAudioButton} onPress={() => speak(example.word)} testID={`alphabet-example-play-${index}`}>
                     <Play size={16} color="#10B981" />
                   </TouchableOpacity>
                 </View>

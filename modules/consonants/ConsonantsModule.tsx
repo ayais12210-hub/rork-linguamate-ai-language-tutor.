@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import ModuleShell from '@/modules/shared/ModuleShell';
+import { Volume2 } from 'lucide-react-native';
+import * as Speech from 'expo-speech';
 
 interface Props {
   languageCode: string;
@@ -14,12 +16,27 @@ export default function ConsonantsModule({ languageCode, onComplete, onBack }: P
     { id: 'c2', symbol: 'D', tip: 'Tongue to teeth' },
   ];
 
+  const speak = useCallback((text: string) => {
+    const t = (text ?? '').toString().trim();
+    if (!t) return;
+    try {
+      Speech.speak(t, { language: languageCode, rate: 0.95, pitch: 1.0 });
+    } catch (e) {
+      console.log('consonant_speak_error', e);
+    }
+  }, [languageCode]);
+
   return (
     <ModuleShell title="Consonants" subtitle={`Language: ${languageCode}`} onBack={onBack} onComplete={onComplete}>
-      {data.map(c => (
+      {data.map((c, i) => (
         <View key={c.id} style={styles.row}>
-          <Text style={styles.symbol}>{c.symbol}</Text>
-          <Text style={styles.tip}>{c.tip}</Text>
+          <View style={styles.left}>
+            <Text style={styles.symbol}>{c.symbol}</Text>
+            <Text style={styles.tip}>{c.tip}</Text>
+          </View>
+          <TouchableOpacity testID={`consonant-play-${i}`} onPress={() => speak(c.symbol)} style={styles.play}>
+            <Volume2 size={18} color="#10B981" />
+          </TouchableOpacity>
         </View>
       ))}
       <TouchableOpacity testID="consonants-complete" style={styles.primary} onPress={onComplete}>
@@ -30,9 +47,11 @@ export default function ConsonantsModule({ languageCode, onComplete, onBack }: P
 }
 
 const styles = StyleSheet.create({
-  row: { backgroundColor: 'white', borderRadius: 10, padding: 14, marginBottom: 8, flexDirection: 'row', justifyContent: 'space-between' },
+  row: { backgroundColor: 'white', borderRadius: 10, padding: 14, marginBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  left: { flexDirection: 'column' },
   symbol: { fontSize: 18, fontWeight: '700', color: '#111827' },
   tip: { fontSize: 14, color: '#6B7280' },
+  play: { backgroundColor: '#ECFDF5', borderRadius: 999, padding: 8 },
   primary: { backgroundColor: '#10B981', paddingVertical: 12, borderRadius: 10, alignItems: 'center', marginTop: 8 },
   primaryText: { color: 'white', fontWeight: '700' },
 });

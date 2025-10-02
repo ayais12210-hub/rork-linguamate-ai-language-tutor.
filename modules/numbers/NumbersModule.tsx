@@ -345,8 +345,15 @@ export default function NumbersModule({ languageCode, onComplete, onBack }: Prop
   };
 
   const playAudio = () => {
-    // In production, play actual audio
-    console.log(`Playing: ${currentGame?.numberData.word}`);
+    const t = currentGame?.numberData.word ?? '';
+    try {
+      // Use TTS for consistent cross-platform playback
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const Speech = require('expo-speech');
+      Speech.speak(t, { language: selectedLanguage?.code, rate: 0.95, pitch: 1.0 });
+    } catch (e) {
+      console.log('audio_play_error', e);
+    }
   };
 
   if (isLoading) {

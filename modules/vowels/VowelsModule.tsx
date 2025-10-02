@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import ModuleShell from '@/modules/shared/ModuleShell';
+import { Volume2 } from 'lucide-react-native';
+import * as Speech from 'expo-speech';
 
 interface Props {
   languageCode: string;
@@ -14,12 +16,31 @@ export default function VowelsModule({ languageCode, onComplete, onBack }: Props
     { id: 'v2', symbol: 'E', sound: '/e/' },
   ];
 
+  const speak = useCallback((text: string) => {
+    const t = (text ?? '').toString().trim();
+    if (!t) return;
+    try {
+      Speech.speak(t, { language: languageCode, rate: 0.95, pitch: 1.0 });
+    } catch (e) {
+      console.log('vowel_speak_error', e);
+    }
+  }, [languageCode]);
+
   return (
     <ModuleShell title="Vowels" subtitle={`Language: ${languageCode}`} onBack={onBack} onComplete={onComplete}>
-      {data.map(v => (
+      {data.map((v, i) => (
         <View key={v.id} style={styles.row}>
-          <Text style={styles.symbol}>{v.symbol}</Text>
-          <Text style={styles.sound}>{v.sound}</Text>
+          <View style={styles.left}>
+            <Text style={styles.symbol}>{v.symbol}</Text>
+            <Text style={styles.sound}>{v.sound}</Text>
+          </View>
+          <TouchableOpacity
+            testID={`vowel-play-${i}`}
+            onPress={() => speak(v.symbol)}
+            style={styles.play}
+          >
+            <Volume2 size={18} color="#10B981" />
+          </TouchableOpacity>
         </View>
       ))}
       <TouchableOpacity testID="vowels-complete" style={styles.primary} onPress={onComplete}>
@@ -30,9 +51,11 @@ export default function VowelsModule({ languageCode, onComplete, onBack }: Props
 }
 
 const styles = StyleSheet.create({
-  row: { backgroundColor: 'white', borderRadius: 10, padding: 14, marginBottom: 8, flexDirection: 'row', justifyContent: 'space-between' },
+  row: { backgroundColor: 'white', borderRadius: 10, padding: 14, marginBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  left: { flexDirection: 'column' },
   symbol: { fontSize: 18, fontWeight: '700', color: '#111827' },
   sound: { fontSize: 14, color: '#6B7280' },
+  play: { backgroundColor: '#ECFDF5', borderRadius: 999, padding: 8 },
   primary: { backgroundColor: '#10B981', paddingVertical: 12, borderRadius: 10, alignItems: 'center', marginTop: 8 },
   primaryText: { color: 'white', fontWeight: '700' },
 });
