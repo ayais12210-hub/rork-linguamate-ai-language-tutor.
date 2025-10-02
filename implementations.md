@@ -4,6 +4,17 @@ This document is a running, append-only log of implementation changes made in th
 
 ---
 
+## 2025-10-02 — Quality gates and infra
+- Added .eslintrc.cjs with Expo preset to enforce linting across TS/TSX.
+- Added .prettierrc for consistent formatting.
+- Added GitHub Actions CI workflow (lint + typecheck) at .github/workflows/ci.yml.
+
+## 2025-10-02 — API hardening
+- Upgraded lib/api.ts to validate critical responses with Zod schemas and to use AbortController timeouts and safer error mapping to reduce "Failed to fetch" class issues.
+
+## 2025-10-02 — i18n scaffold
+- Introduced lightweight i18n helper at lib/i18n.ts with an English base dictionary at constants/locales/en.json.
+
 ## 2025-10-02 — Ratings and monitoring improvements
 - Initialized comprehensive MonitoringUtils at app startup tied to current user in app/_layout.tsx via MonitoringInitializer component for better analytics and stability insights.
 - Added global, cross-platform RatingPrompt component with smart prompt timing, web/mobile support, AsyncStorage persistence, and direct deep-links to store review pages.

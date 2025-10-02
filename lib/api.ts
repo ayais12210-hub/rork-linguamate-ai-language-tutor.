@@ -1,4 +1,5 @@
 // API utilities and configurations for the language learning app
+import { z } from 'zod';
 
 // API endpoints
 export const API_ENDPOINTS = {
@@ -35,6 +36,11 @@ export interface ImageGenerateResponse {
   size: string;
 }
 
+const ImageGenerateResponseSchema = z.object({
+  image: z.object({ base64Data: z.string(), mimeType: z.string() }),
+  size: z.string(),
+});
+
 export interface ImageEditRequest {
   prompt: string;
   images: Array<{ type: 'image'; image: string }>;
@@ -47,6 +53,10 @@ export interface ImageEditResponse {
   };
 }
 
+const ImageEditResponseSchema = z.object({
+  image: z.object({ base64Data: z.string(), mimeType: z.string() }),
+});
+
 export interface STTRequest {
   audio: File;
   language?: string;
@@ -56,6 +66,8 @@ export interface STTResponse {
   text: string;
   language: string;
 }
+
+const STTResponseSchema = z.object({ text: z.string(), language: z.string() });
 
 // Core message types for AI
 export type ContentPart =
@@ -83,22 +95,40 @@ export class ApiClient {
 
   private async request<T>(
     url: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    validate?: (data: unknown) => T,
+    timeoutMs: number = 20000
   ): Promise<T> {
     try {
+      const controller = typeof AbortController !== 'undefined' ? new AbortController() : undefined;
+      const id = controller ? setTimeout(() => controller.abort(), timeoutMs) : undefined;
+
       const response = await fetch(url, {
         ...options,
         headers: {
           ...this.baseHeaders,
-          ...options.headers,
+          ...(options.headers ?? {}),
         },
+        signal: controller?.signal,
+      }).catch((e) => {
+        throw new Error('NETWORK_REQUEST_FAILED');
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (id) clearTimeout(id as unknown as number);
+
+      if (!response?.ok) {
+        const status = response?.status ?? 0;
+        throw new Error(`HTTP_${status}`);
       }
 
-      return await response.json();
+      const data = await response.json().catch(() => {
+        throw new Error('INVALID_JSON');
+      });
+
+      if (validate) {
+        return validate(data);
+      }
+      return data as T;
     } catch (error) {
       console.error('API request failed:', error);
       throw error;
@@ -115,27 +145,39 @@ export class ApiClient {
 
   // AI Image Generation
   async generateImage(request: ImageGenerateRequest): Promise<ImageGenerateResponse> {
-    return this.request<ImageGenerateResponse>(API_ENDPOINTS.IMAGE_GENERATE, {
-      method: 'POST',
-      body: JSON.stringify(request),
-    });
+    return this.request<ImageGenerateResponse>(
+      API_ENDPOINTS.IMAGE_GENERATE,
+      {
+        method: 'POST',
+        body: JSON.stringify(request),
+      },
+      (data) => ImageGenerateResponseSchema.parse(data)
+    );
   }
 
   // AI Image Editing
   async editImage(request: ImageEditRequest): Promise<ImageEditResponse> {
-    return this.request<ImageEditResponse>(API_ENDPOINTS.IMAGE_EDIT, {
-      method: 'POST',
-      body: JSON.stringify(request),
-    });
+    return this.request<ImageEditResponse>(
+      API_ENDPOINTS.IMAGE_EDIT,
+      {
+        method: 'POST',
+        body: JSON.stringify(request),
+      },
+      (data) => ImageEditResponseSchema.parse(data)
+    );
   }
 
   // Speech to Text
   async transcribeAudio(formData: FormData): Promise<STTResponse> {
-    return this.request<STTResponse>(API_ENDPOINTS.SPEECH_TO_TEXT, {
-      method: 'POST',
-      body: formData,
-      headers: {}, // Let browser set Content-Type for FormData
-    });
+    return this.request<STTResponse>(
+      API_ENDPOINTS.SPEECH_TO_TEXT,
+      {
+        method: 'POST',
+        body: formData,
+        headers: {},
+      },
+      (data) => STTResponseSchema.parse(data)
+    );
   }
 
   // Translation service
@@ -148,9 +190,8 @@ export class ApiClient {
     
     try {
       const response = await this.request<any>(url, { method: 'GET' });
-      return {
-        translatedText: response.responseData?.translatedText || text,
-      };
+      const translated = (response?.responseData?.translatedText as string | undefined) ?? text;
+      return { translatedText: translated };
     } catch (error) {
       console.error('Translation failed:', error);
       return { translatedText: text };

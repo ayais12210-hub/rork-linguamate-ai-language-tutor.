@@ -1,0 +1,9 @@
+{
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "retry": "Retry",
+    "error_generic": "Something went wrong. Please try again.",
+    "error_network": "Network error. Check your connection and try again."
+  }
+}
