@@ -1,5 +1,5 @@
 import { trpc } from '@/lib/trpc';
 
-export function useSubmitProgress() {
-  return trpc.learn.submitProgress.useMutation();
+export function useUpdateLessonProgress() {
+  return trpc.lessons.updateProgress.useMutation();
 }

@@ -1,5 +1,5 @@
 import { trpc } from '@/lib/trpc';
 
-export function useLearnData() {
-  return trpc.learn.getData.useQuery();
+export function useLearnContent(targetName: string, nativeName: string) {
+  return trpc.learn.getContent.useQuery({ targetName, nativeName });
 }
