@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,7 @@ import {
   Shield,
   Mail,
   ChevronRight,
+  Check,
   LucideIcon,
   Vibrate,
   Smartphone,
@@ -48,6 +49,7 @@ import type { UserSettings, UserStats } from '@/types/user';
 import { LANGUAGES } from '@/constants/languages';
 import LanguageSelector from '@/components/LanguageSelector';
 import UpgradeModal from '@/components/UpgradeModal';
+import { Modal } from '@/home/project/components/Modal';
 import { useNotifications } from '@/hooks/use-notifications';
 import { useOfflineStatus } from '@/modules/offline/index';
 import { useTheme } from '@/lib/theme';
@@ -68,6 +70,8 @@ export default function SettingsScreen() {
   const [showLanguageSelector, setShowLanguageSelector] = useState<boolean>(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
   const [showNativeLanguageSelector, setShowNativeLanguageSelector] = useState<boolean>(false);
+  const [showDailyGoalPicker, setShowDailyGoalPicker] = useState<boolean>(false);
+  const [showDifficultyPicker, setShowDifficultyPicker] = useState<boolean>(false);
   const { user, updateUser, upgradeToPremium } = useUser();
   const notifications = useNotifications();
   const { isOffline, isConnected, unsyncedCount, lastSync } = useOfflineStatus();
@@ -126,19 +130,7 @@ export default function SettingsScreen() {
 
   const handleDailyGoalChange = () => {
     triggerHaptic();
-    Alert.alert(
-      'Daily Learning Goal',
-      'How many minutes would you like to study each day?',
-      [
-        { text: '5 minutes', onPress: () => updateDailyGoal(5) },
-        { text: '10 minutes', onPress: () => updateDailyGoal(10) },
-        { text: '15 minutes (Recommended)', onPress: () => updateDailyGoal(15) },
-        { text: '30 minutes', onPress: () => updateDailyGoal(30) },
-        { text: '45 minutes', onPress: () => updateDailyGoal(45) },
-        { text: '60 minutes', onPress: () => updateDailyGoal(60) },
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
+    setShowDailyGoalPicker(true);
   };
 
   const updateDailyGoal = (minutes: number) => {
@@ -161,26 +153,7 @@ export default function SettingsScreen() {
 
   const handleDifficultyChange = () => {
     triggerHaptic();
-    const currentLevel = user.proficiencyLevel;
-    Alert.alert(
-      'Learning Difficulty',
-      'Select the difficulty level that matches your current skills:',
-      [
-        { 
-          text: `🌱 Beginner${currentLevel === 'beginner' ? ' (Current)' : ''}`, 
-          onPress: () => updateDifficulty('beginner') 
-        },
-        { 
-          text: `📚 Intermediate${currentLevel === 'intermediate' ? ' (Current)' : ''}`, 
-          onPress: () => updateDifficulty('intermediate') 
-        },
-        { 
-          text: `🎓 Advanced${currentLevel === 'advanced' ? ' (Current)' : ''}`, 
-          onPress: () => updateDifficulty('advanced') 
-        },
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
+    setShowDifficultyPicker(true);
   };
 
   const updateDifficulty = (level: 'beginner' | 'intermediate' | 'advanced') => {
@@ -924,6 +897,66 @@ export default function SettingsScreen() {
           onUpgrade={handleUpgrade}
           reason="feature"
         />
+        <Modal
+          visible={showDailyGoalPicker}
+          onClose={() => setShowDailyGoalPicker(false)}
+          title="Daily Learning Goal"
+          position="bottom"
+          size="large"
+          animationType="slide"
+          footer={null}
+        >
+          <View>
+            {[5,10,15,20,30,45,60].map((m) => {
+              const selected = m === dailyGoalMinutes;
+              return (
+                <TouchableOpacity
+                  key={`goal-${m}`}
+                  testID={`goal-option-${m}`}
+                  style={styles.optionRow}
+                  onPress={() => {
+                    setShowDailyGoalPicker(false);
+                    updateDailyGoal(m);
+                  }}
+                >
+                  <Text style={[styles.optionText, { color: theme.colors.text.primary }]}>{m} minutes/day</Text>
+                  {selected && <Check size={20} color="#10B981" />}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </Modal>
+
+        <Modal
+          visible={showDifficultyPicker}
+          onClose={() => setShowDifficultyPicker(false)}
+          title="Learning Difficulty"
+          position="bottom"
+          size="large"
+          animationType="slide"
+          footer={null}
+        >
+          <View>
+            {(['beginner','intermediate','advanced'] as const).map((d) => {
+              const selected = d === user.proficiencyLevel;
+              const label = d === 'beginner' ? '🌱 Beginner' : d === 'intermediate' ? '📚 Intermediate' : '🎓 Advanced';
+              return (
+                <TouchableOpacity
+                  key={`diff-${d}`}
+                  testID={`difficulty-option-${d}`}
+                  style={styles.optionRow}
+                  onPress={() => {
+                    setShowDifficultyPicker(false);
+                    updateDifficulty(d);
+                  }}
+                >
+                  <Text style={[styles.optionText, { color: theme.colors.text.primary }]}>{label}</Text>
+                  {selected && <Check size={20} color="#10B981" />}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </Modal>
       </SafeAreaView>
     </>
   );
@@ -1124,5 +1157,17 @@ const styles = StyleSheet.create({
     color: '#D1D5DB',
     textAlign: 'center',
     marginBottom: 2,
+  },
+  optionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
+  },
+  optionText: {
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
