@@ -596,7 +596,7 @@ export default function LearnScreen() {
                 ))}
               </View>
               <View style={styles.tensRow}>
-                {data.numbers.filter(n => n.value % 10 === 0 && n.value >= 20).map((n, idx) => (
+                {data.numbers.filter(n => n.value % 10 === 0 && n.value >= 10).map((n, idx) => (
                   <TouchableOpacity key={`t_${n.value}_${idx}`} style={styles.tenCard} onPress={() => onPlay(n.target)} testID={`ten-${n.value}`}>
                     <Text style={styles.tenValue}>{n.value}</Text>
                     <Text style={styles.tenTarget}>{n.target}</Text>
@@ -1527,7 +1527,7 @@ function buildFallbackContent(nativeName: string, targetName: string): LearnPayl
 
   const numbers = preset?.numbers ?? (
     Array.from({ length: 21 }, (_, v) => ({ value: v, target: String(v), pronunciation: String(v) }))
-      .concat([20,30,40,50,60,70,80,90,100].map(v => ({ value: v, target: String(v), pronunciation: String(v) })))
+      .concat([30,40,50,60,70,80,90,100].map(v => ({ value: v, target: String(v), pronunciation: String(v) })))
   );
 
   const commonWords = preset?.commonWords ?? [
