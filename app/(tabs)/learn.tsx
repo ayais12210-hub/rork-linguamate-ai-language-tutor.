@@ -257,6 +257,24 @@ export default function LearnScreen() {
 
   const cards = useMemo(() => (data?.commonWords ?? []).slice(0, 20), [data?.commonWords]);
 
+  const [phonicsSeed, setPhonicsSeed] = useState<number>(() => Math.floor(Math.random() * 100000));
+  const [phonicsLastScore, setPhonicsLastScore] = useState<number | null>(null);
+  const randomPhonicsSet = useMemo(() => {
+    const pool = [...phonics];
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = (Math.floor((Math.sin(phonicsSeed + i) + 1) * 10000) % (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    return pool.slice(0, Math.min(10, pool.length));
+  }, [phonics, phonicsSeed]);
+  const regeneratePhonicsSet = useCallback(() => {
+    setPhonicsSeed(Math.floor(Math.random() * 100000));
+  }, []);
+  const onPhonicsComplete = useCallback((score: number) => {
+    setPhonicsLastScore(score);
+    updateStats({ xpPoints: (user.stats?.xpPoints || 0) + Math.max(5, score * 3) });
+  }, [updateStats, user.stats?.xpPoints]);
+
   const practiceCandidates = useMemo(() => {
     const fromPhonics = phonics.flatMap(ph => ph.examples.slice(0, 1).map(e => e.word));
     const fromWords = (data?.commonWords ?? []).slice(0, 10).map(w => w.target);
@@ -765,7 +783,15 @@ export default function LearnScreen() {
                 </View>
               </View>
             ))}
-            <PhonicsTrainer items={phonics.slice(0, 8)} targetLangCode={targetLang.code} testIDPrefix="phonics-trainer" />
+            <View style={styles.phonicsActionsRow}>
+              <TouchableOpacity onPress={regeneratePhonicsSet} style={styles.aiBtn} testID="phonics-randomize">
+                <Text style={styles.aiBtnText}>Randomize set</Text>
+              </TouchableOpacity>
+              {!!phonicsLastScore && (
+                <Text style={styles.phonicsLastScore}>Last score: {phonicsLastScore}</Text>
+              )}
+            </View>
+            <PhonicsTrainer items={randomPhonicsSet} targetLangCode={targetLang.code} onComplete={onPhonicsComplete} testIDPrefix="phonics-trainer" />
           </View>
         </View>
 
@@ -948,6 +974,8 @@ const styles = StyleSheet.create({
   phonicsGraphemes: { fontSize: 12, color: '#6B7280', marginTop: 2 },
   mouthHint: { marginTop: 6, fontSize: 12, color: '#EF4444' },
   phonicsExample: { backgroundColor: '#F0FDF4', borderColor: '#A7F3D0', borderWidth: 1, borderRadius: 10, paddingVertical: 8, paddingHorizontal: 10 },
+  phonicsActionsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  phonicsLastScore: { color: '#065F46', fontWeight: '800', fontSize: 12 },
 
   grammarCard: { backgroundColor: 'white', borderRadius: 12, padding: 12, marginBottom: 10, borderWidth: 1, borderColor: '#E5E7EB' },
   grammarTitle: { fontSize: 16, fontWeight: '800', color: '#111827' },
