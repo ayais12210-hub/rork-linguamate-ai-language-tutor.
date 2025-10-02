@@ -29,6 +29,11 @@
               "application-groups": [
                 "group.com.myapp"
               ]
+            },
+            "developer": {
+              "networking": {
+                "wifi-info": true
+              }
             }
           }
         }

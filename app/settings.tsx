@@ -49,7 +49,7 @@ import { LANGUAGES } from '@/constants/languages';
 import LanguageSelector from '@/components/LanguageSelector';
 import UpgradeModal from '@/components/UpgradeModal';
 import { useNotifications } from '@/hooks/use-notifications';
-import { onlineManager } from '@tanstack/react-query';
+import { useOfflineStatus } from '@/modules/offline/index';
 
 type SettingItem = {
   icon: LucideIcon;
@@ -67,34 +67,9 @@ export default function SettingsScreen() {
   const [showLanguageSelector, setShowLanguageSelector] = useState<boolean>(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
   const [showNativeLanguageSelector, setShowNativeLanguageSelector] = useState<boolean>(false);
-  const [isOnline, setIsOnline] = useState<boolean>(onlineManager.isOnline());
   const { user, updateUser, upgradeToPremium } = useUser();
   const notifications = useNotifications();
-
-  React.useEffect(() => {
-    const unsubscribe = onlineManager.subscribe((online?: boolean) => {
-      setIsOnline(Boolean(online));
-    });
-
-    if (Platform.OS === 'web') {
-      const handleOnline = () => onlineManager.setOnline(true);
-      const handleOffline = () => onlineManager.setOnline(false);
-      window.addEventListener('online', handleOnline);
-      window.addEventListener('offline', handleOffline);
-
-      if (typeof navigator !== 'undefined' && 'onLine' in navigator) {
-        onlineManager.setOnline(Boolean(navigator.onLine));
-      }
-
-      return () => {
-        window.removeEventListener('online', handleOnline);
-        window.removeEventListener('offline', handleOffline);
-        unsubscribe?.();
-      };
-    }
-
-    return unsubscribe;
-  }, []);
+  const { isOffline, isConnected, unsyncedCount, lastSync } = useOfflineStatus();
 
   const defaultSettings: UserSettings = {
     darkMode: false,
@@ -691,16 +666,20 @@ export default function SettingsScreen() {
       title: 'Data & Storage',
       items: [
         {
-          icon: isOnline ? Wifi : WifiOff,
+          icon: isConnected ? Wifi : WifiOff,
           label: 'Network Status',
-          description: isOnline ? 'Connected to internet' : 'Offline - some features unavailable',
-          value: isOnline ? '🟢 Online' : '🔴 Offline',
+          description: isConnected 
+            ? (lastSync ? `Last synced: ${new Date(lastSync).toLocaleTimeString()}` : 'Connected to internet')
+            : 'Offline - some features unavailable',
+          value: isConnected ? '🟢 Online' : '🔴 Offline',
         },
         {
           icon: Database,
           label: 'Offline Mode',
-          description: 'App works offline with cached data',
-          value: 'Enabled',
+          description: unsyncedCount > 0 
+            ? `${unsyncedCount} item${unsyncedCount === 1 ? '' : 's'} pending sync`
+            : 'App works offline with cached data',
+          value: isOffline ? 'Active' : 'Ready',
         },
         {
           icon: RefreshCw,

@@ -15,6 +15,9 @@ import SplashCursor from '@/components/SplashCursor';
 import { MonitoringUtils } from '@/lib/monitoring';
 import RatingPrompt from '@/components/RatingPrompt';
 import NetworkStatusBanner from '@/components/NetworkStatusBanner';
+import { OfflineProvider } from '@/modules/offline/OfflineProvider';
+import OfflineBanner from '@/components/OfflineBanner';
+import { offlineQueue } from '@/modules/offline/offlineQueue';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -49,6 +52,16 @@ function MonitoringInitializer() {
   return null;
 }
 
+function OfflineInitializer() {
+  useEffect(() => {
+    console.log('[RootLayout] Initializing offline queue');
+    offlineQueue.initialize().catch((e) => {
+      console.log('[RootLayout] Offline queue init error', e);
+    });
+  }, []);
+  return null;
+}
+
 export default function RootLayout() {
   useEffect(() => {
     SplashScreen.hideAsync();
@@ -58,22 +71,26 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       {Platform.OS === 'web' ? <ReactQueryDevtools /> : null}
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
-        <UserProvider>
-          <ChatProvider>
-            <LearningProgressProvider>
-              <ErrorBoundary>
-                <GestureHandlerRootView style={{ flex: 1 }} testID="root-gesture-container">
-                  <MonitoringInitializer />
-                  <OnlineStatusSync />
-                  <RootLayoutNav />
-                  <RatingPrompt />
-                  <NetworkStatusBanner />
-                </GestureHandlerRootView>
-                <SplashCursor />
-              </ErrorBoundary>
-            </LearningProgressProvider>
-          </ChatProvider>
-        </UserProvider>
+        <OfflineProvider>
+          <UserProvider>
+            <ChatProvider>
+              <LearningProgressProvider>
+                <ErrorBoundary>
+                  <GestureHandlerRootView style={{ flex: 1 }} testID="root-gesture-container">
+                    <MonitoringInitializer />
+                    <OfflineInitializer />
+                    <OnlineStatusSync />
+                    <RootLayoutNav />
+                    <RatingPrompt />
+                    <NetworkStatusBanner />
+                    <OfflineBanner />
+                  </GestureHandlerRootView>
+                  <SplashCursor />
+                </ErrorBoundary>
+              </LearningProgressProvider>
+            </ChatProvider>
+          </UserProvider>
+        </OfflineProvider>
       </trpc.Provider>
     </QueryClientProvider>
   );

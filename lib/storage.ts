@@ -8,6 +8,7 @@ export const STORAGE_KEYS = {
   VOCABULARY: 'vocabulary',
   SETTINGS: 'settings',
   OFFLINE_LESSONS: 'offline_lessons',
+  OFFLINE_QUEUE: 'offline_queue',
   CHAT_HISTORY: 'chat_history',
   NOTIFICATIONS: 'notifications',
   ONBOARDING_COMPLETED: 'onboarding_completed',
