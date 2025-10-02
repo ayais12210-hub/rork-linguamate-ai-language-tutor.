@@ -305,3 +305,122 @@ export const getDailyChallengeProcedure = protectedProcedure
       completed: false
     };
   });
+
+// Generate a dynamic lesson based on topic/difficulty
+export const generateLessonProcedure = protectedProcedure
+  .input(z.object({
+    language: z.string().default('es'),
+    topic: z.string().default('phonics'),
+    difficulty: z.enum(['beginner','intermediate','advanced','expert']).default('beginner'),
+    itemCount: z.number().min(3).max(20).default(8)
+  }))
+  .mutation(({ input }) => {
+    const id = `gen-${input.topic}-${Date.now()}`;
+    const pool = [
+      'a','e','i','o','u','ba','be','bi','bo','bu','pa','pe','pi','po','pu','ta','te','ti','to','tu'
+    ];
+    const items = Array.from({ length: input.itemCount }).map((_, idx) => {
+      const value = pool[Math.floor(Math.random() * pool.length)];
+      return {
+        id: `${id}-${idx}`,
+        type: value.length === 1 ? 'character' : 'syllable',
+        value,
+        pronunciation: value,
+        translation: value
+      };
+    });
+    const lesson = {
+      id,
+      type: input.topic,
+      title: `${input.topic} (${input.difficulty})`,
+      description: 'Auto-generated practice set',
+      icon: '🧩',
+      difficulty: input.difficulty,
+      estimatedTime: Math.max(5, Math.min(20, Math.round(items.length * 1.5))),
+      xpReward: items.length * 5,
+      isLocked: false,
+      language: input.language,
+      subModules: [
+        {
+          id: `${id}-set-1`,
+          title: 'Practice Set',
+          type: 'lesson',
+          content: { instructions: 'Tap to practice the generated set', items },
+          isCompleted: false
+        }
+      ]
+    };
+
+    lessons.set(lesson.id, lesson);
+    return lesson;
+  });
+
+// Submit a lesson attempt and compute score/xp
+export const submitLessonProcedure = protectedProcedure
+  .input(z.object({
+    lessonId: z.string(),
+    answers: z.array(z.object({ id: z.string(), correct: z.boolean() })),
+    timeSpent: z.number().min(0).default(0)
+  }))
+  .mutation(({ ctx, input }) => {
+    const lesson = lessons.get(input.lessonId);
+    if (!lesson) throw new Error('Lesson not found');
+
+    const correct = input.answers.filter(a => a.correct).length;
+    const score = Math.round((correct / Math.max(1, input.answers.length)) * 100);
+    const xpEarned = Math.round((lesson.xpReward || 50) * (score / 100));
+
+    const key = `${ctx.userId}-${lesson.language}`;
+    const progress = userProgress.get(key) || {
+      userId: ctx.userId,
+      language: lesson.language,
+      modules: [],
+      overallProgress: 0,
+      dailyGoal: 15,
+      dailyProgress: 0,
+      streakDays: 0,
+      totalXP: 0,
+      achievements: [],
+      weakAreas: [],
+      strongAreas: []
+    };
+
+    let moduleProgress = progress.modules.find((m: any) => m.moduleId === input.lessonId);
+    if (!moduleProgress) {
+      moduleProgress = {
+        moduleId: input.lessonId,
+        progress: 0,
+        lastPracticed: new Date(),
+        totalTime: 0,
+        accuracy: 0,
+        completedSubModules: [],
+        masteryLevel: 'learning'
+      };
+      progress.modules.push(moduleProgress);
+    }
+
+    const sub = (lesson.subModules?.[0]?.id as string) || `${lesson.id}-auto`;
+    if (!moduleProgress.completedSubModules.includes(sub)) {
+      moduleProgress.completedSubModules.push(sub);
+    }
+
+    moduleProgress.lastPracticed = new Date();
+    moduleProgress.totalTime += input.timeSpent;
+    progress.dailyProgress += input.timeSpent;
+
+    const attempts = moduleProgress.completedSubModules.length;
+    moduleProgress.accuracy = ((moduleProgress.accuracy * (attempts - 1)) + score) / attempts;
+
+    progress.totalXP += xpEarned;
+
+    const totalSubModules = lesson.subModules?.length || 1;
+    moduleProgress.progress = (moduleProgress.completedSubModules.length / totalSubModules) * 100;
+    if (moduleProgress.progress === 100 && moduleProgress.accuracy >= 90) {
+      moduleProgress.masteryLevel = 'mastered';
+    } else if (moduleProgress.progress >= 50) {
+      moduleProgress.masteryLevel = 'practicing';
+    }
+
+    userProgress.set(key, progress);
+    return { score, xpEarned, progress };
+  });

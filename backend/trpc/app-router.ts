@@ -28,7 +28,9 @@ import {
   getUserProgressProcedure,
   updateLessonProgressProcedure,
   getRecommendedLessonsProcedure,
-  getDailyChallengeProcedure
+  getDailyChallengeProcedure,
+  generateLessonProcedure,
+  submitLessonProcedure,
 } from "./routes/lessons/lessons";
 import {
   getChatHistoryProcedure,
@@ -63,7 +65,10 @@ export const appRouter = createTRPCRouter({
   // Authentication
   auth: createTRPCRouter({
     login: loginProcedure,
+    // aliases for external clients
+    signin: loginProcedure,
     signup: signupProcedure,
+    signout: logoutProcedure,
     logout: logoutProcedure,
     refreshToken: refreshTokenProcedure,
     verifyEmail: verifyEmailProcedure,
@@ -78,7 +83,9 @@ export const appRouter = createTRPCRouter({
   // User management
   user: createTRPCRouter({
     get: getUserProcedure,
+    getProfile: getUserProcedure,
     update: updateUserProcedure,
+    updateSettings: updateUserProcedure,
     completeOnboarding: completeOnboardingProcedure,
     updateStats: updateStatsProcedure,
     upgradeToPremium: upgradeToPremiumProcedure,
@@ -94,6 +101,9 @@ export const appRouter = createTRPCRouter({
     updateProgress: updateLessonProgressProcedure,
     getRecommended: getRecommendedLessonsProcedure,
     getDailyChallenge: getDailyChallengeProcedure,
+    // new endpoints
+    generate: generateLessonProcedure,
+    submit: submitLessonProcedure,
   }),
   
   // Chat and AI features
@@ -108,6 +118,7 @@ export const appRouter = createTRPCRouter({
   // Analytics and progress tracking
   analytics: createTRPCRouter({
     trackEvent: trackEventProcedure,
+    track: trackEventProcedure,
     getLearningAnalytics: getLearningAnalyticsProcedure,
     getLeaderboard: getLeaderboardProcedure,
     getRecommendations: getPersonalizedRecommendationsProcedure,
@@ -125,6 +136,7 @@ export const appRouter = createTRPCRouter({
   // Leaderboard
   leaderboard: createTRPCRouter({
     get: getLeaderboardDataProcedure,
+    getRankings: getLeaderboardDataProcedure,
     searchUsers: searchUsersProcedure,
     getUserStats: getUserStatsProcedure,
     compareUsers: compareUsersProcedure,
