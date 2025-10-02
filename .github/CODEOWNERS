@@ -1,52 +1,19 @@
-# CODEOWNERS file for Linguamate
-# 
-# This file defines individuals or teams that are responsible for code in this repository.
-# Code owners are automatically requested for review when someone opens a pull request
-# that modifies code that they own.
-#
-# More info: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
-
 # Default owners for everything in the repo
-# These owners will be requested for review unless a later match takes precedence
-* @linguamate/core-team
+* @ayais12210-hub
 
-# Backend & API
-/backend/ @linguamate/backend-team
-/lib/trpc.ts @linguamate/backend-team
-/lib/api.ts @linguamate/backend-team
+# Backend and API
+/backend/ @ayais12210-hub
+/lib/trpc.ts @ayais12210-hub
 
 # Testing infrastructure
-/tests/ @linguamate/qa-team
-/__tests__/ @linguamate/qa-team
-jest.config.ts @linguamate/qa-team
-playwright.config.ts @linguamate/qa-team
-/.github/workflows/ @linguamate/devops-team
-
-# Documentation
-/docs/ @linguamate/docs-team
-*.md @linguamate/docs-team
-
-# Configuration files
-package.json @linguamate/core-team
-tsconfig.json @linguamate/core-team
-app.json @linguamate/core-team
-
-# Security & validation
-/modules/security/ @linguamate/security-team
-/backend/validation/ @linguamate/security-team
-/lib/validation/ @linguamate/security-team
-/schemas/ @linguamate/security-team
-
-# UI Components
-/components/ @linguamate/frontend-team
-/app/components/ @linguamate/frontend-team
-
-# Modules
-/modules/ @linguamate/content-team
-
-# State management
-/state/ @linguamate/frontend-team
-/hooks/ @linguamate/frontend-team
+/tests/ @ayais12210-hub
+/__tests__/ @ayais12210-hub
+jest.config.ts @ayais12210-hub
+playwright.config.ts @ayais12210-hub
 
 # CI/CD
-/.github/ @linguamate/devops-team
+/.github/ @ayais12210-hub
+
+# Documentation
+/docs/ @ayais12210-hub
+*.md @ayais12210-hub

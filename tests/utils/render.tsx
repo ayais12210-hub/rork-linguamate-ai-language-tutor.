@@ -7,44 +7,32 @@ const createTestQueryClient = () =>
     defaultOptions: {
       queries: {
         retry: false,
-        gcTime: Infinity,
+        gcTime: Infinity
       },
       mutations: {
-        retry: false,
-      },
-    },
+        retry: false
+      }
+    }
   });
 
-interface TestProvidersProps {
-  children: React.ReactNode;
+interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
   queryClient?: QueryClient;
-}
-
-export function TestProviders({ children, queryClient }: TestProvidersProps) {
-  const client = queryClient || createTestQueryClient();
-
-  return (
-    <QueryClientProvider client={client}>
-      {children}
-    </QueryClientProvider>
-  );
 }
 
 export function renderWithProviders(
   ui: React.ReactElement,
-  options?: Omit<RenderOptions, 'wrapper'> & { queryClient?: QueryClient }
+  options?: CustomRenderOptions
 ) {
-  const { queryClient, ...renderOptions } = options || {};
+  const { queryClient = createTestQueryClient(), ...renderOptions } = options || {};
 
   const Wrapper = ({ children }: PropsWithChildren) => (
-    <TestProviders queryClient={queryClient}>{children}</TestProviders>
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
 
   return {
     ...render(ui, { wrapper: Wrapper, ...renderOptions }),
-    queryClient: queryClient || createTestQueryClient(),
+    queryClient
   };
 }
 
-export { screen, waitFor, within, fireEvent } from '@testing-library/react';
-export { renderWithProviders as render };
+export * from '@testing-library/react';

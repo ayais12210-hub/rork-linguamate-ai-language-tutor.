@@ -1,6 +1,14 @@
 import { http, HttpResponse } from 'msw';
 
 export const handlers = [
+  http.get('**/healthz', () => {
+    return HttpResponse.json({ ok: true });
+  }),
+
+  http.get('**/api/health', () => {
+    return HttpResponse.json({ status: 'healthy', timestamp: Date.now() });
+  }),
+
   http.post('**/api/trpc/*', async ({ request }) => {
     const url = new URL(request.url);
     const pathname = url.pathname;
@@ -8,8 +16,8 @@ export const handlers = [
     if (pathname.includes('example.hi')) {
       return HttpResponse.json({
         result: {
-          data: { greeting: 'Hello from mock!' },
-        },
+          data: { greeting: 'Hello from mock!' }
+        }
       });
     }
 
@@ -17,14 +25,10 @@ export const handlers = [
       return HttpResponse.json({
         result: {
           data: {
-            user: {
-              id: 'test-user-id',
-              email: 'test@example.com',
-              name: 'Test User',
-            },
-            token: 'mock-jwt-token',
-          },
-        },
+            user: { id: '1', email: 'test@example.com', name: 'Test User' },
+            token: 'mock-jwt-token'
+          }
+        }
       });
     }
 
@@ -33,27 +37,42 @@ export const handlers = [
         result: {
           data: [
             {
-              id: 'lesson-1',
+              id: '1',
               title: 'Punjabi Basics',
               language: 'pa',
               level: 'A1',
-              xpReward: 10,
-            },
-          ],
-        },
+              xpReward: 10
+            }
+          ]
+        }
       });
     }
 
     return HttpResponse.json({
-      result: { data: null },
+      result: { data: null }
     });
   }),
 
-  http.get('**/healthz', () => {
-    return HttpResponse.json({ ok: true, timestamp: Date.now() });
-  }),
+  http.get('**/api/trpc/*', async ({ request }) => {
+    const url = new URL(request.url);
+    const pathname = url.pathname;
 
-  http.get('**/api/health', () => {
-    return HttpResponse.json({ status: 'healthy', uptime: 1000 });
-  }),
+    if (pathname.includes('user.profile')) {
+      return HttpResponse.json({
+        result: {
+          data: {
+            id: '1',
+            email: 'test@example.com',
+            name: 'Test User',
+            xp: 100,
+            level: 5
+          }
+        }
+      });
+    }
+
+    return HttpResponse.json({
+      result: { data: null }
+    });
+  })
 ];

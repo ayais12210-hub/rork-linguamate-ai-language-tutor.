@@ -90,7 +90,7 @@ jobs:
             ~/.cache
           key: ${{ runner.os }}-node-${{ hashFiles('**/bun.lock') }}
       - name: Run tests
-        run: bun run test:ci
+        run: bun run test -- --ci --runInBand --coverage
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         if: always()

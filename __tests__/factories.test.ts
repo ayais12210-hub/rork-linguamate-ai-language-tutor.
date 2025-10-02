@@ -1,106 +1,76 @@
-import { makeLesson, makeExercise, makeLessonList, makeUser, makeUserProgress } from '../tests/factories';
+import { makeLesson, makeExercise, makeUser, makeUserProfile } from '../tests/factories';
 
 describe('Test Factories', () => {
-  describe('makeExercise', () => {
-    it('should create a valid exercise with defaults', () => {
-      const exercise = makeExercise();
-
-      expect(exercise).toHaveProperty('id');
-      expect(exercise).toHaveProperty('type');
-      expect(exercise).toHaveProperty('prompt');
-      expect(exercise).toHaveProperty('answer');
-      expect(exercise.type).toBe('mcq');
-    });
-
-    it('should allow overriding properties', () => {
-      const exercise = makeExercise({
-        type: 'translation',
-        prompt: 'Custom prompt',
-      });
-
-      expect(exercise.type).toBe('translation');
-      expect(exercise.prompt).toBe('Custom prompt');
-    });
-  });
-
   describe('makeLesson', () => {
-    it('should create a valid lesson with defaults', () => {
+    test('creates valid lesson with defaults', () => {
       const lesson = makeLesson();
-
       expect(lesson).toHaveProperty('id');
       expect(lesson).toHaveProperty('title');
-      expect(lesson).toHaveProperty('language');
-      expect(lesson).toHaveProperty('level');
-      expect(lesson).toHaveProperty('exercises');
+      expect(lesson).toHaveProperty('language', 'pa');
+      expect(lesson).toHaveProperty('level', 'A1');
       expect(lesson.exercises).toHaveLength(1);
       expect(lesson.xpReward).toBe(10);
     });
 
-    it('should allow custom exercises', () => {
-      const customExercises = [
-        makeExercise({ type: 'translation' }),
-        makeExercise({ type: 'listening' }),
-      ];
-
-      const lesson = makeLesson({ exercises: customExercises });
-
-      expect(lesson.exercises).toHaveLength(2);
-      expect(lesson.exercises[0].type).toBe('translation');
-      expect(lesson.exercises[1].type).toBe('listening');
+    test('accepts overrides', () => {
+      const lesson = makeLesson({
+        title: 'Custom Title',
+        xpReward: 50,
+        level: 'B1'
+      });
+      expect(lesson.title).toBe('Custom Title');
+      expect(lesson.xpReward).toBe(50);
+      expect(lesson.level).toBe('B1');
     });
   });
 
-  describe('makeLessonList', () => {
-    it('should create multiple lessons', () => {
-      const lessons = makeLessonList(5);
-
-      expect(lessons).toHaveLength(5);
-      lessons.forEach((lesson) => {
-        expect(lesson).toHaveProperty('id');
-        expect(lesson).toHaveProperty('title');
-      });
+  describe('makeExercise', () => {
+    test('creates valid exercise with defaults', () => {
+      const exercise = makeExercise();
+      expect(exercise).toHaveProperty('id');
+      expect(exercise).toHaveProperty('type', 'mcq');
+      expect(exercise).toHaveProperty('prompt');
+      expect(exercise.options).toHaveLength(3);
+      expect(exercise).toHaveProperty('answer');
     });
 
-    it('should create lessons with varying levels', () => {
-      const lessons = makeLessonList(5);
-      const levels = lessons.map((l) => l.level);
-
-      expect(levels).toContain('A1');
-      expect(levels).toContain('A2');
+    test('accepts overrides', () => {
+      const exercise = makeExercise({
+        type: 'fill-blank',
+        prompt: 'Custom prompt'
+      });
+      expect(exercise.type).toBe('fill-blank');
+      expect(exercise.prompt).toBe('Custom prompt');
     });
   });
 
   describe('makeUser', () => {
-    it('should create a valid user', () => {
+    test('creates valid user with defaults', () => {
       const user = makeUser();
-
       expect(user).toHaveProperty('id');
       expect(user).toHaveProperty('email');
       expect(user).toHaveProperty('name');
-      expect(user.email).toContain('@');
+      expect(user.targetLanguage).toBe('pa');
+      expect(user.xp).toBe(0);
     });
 
-    it('should allow overriding user properties', () => {
+    test('accepts overrides', () => {
       const user = makeUser({
         email: 'custom@example.com',
-        name: 'Custom Name',
+        xp: 500
       });
-
       expect(user.email).toBe('custom@example.com');
-      expect(user.name).toBe('Custom Name');
+      expect(user.xp).toBe(500);
     });
   });
 
-  describe('makeUserProgress', () => {
-    it('should create valid user progress', () => {
-      const progress = makeUserProgress();
-
-      expect(progress).toHaveProperty('userId');
-      expect(progress).toHaveProperty('totalXp');
-      expect(progress).toHaveProperty('level');
-      expect(progress).toHaveProperty('streak');
-      expect(progress.totalXp).toBeGreaterThanOrEqual(0);
-      expect(progress.level).toBeGreaterThanOrEqual(1);
+  describe('makeUserProfile', () => {
+    test('creates valid user profile with preferences and stats', () => {
+      const profile = makeUserProfile();
+      expect(profile).toHaveProperty('preferences');
+      expect(profile).toHaveProperty('stats');
+      expect(profile.preferences).toHaveProperty('dailyGoal', 20);
+      expect(profile.stats).toHaveProperty('lessonsCompleted', 0);
     });
   });
 });

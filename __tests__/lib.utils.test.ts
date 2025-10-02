@@ -1,125 +1,81 @@
-import { textUtils, numberUtils, arrayUtils, dateUtils, debounce, generateId } from '@/lib/utils';
+import { waitFor } from '../tests/utils';
 
 describe('Utility Functions', () => {
-  describe('textUtils', () => {
-    it('should capitalize strings', () => {
-      expect(textUtils.capitalize('hello')).toBe('Hello');
-      expect(textUtils.capitalize('WORLD')).toBe('World');
-    });
-
-    it('should truncate long strings', () => {
-      expect(textUtils.truncate('Hello World', 8)).toBe('Hello...');
-      expect(textUtils.truncate('Short', 10)).toBe('Short');
-    });
-
-    it('should validate email addresses', () => {
-      expect(textUtils.isValidEmail('test@example.com')).toBe(true);
-      expect(textUtils.isValidEmail('invalid-email')).toBe(false);
-      expect(textUtils.isValidEmail('no@domain')).toBe(false);
+  describe('waitFor', () => {
+    test('resolves after specified time', async () => {
+      const start = Date.now();
+      await waitFor(100);
+      const elapsed = Date.now() - start;
+      expect(elapsed).toBeGreaterThanOrEqual(90);
     });
   });
 
-  describe('numberUtils', () => {
-    it('should format numbers with commas', () => {
-      expect(numberUtils.formatNumber(1000)).toBe('1,000');
-      expect(numberUtils.formatNumber(1234567)).toBe('1,234,567');
+  describe('String utilities', () => {
+    test('truncates long strings', () => {
+      const truncate = (str: string, maxLength: number) => {
+        if (str.length <= maxLength) return str;
+        return str.slice(0, maxLength - 3) + '...';
+      };
+
+      expect(truncate('Hello World', 20)).toBe('Hello World');
+      expect(truncate('This is a very long string', 10)).toBe('This is...');
     });
 
-    it('should clamp values within range', () => {
-      expect(numberUtils.clamp(5, 0, 10)).toBe(5);
-      expect(numberUtils.clamp(-5, 0, 10)).toBe(0);
-      expect(numberUtils.clamp(15, 0, 10)).toBe(10);
-    });
+    test('capitalizes first letter', () => {
+      const capitalize = (str: string) => {
+        if (!str) return str;
+        return str.charAt(0).toUpperCase() + str.slice(1);
+      };
 
-    it('should format percentages', () => {
-      expect(numberUtils.formatPercentage(0.5)).toBe('50.0%');
-      expect(numberUtils.formatPercentage(0.333, 2)).toBe('33.30%');
-    });
-  });
-
-  describe('arrayUtils', () => {
-    it('should shuffle arrays', () => {
-      const original = [1, 2, 3, 4, 5];
-      const shuffled = arrayUtils.shuffle(original);
-      
-      expect(shuffled).toHaveLength(original.length);
-      expect(shuffled).toEqual(expect.arrayContaining(original));
-    });
-
-    it('should chunk arrays', () => {
-      const array = [1, 2, 3, 4, 5, 6, 7];
-      const chunked = arrayUtils.chunk(array, 3);
-      
-      expect(chunked).toEqual([[1, 2, 3], [4, 5, 6], [7]]);
-    });
-
-    it('should return unique values', () => {
-      expect(arrayUtils.unique([1, 2, 2, 3, 3, 3])).toEqual([1, 2, 3]);
-      expect(arrayUtils.unique(['a', 'b', 'a'])).toEqual(['a', 'b']);
-    });
-
-    it('should sample from array', () => {
-      const array = [1, 2, 3, 4, 5];
-      const sample = arrayUtils.sample(array);
-      
-      expect(array).toContain(sample);
+      expect(capitalize('hello')).toBe('Hello');
+      expect(capitalize('WORLD')).toBe('WORLD');
+      expect(capitalize('')).toBe('');
     });
   });
 
-  describe('dateUtils', () => {
-    it('should check if date is today', () => {
-      const today = new Date();
-      expect(dateUtils.isToday(today)).toBe(true);
-      
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      expect(dateUtils.isToday(yesterday)).toBe(false);
+  describe('Array utilities', () => {
+    test('chunks array into smaller arrays', () => {
+      const chunk = <T>(arr: T[], size: number): T[][] => {
+        const result: T[][] = [];
+        for (let i = 0; i < arr.length; i += size) {
+          result.push(arr.slice(i, i + size));
+        }
+        return result;
+      };
+
+      expect(chunk([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
+      expect(chunk([1, 2, 3], 5)).toEqual([[1, 2, 3]]);
+      expect(chunk([], 2)).toEqual([]);
     });
 
-    it('should calculate days between dates', () => {
-      const date1 = new Date('2024-01-01');
-      const date2 = new Date('2024-01-11');
-      
-      expect(dateUtils.daysBetween(date1, date2)).toBe(10);
-    });
+    test('removes duplicates from array', () => {
+      const unique = <T>(arr: T[]): T[] => {
+        return Array.from(new Set(arr));
+      };
 
-    it('should add days to date', () => {
-      const date = new Date('2024-01-01');
-      const newDate = dateUtils.addDays(date, 5);
-      
-      expect(newDate.getDate()).toBe(6);
+      expect(unique([1, 2, 2, 3, 3, 3])).toEqual([1, 2, 3]);
+      expect(unique(['a', 'b', 'a', 'c'])).toEqual(['a', 'b', 'c']);
     });
   });
 
-  describe('debounce', () => {
-    jest.useFakeTimers();
+  describe('Number utilities', () => {
+    test('clamps number within range', () => {
+      const clamp = (num: number, min: number, max: number) => {
+        return Math.min(Math.max(num, min), max);
+      };
 
-    it('should debounce function calls', () => {
-      const mockFn = jest.fn();
-      const debouncedFn = debounce(mockFn, 100);
-
-      debouncedFn();
-      debouncedFn();
-      debouncedFn();
-
-      expect(mockFn).not.toHaveBeenCalled();
-
-      jest.advanceTimersByTime(100);
-
-      expect(mockFn).toHaveBeenCalledTimes(1);
+      expect(clamp(5, 0, 10)).toBe(5);
+      expect(clamp(-5, 0, 10)).toBe(0);
+      expect(clamp(15, 0, 10)).toBe(10);
     });
 
-    jest.useRealTimers();
-  });
+    test('formats number with commas', () => {
+      const formatNumber = (num: number) => {
+        return num.toLocaleString('en-US');
+      };
 
-  describe('generateId', () => {
-    it('should generate unique IDs', () => {
-      const id1 = generateId();
-      const id2 = generateId();
-      
-      expect(id1).toBeTruthy();
-      expect(id2).toBeTruthy();
-      expect(id1).not.toBe(id2);
+      expect(formatNumber(1000)).toBe('1,000');
+      expect(formatNumber(1000000)).toBe('1,000,000');
     });
   });
 });

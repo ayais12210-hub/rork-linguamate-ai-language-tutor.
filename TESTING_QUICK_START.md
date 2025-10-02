@@ -1,161 +1,211 @@
 # Testing Quick Start Guide
 
-> **TL;DR**: Complete testing infrastructure is ready. Follow these 3 steps to get started.
+## 🚀 Get Started in 3 Steps
 
-## 🚀 Quick Setup (3 Steps)
+### 1. Install Dependencies
 
-### Step 1: Update package.json
-
-Add these scripts to your `package.json`:
-
-```json
-{
-  "scripts": {
-    "dev": "expo start",
-    "web": "expo start --web",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint . --ext .ts,.tsx",
-    "lint:fix": "eslint . --ext .ts,.tsx --fix",
-    "format": "prettier --check .",
-    "format:write": "prettier --write .",
-    "test": "jest --coverage",
-    "test:watch": "jest --watch",
-    "test:ci": "jest --ci --runInBand --coverage",
-    "e2e": "playwright test",
-    "e2e:ui": "playwright test --ui",
-    "e2e:report": "playwright show-report",
-    "e2e:debug": "playwright test --debug",
-    "build:web": "expo export --platform web",
-    "prepare": "husky install",
-    "lint-staged": "lint-staged"
-  }
-}
+```bash
+bun install
 ```
 
-### Step 2: Initialize Git Hooks
+### 2. Initialize Git Hooks
 
 ```bash
 bun run prepare
 ```
 
-### Step 3: Run Tests
+### 3. Install Playwright Browsers
 
 ```bash
-# Run all tests
+bunx playwright install --with-deps
+```
+
+## ✅ Verify Installation
+
+```bash
+# Run unit tests
 bun test
 
 # Run E2E tests
 bun e2e
 ```
 
-## ✅ What's Included
-
-- ✅ Jest for unit/integration tests
-- ✅ Playwright for E2E tests
-- ✅ MSW for API mocking
-- ✅ Test factories for data generation
-- ✅ Git hooks (pre-commit linting, commit validation)
-- ✅ CI/CD pipeline with test gates
-- ✅ Coverage thresholds (85% lines, 80% functions)
-- ✅ Sample tests to get started
-
 ## 📝 Common Commands
 
+### Testing
+
 ```bash
-# Testing
-bun test              # Run unit tests
-bun test:watch        # Watch mode
-bun e2e               # E2E tests
-bun e2e:ui            # E2E with UI
+# Run all tests with coverage
+bun test
 
-# Code Quality
-bun typecheck         # Type check
-bun lint              # Lint code
-bun format            # Check formatting
+# Watch mode for development
+bun test:watch
 
-# Development
-bun dev               # Start dev server
-bun web               # Start web server
+# Run E2E tests
+bun e2e
+
+# View E2E report
+bun e2e:report
 ```
 
-## 📚 Full Documentation
+### Code Quality
 
-- **[TESTING_IMPLEMENTATION_SUMMARY.md](docs/TESTING_IMPLEMENTATION_SUMMARY.md)** - Complete overview
-- **[TESTING_SETUP.md](docs/TESTING_SETUP.md)** - Detailed setup guide
-- **[TESTING_STRATEGY.md](docs/TESTING_STRATEGY.md)** - Testing strategy and best practices
-- **[TESTID_CONVENTIONS.md](docs/TESTID_CONVENTIONS.md)** - TestID naming conventions
+```bash
+# Type check
+bun typecheck
 
-## 🎯 Coverage Targets
+# Lint code
+bun lint
 
-- **Lines**: 85%
-- **Functions**: 80%
-- **Branches**: 70%
+# Check formatting
+bun format
 
-## 🔧 File Structure
-
-```
-linguamate/
-├── __tests__/           # Unit tests
-├── tests/
-│   ├── e2e/            # E2E tests
-│   ├── factories/      # Test data
-│   ├── msw/            # API mocks
-│   └── utils/          # Test utilities
-├── jest.config.ts      # Jest config
-└── playwright.config.ts # Playwright config
+# Fix formatting
+bun format:write
 ```
 
-## 💡 Writing Your First Test
+### Building
+
+```bash
+# Build web app
+bun build:web
+
+# Start web dev server
+bun web
+```
+
+## 📚 Documentation
+
+- **[Testing Strategy](./docs/TESTING_STRATEGY.md)** - Overall testing approach
+- **[Testing Setup](./docs/TESTING_SETUP.md)** - Detailed setup guide
+- **[Implementation Summary](./docs/TESTING_IMPLEMENTATION_SUMMARY.md)** - What was built
+- **[TestID Conventions](./docs/TESTID_CONVENTIONS.md)** - UI testing standards
+
+## 🎯 What's Included
+
+### Test Infrastructure
+- ✅ Jest for unit & integration tests
+- ✅ Playwright for E2E tests
+- ✅ MSW for API mocking
+- ✅ React Testing Library
+- ✅ Test utilities & factories
+
+### CI/CD
+- ✅ GitHub Actions workflow
+- ✅ Automated testing on PRs
+- ✅ Coverage enforcement
+- ✅ Build verification
+
+### Code Quality
+- ✅ Husky git hooks
+- ✅ Lint-staged pre-commit
+- ✅ Commitlint for conventional commits
+- ✅ ESLint + Prettier
+
+### Seed Tests
+- ✅ 27 unit tests
+- ✅ 5 E2E tests
+- ✅ Schema validation tests
+- ✅ Factory tests
+- ✅ Utility tests
+
+## 🔍 Coverage Thresholds
+
+- **Global**: 70% branches, 80% functions, 85% lines
+- **Schemas**: 90% branches, 95% functions, 95% lines
+- **State**: 75% branches, 85% functions, 85% lines
+
+## 🛠️ Troubleshooting
+
+### Tests failing?
+
+```bash
+# Clear Jest cache
+bun test -- --clearCache
+
+# Reinstall dependencies
+rm -rf node_modules bun.lock
+bun install
+```
+
+### E2E tests failing?
+
+```bash
+# Reinstall Playwright browsers
+bunx playwright install --with-deps
+
+# Check web server
+bun web
+```
+
+### Coverage not meeting thresholds?
+
+```bash
+# View detailed coverage report
+bun test -- --coverage
+open coverage/lcov-report/index.html
+```
+
+## 📖 Writing Your First Test
 
 ### Unit Test
 
 ```typescript
 // __tests__/myFeature.test.ts
-import { myFunction } from '@/lib/myFeature';
-
-describe('myFunction', () => {
-  it('should do something', () => {
-    expect(myFunction('input')).toBe('expected output');
+describe('myFeature', () => {
+  test('does something', () => {
+    expect(true).toBe(true);
   });
+});
+```
+
+### Component Test
+
+```typescript
+// __tests__/MyComponent.test.tsx
+import { renderWithProviders, screen } from '../tests/utils';
+import { MyComponent } from '@components/MyComponent';
+
+test('renders correctly', () => {
+  renderWithProviders(<MyComponent />);
+  expect(screen.getByText('Hello')).toBeInTheDocument();
 });
 ```
 
 ### E2E Test
 
 ```typescript
-// tests/e2e/myFeature.spec.ts
+// tests/e2e/myFlow.spec.ts
 import { test, expect } from '@playwright/test';
 
-test('should navigate to feature', async ({ page }) => {
+test('completes user flow', async ({ page }) => {
   await page.goto('/');
-  await page.getByText('My Feature').click();
-  await expect(page).toHaveURL(/.*feature/);
+  await expect(page.getByText('Welcome')).toBeVisible();
 });
 ```
 
-## 🐛 Troubleshooting
+## 🎓 Next Steps
 
-### Tests not running?
-```bash
-bun test --clearCache
-rm -rf node_modules && bun install
-```
+1. **Read the docs** - Start with [Testing Strategy](./docs/TESTING_STRATEGY.md)
+2. **Write tests** - Add tests for new features
+3. **Increase coverage** - Aim for 85%+ coverage
+4. **Monitor CI** - Check GitHub Actions for failures
+5. **Follow conventions** - Use testIDs, factories, and best practices
 
-### Git hooks not working?
-```bash
-bun run prepare
-chmod +x .husky/*
-```
+## 💡 Tips
 
-### E2E tests failing?
-```bash
-bunx playwright install --force
-```
+- Use `test:watch` during development
+- Use factories for test data
+- Mock external dependencies with MSW
+- Keep tests fast and isolated
+- Follow the AAA pattern (Arrange, Act, Assert)
 
-## 🎉 You're Ready!
+## 🆘 Need Help?
 
-Start writing tests and enjoy the confidence that comes with comprehensive test coverage!
+- Check [Testing Setup](./docs/TESTING_SETUP.md) for detailed guides
+- Review [Testing Strategy](./docs/TESTING_STRATEGY.md) for best practices
+- Look at existing tests in `__tests__/` for examples
 
 ---
 
-**Need Help?** Check the full documentation in `/docs` or ask in the team Slack channel.
+**Ready to test?** Run `bun test` and start building with confidence! 🚀
