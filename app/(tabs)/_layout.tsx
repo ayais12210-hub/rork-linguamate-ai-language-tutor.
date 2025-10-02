@@ -53,16 +53,20 @@ export default function TabLayout() {
           backgroundColor: colors.tabBg,
           borderTopWidth: 1,
           borderTopColor: colors.tabBorder,
-          paddingBottom: Math.max(insets.bottom, 10),
-          paddingTop: 6,
+          paddingBottom: Math.max(insets.bottom + 24, 32),
+          paddingTop: 10,
+        },
+        tabBarIconStyle: {
+          marginTop: 2,
         },
         tabBarItemStyle: {
-          paddingVertical: 6,
+          paddingVertical: 4,
         },
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '500',
-          marginTop: 4,
+          marginTop: 2,
+          marginBottom: 8,
         },
       }}
     >
