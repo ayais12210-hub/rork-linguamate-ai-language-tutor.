@@ -1,8 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Platform } from 'react-native';
 import { UserProvider, useUser } from '@/hooks/user-store';
 import { ChatProvider } from '@/hooks/chat-store';
 import { LearningProgressProvider } from '@/state/learning-progress';
@@ -52,12 +54,13 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      {Platform.OS === 'web' ? <ReactQueryDevtools /> : null}
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <UserProvider>
           <ChatProvider>
             <LearningProgressProvider>
               <ErrorBoundary>
-                <GestureHandlerRootView style={{ flex: 1 }}>
+                <GestureHandlerRootView style={{ flex: 1 }} testID="root-gesture-container">
                   <MonitoringInitializer />
                   <RootLayoutNav />
                   <RatingPrompt />

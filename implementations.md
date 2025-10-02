@@ -4,6 +4,11 @@ This document is a running, append-only log of implementation changes made in th
 
 ---
 
+## 2025-10-02 — API client hardening and React Query hook
+- Replaced shared/services/api/client.ts with a typed fetch wrapper using Zod validation, AbortController timeouts, and clear ApiError typing.
+- Added requestRaw and useApiQuery helpers with strict generics and correct queryKey composition for caching.
+- Exported trpc/trpcClient passthroughs for existing code.
+
 ## 2025-10-02 — Feature-first scaffolding and shared services
 - Created scaffold folders: app/features/lessons, app/shared/components, app/shared/services, app/shared/i18n.
 - Added shared/services/api/client.ts re-exporting tRPC client for a stable import path.
