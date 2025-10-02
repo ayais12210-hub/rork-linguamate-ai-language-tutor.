@@ -24,7 +24,7 @@ export default function TabLayout() {
 
   const SettingsButton = () => (
     <TouchableOpacity
-      onPress={() => router.push('/settings')}
+      onPress={() => router.push('/(tabs)/settings')}
       style={styles.settingsButton}
       testID="open-settings"
     >
@@ -122,6 +122,7 @@ export default function TabLayout() {
           href: null,
         }}
       />
+      {/* Settings routes live under /(tabs)/settings but are not a visible tab */}
     </Tabs>
   );
 }
