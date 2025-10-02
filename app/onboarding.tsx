@@ -21,15 +21,12 @@ import {
   Sparkles,
   Trophy,
   Users,
-  ChevronDown,
-  Edit2,
 } from 'lucide-react-native';
 import { useUser } from '@/hooks/user-store';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import LanguageSearchBar from '@/components/search/LanguageSearchBar';
 import { rankLanguages } from '@/modules/languages/logic/filter';
 import type { Lang } from '@/modules/languages/data/languages';
-import { LANGUAGES } from '@/modules/languages/data/languages';
 
 const { width } = Dimensions.get('window');
 
@@ -91,13 +88,6 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     icon: BookOpen,
     color: '#EC4899',
   },
-  {
-    id: 'review',
-    title: 'Review & Confirm',
-    subtitle: 'Check your selections before starting',
-    icon: Check,
-    color: '#10B981',
-  },
 ];
 
 const PROFICIENCY_LEVELS = [
@@ -145,7 +135,6 @@ export default function OnboardingScreen() {
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [nativeSearchQuery, setNativeSearchQuery] = useState('');
   const [targetSearchQuery, setTargetSearchQuery] = useState('');
-  const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
   const nativeLanguages = React.useMemo(
     () => rankLanguages(nativeSearchQuery),
@@ -201,8 +190,6 @@ export default function OnboardingScreen() {
         return true;
       case 'topics':
         return selectedTopics.length > 0;
-      case 'review':
-        return true;
       default:
         return true;
     }
@@ -450,202 +437,10 @@ export default function OnboardingScreen() {
           </ScrollView>
         );
 
-      case 'review':
-        return (
-          <ScrollView style={styles.reviewScroll} showsVerticalScrollIndicator={false}>
-            <View style={styles.reviewContainer}>
-              <ReviewSection
-                title="Languages"
-                icon="🌐"
-                isExpanded={expandedSection === 'languages'}
-                onToggle={() => setExpandedSection(expandedSection === 'languages' ? null : 'languages')}
-              >
-                <View style={styles.reviewItem}>
-                  <Text style={styles.reviewLabel}>Native Language</Text>
-                  <Text style={styles.reviewValue}>
-                    {LANGUAGES.find(l => l.code === nativeLanguage)?.flag} {LANGUAGES.find(l => l.code === nativeLanguage)?.name}
-                  </Text>
-                </View>
-                <View style={styles.reviewDivider} />
-                <View style={styles.reviewItem}>
-                  <Text style={styles.reviewLabel}>Learning</Text>
-                  <Text style={styles.reviewValue}>
-                    {LANGUAGES.find(l => l.code === targetLanguage)?.flag} {LANGUAGES.find(l => l.code === targetLanguage)?.name}
-                  </Text>
-                </View>
-                {expandedSection === 'languages' && (
-                  <TouchableOpacity
-                    style={styles.editButton}
-                    onPress={() => {
-                      setExpandedSection(null);
-                      setCurrentStep(1);
-                    }}
-                  >
-                    <Edit2 size={16} color="white" />
-                    <Text style={styles.editButtonText}>Change Languages</Text>
-                  </TouchableOpacity>
-                )}
-              </ReviewSection>
-
-              <ReviewSection
-                title="Skill Level"
-                icon="🎯"
-                isExpanded={expandedSection === 'level'}
-                onToggle={() => setExpandedSection(expandedSection === 'level' ? null : 'level')}
-              >
-                <View style={styles.reviewItem}>
-                  <Text style={styles.reviewLabel}>Current Level</Text>
-                  <Text style={styles.reviewValue}>
-                    {PROFICIENCY_LEVELS.find(l => l.id === selectedLevel)?.label}
-                  </Text>
-                </View>
-                {expandedSection === 'level' && (
-                  <TouchableOpacity
-                    style={styles.editButton}
-                    onPress={() => {
-                      setExpandedSection(null);
-                      setCurrentStep(3);
-                    }}
-                  >
-                    <Edit2 size={16} color="white" />
-                    <Text style={styles.editButtonText}>Change Level</Text>
-                  </TouchableOpacity>
-                )}
-              </ReviewSection>
-
-              <ReviewSection
-                title="Learning Goals"
-                icon="🏆"
-                isExpanded={expandedSection === 'goals'}
-                onToggle={() => setExpandedSection(expandedSection === 'goals' ? null : 'goals')}
-              >
-                <View style={styles.reviewItem}>
-                  <Text style={styles.reviewLabel}>Your Goals</Text>
-                  <View style={styles.chipContainer}>
-                    {selectedGoals.map(goalId => {
-                      const goal = LEARNING_GOALS.find(g => g.id === goalId);
-                      return (
-                        <View key={goalId} style={styles.chip}>
-                          <Text style={styles.chipText}>{goal?.icon} {goal?.label}</Text>
-                        </View>
-                      );
-                    })}
-                  </View>
-                </View>
-                {expandedSection === 'goals' && (
-                  <TouchableOpacity
-                    style={styles.editButton}
-                    onPress={() => {
-                      setExpandedSection(null);
-                      setCurrentStep(4);
-                    }}
-                  >
-                    <Edit2 size={16} color="white" />
-                    <Text style={styles.editButtonText}>Change Goals</Text>
-                  </TouchableOpacity>
-                )}
-              </ReviewSection>
-
-              <ReviewSection
-                title="Daily Commitment"
-                icon="⏰"
-                isExpanded={expandedSection === 'time'}
-                onToggle={() => setExpandedSection(expandedSection === 'time' ? null : 'time')}
-              >
-                <View style={styles.reviewItem}>
-                  <Text style={styles.reviewLabel}>Daily Goal</Text>
-                  <Text style={styles.reviewValue}>
-                    {DAILY_GOALS.find(g => g.minutes === dailyGoal)?.label} ({dailyGoal} min/day)
-                  </Text>
-                </View>
-                {expandedSection === 'time' && (
-                  <TouchableOpacity
-                    style={styles.editButton}
-                    onPress={() => {
-                      setExpandedSection(null);
-                      setCurrentStep(5);
-                    }}
-                  >
-                    <Edit2 size={16} color="white" />
-                    <Text style={styles.editButtonText}>Change Time</Text>
-                  </TouchableOpacity>
-                )}
-              </ReviewSection>
-
-              <ReviewSection
-                title="Interests"
-                icon="📚"
-                isExpanded={expandedSection === 'topics'}
-                onToggle={() => setExpandedSection(expandedSection === 'topics' ? null : 'topics')}
-              >
-                <View style={styles.reviewItem}>
-                  <Text style={styles.reviewLabel}>Topics</Text>
-                  <View style={styles.chipContainer}>
-                    {selectedTopics.map(topicId => {
-                      const topic = TOPICS.find(t => t.id === topicId);
-                      return (
-                        <View key={topicId} style={styles.chip}>
-                          <Text style={styles.chipText}>{topic?.icon} {topic?.label}</Text>
-                        </View>
-                      );
-                    })}
-                  </View>
-                </View>
-                {expandedSection === 'topics' && (
-                  <TouchableOpacity
-                    style={styles.editButton}
-                    onPress={() => {
-                      setExpandedSection(null);
-                      setCurrentStep(6);
-                    }}
-                  >
-                    <Edit2 size={16} color="white" />
-                    <Text style={styles.editButtonText}>Change Topics</Text>
-                  </TouchableOpacity>
-                )}
-              </ReviewSection>
-            </View>
-          </ScrollView>
-        );
-
       default:
         return null;
     }
   };
-
-  interface ReviewSectionProps {
-    title: string;
-    icon: string;
-    isExpanded: boolean;
-    onToggle: () => void;
-    children: React.ReactNode;
-  }
-
-  const ReviewSection = ({ title, icon, isExpanded, onToggle, children }: ReviewSectionProps) => (
-    <View style={styles.reviewSection}>
-      <TouchableOpacity
-        style={styles.reviewSectionHeader}
-        onPress={onToggle}
-        activeOpacity={0.7}
-      >
-        <View style={styles.reviewSectionTitleRow}>
-          <Text style={styles.reviewSectionIcon}>{icon}</Text>
-          <Text style={styles.reviewSectionTitle}>{title}</Text>
-        </View>
-        <ChevronDown
-          size={20}
-          color="rgba(255, 255, 255, 0.7)"
-          style={[
-            styles.chevronIcon,
-            isExpanded && styles.chevronIconExpanded,
-          ]}
-        />
-      </TouchableOpacity>
-      <View style={styles.reviewSectionContent}>
-        {children}
-      </View>
-    </View>
-  );
 
   return (
     <LinearGradient
@@ -963,106 +758,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   selectedTopicLabel: {
-    fontWeight: '600' as const,
-  },
-  reviewScroll: {
-    flex: 1,
-  },
-  reviewContainer: {
-    gap: 12,
-    paddingBottom: 20,
-  },
-  reviewSection: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 16,
-    overflow: 'hidden' as const,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-  },
-  reviewSectionHeader: {
-    flexDirection: 'row' as const,
-    justifyContent: 'space-between' as const,
-    alignItems: 'center' as const,
-    padding: 16,
-  },
-  reviewSectionTitleRow: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    gap: 10,
-  },
-  reviewSectionIcon: {
-    fontSize: 20,
-  },
-  reviewSectionTitle: {
-    color: 'white',
-    fontSize: 17,
-    fontWeight: '700' as const,
-  },
-  chevronIcon: {
-    transform: [{ rotate: '0deg' }],
-  },
-  chevronIconExpanded: {
-    transform: [{ rotate: '180deg' }],
-  },
-  reviewSectionContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  reviewItem: {
-    gap: 8,
-  },
-  reviewLabel: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 13,
-    fontWeight: '500' as const,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 0.5,
-  },
-  reviewValue: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600' as const,
-  },
-  reviewDivider: {
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    marginVertical: 12,
-  },
-  chipContainer: {
-    flexDirection: 'row' as const,
-    flexWrap: 'wrap' as const,
-    gap: 8,
-    marginTop: 4,
-  },
-  chip: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  chipText: {
-    color: 'white',
-    fontSize: 13,
-    fontWeight: '500' as const,
-  },
-  editButton: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    gap: 6,
-    marginTop: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-  },
-  editButtonText: {
-    color: 'white',
-    fontSize: 14,
     fontWeight: '600' as const,
   },
   footer: {
