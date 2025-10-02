@@ -9,6 +9,15 @@ import {
   RateLimiter,
   SECURITY_CONFIG 
 } from '@/lib/security';
+import {
+  SignInSchema,
+  SignUpSchema,
+  VerifyOtpSchema,
+  ForgotPasswordSchema,
+  ChangePasswordSchema,
+  RefreshTokenSchema,
+} from '@/schemas/auth';
+import { UpdateProfileSchema, DeleteAccountSchema } from '@/schemas/profile';
 
 // Mock database for demo - replace with real database
 const users = new Map<string, any>();
@@ -37,9 +46,7 @@ const verifyPassword = async (password: string, hash: string): Promise<boolean> 
 
 // Login procedure with enhanced security
 export const loginProcedure = publicProcedure
-  .input(z.object({
-    email: z.string().email(),
-    password: z.string().min(8),
+  .input(SignInSchema.extend({
     deviceFingerprint: z.string().optional(),
     captchaToken: z.string().optional(),
   }))
@@ -170,23 +177,14 @@ export const loginProcedure = publicProcedure
 
 // Signup procedure with enhanced security
 export const signupProcedure = publicProcedure
-  .input(z.object({
+  .input(SignUpSchema.extend({
     name: z.string().min(2).max(50),
-    email: z.string().email(),
-    password: z.string().min(8),
     deviceFingerprint: z.string().optional(),
-    acceptedTerms: z.boolean(),
   }))
   .mutation(async ({ input, ctx }) => {
-    const { name, email, password, deviceFingerprint, acceptedTerms } = input;
+    const { name, email, password, deviceFingerprint } = input;
     
-    // Validate terms acceptance
-    if (!acceptedTerms) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'You must accept the terms and conditions',
-      });
-    }
+
     
     // Sanitize inputs
     const sanitizedName = InputSanitizer.sanitizeText(name);
@@ -354,9 +352,7 @@ export const logoutProcedure = protectedProcedure
 
 // Refresh token procedure
 export const refreshTokenProcedure = publicProcedure
-  .input(z.object({
-    refreshToken: z.string(),
-  }))
+  .input(RefreshTokenSchema)
   .mutation(async ({ input }) => {
     const { refreshToken } = input;
     
@@ -382,10 +378,7 @@ export const refreshTokenProcedure = publicProcedure
 
 // Verify email procedure
 export const verifyEmailProcedure = publicProcedure
-  .input(z.object({
-    email: z.string().email(),
-    code: z.string(),
-  }))
+  .input(VerifyOtpSchema.extend({ code: z.string() }))
   .mutation(async ({ input }) => {
     const { email, code } = input;
     
@@ -419,10 +412,10 @@ export const resetPasswordProcedure = publicProcedure
   .input(z.object({
     email: z.string().email(),
     code: z.string(),
-    newPassword: z.string().min(8),
+    password: z.string().min(8),
   }))
   .mutation(async ({ input }) => {
-    const { email, code, newPassword } = input;
+    const { email, code, password: newPassword } = input;
     
     // Find user by email
     const user = Array.from(users.values()).find(u => u.email === email);
@@ -451,9 +444,7 @@ export const resetPasswordProcedure = publicProcedure
 
 // Request password reset procedure
 export const requestPasswordResetProcedure = publicProcedure
-  .input(z.object({
-    email: z.string().email(),
-  }))
+  .input(ForgotPasswordSchema)
   .mutation(async ({ input }) => {
     const { email } = input;
     
@@ -475,10 +466,7 @@ export const requestPasswordResetProcedure = publicProcedure
 
 // Delete account procedure
 export const deleteAccountProcedure = protectedProcedure
-  .input(z.object({
-    password: z.string(),
-    confirmation: z.string().regex(/delete my account/i),
-  }))
+  .input(DeleteAccountSchema)
   .mutation(async ({ ctx, input }) => {
     const { userId } = ctx;
     const { password } = input;
@@ -534,7 +522,7 @@ export const getCurrentUserProcedure = protectedProcedure
 
 // Update profile procedure
 export const updateProfileProcedure = protectedProcedure
-  .input(z.object({
+  .input(UpdateProfileSchema.extend({
     name: z.string().min(2).optional(),
     email: z.string().email().optional(),
     nativeLanguage: z.string().optional(),
@@ -574,11 +562,7 @@ export const updateProfileProcedure = protectedProcedure
 
 // Change password procedure with enhanced security
 export const changePasswordProcedure = protectedProcedure
-  .input(z.object({
-    currentPassword: z.string(),
-    newPassword: z.string().min(8),
-    confirmPassword: z.string(),
-  }))
+  .input(ChangePasswordSchema)
   .mutation(async ({ ctx, input }) => {
     const { userId } = ctx;
     const { currentPassword, newPassword, confirmPassword } = input;
