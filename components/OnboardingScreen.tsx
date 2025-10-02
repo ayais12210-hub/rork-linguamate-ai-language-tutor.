@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MessageCircle, Zap, Trophy, ChevronRight, Clock } from 'lucide-react-native';
+import { MessageCircle, Zap, Trophy, ChevronRight } from 'lucide-react-native';
 import { OnboardingData } from '@/types/user';
 import { useUser } from '@/hooks/user-store';
 
@@ -74,7 +74,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
   });
   const { completeOnboarding } = useUser();
 
-  const totalQuestions = 4 as const;
+  const totalQuestions = 3 as const;
 
   const nextPage = useCallback(() => {
     if (currentPage < introData.length - 1) {
@@ -124,7 +124,6 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
       case 0: return onboardingData.learningGoals.length > 0;
       case 1: return onboardingData.interests.length > 0;
       case 2: return onboardingData.preferredTopics.length > 0;
-      case 3: return onboardingData.dailyGoalMinutes > 0;
       default: return false;
     }
   }, [questionStep, onboardingData]);
@@ -134,7 +133,6 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
       { title: 'Learning Goals', subtitle: 'What do you want to achieve?' },
       { title: 'Your Interests', subtitle: 'What topics interest you?' },
       { title: 'Conversation Topics', subtitle: 'What would you like to practice?' },
-      { title: 'Daily Goals', subtitle: 'How much time can you dedicate?' },
     ];
 
     const renderQuestionStep = () => {
@@ -220,32 +218,6 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
             </View>
           );
 
-        case 3:
-          return (
-            <View>
-              <Text style={styles.questionDescription}>
-                How many minutes per day would you like to practice?
-              </Text>
-              {[5, 10, 15, 20, 30, 45, 60].map(minutes => (
-                <TouchableOpacity
-                  key={minutes}
-                  style={[
-                    styles.timeButton,
-                    onboardingData.dailyGoalMinutes === minutes && styles.selectedOption
-                  ]}
-                  onPress={() => setOnboardingData(prev => ({ ...prev, dailyGoalMinutes: minutes }))}
-                >
-                  <Clock size={20} color={onboardingData.dailyGoalMinutes === minutes ? 'white' : '#6B7280'} />
-                  <Text style={[
-                    styles.timeText,
-                    onboardingData.dailyGoalMinutes === minutes && styles.selectedOptionText
-                  ]}>
-                    {minutes} minutes
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          );
         default:
           return null;
       }
