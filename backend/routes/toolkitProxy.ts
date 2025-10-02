@@ -20,9 +20,25 @@ function rateLimit(ip: string): boolean {
   return rec.count <= MAX_REQ;
 }
 
+function buildHeaders(initHeaders?: HeadersInit): HeadersInit {
+  const base: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (API_KEY) base['Authorization'] = `Bearer ${API_KEY}`;
+  // Merge user headers (cast to Record where applicable)
+  if (initHeaders) {
+    if (initHeaders instanceof Headers) {
+      initHeaders.forEach((v, k) => { base[k] = v; });
+    } else if (Array.isArray(initHeaders)) {
+      for (const [k, v] of initHeaders) base[k] = v;
+    } else {
+      Object.assign(base, initHeaders as Record<string, string>);
+    }
+  }
+  return base;
+}
+
 async function proxyJson(c: any, path: string, body?: unknown, init?: RequestInit) {
   const ip = (c.req.header('x-forwarded-for') ?? c.req.header('cf-connecting-ip') ?? 'anon') as string;
-  if (!rateLimit(ip)) return c.json({ message: 'Rate limit exceeded' }, 429);
+  if (!rateLimit(ip)) { c.status(429 as any); return c.json({ message: 'Rate limit exceeded' }); }
 
   const url = new URL(path, BASE).toString();
   const retries = 2;
@@ -33,11 +49,7 @@ async function proxyJson(c: any, path: string, body?: unknown, init?: RequestIni
       const res = await fetch(url, {
         ...init,
         method: init?.method ?? 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': API_KEY ? `Bearer ${API_KEY}` : undefined,
-          ...init?.headers,
-        },
+        headers: buildHeaders(init?.headers),
         body: body ? JSON.stringify(body) : undefined,
       });
       const text = await res.text();
@@ -47,19 +59,23 @@ async function proxyJson(c: any, path: string, body?: unknown, init?: RequestIni
           await new Promise(r => setTimeout(r, 500 * Math.pow(2, attempt)));
           attempt++; continue;
         }
-        return c.json({ message: json?.message ?? 'Upstream error', status: res.status }, res.status);
+        c.status(res.status as any);
+        return c.json({ message: json?.message ?? 'Upstream error', status: res.status });
       }
-      return c.json(json, res.status);
+      c.status(res.status as any);
+      return c.json(json);
     } catch (e: any) {
       lastErr = e;
       if (attempt === retries) {
-        return c.json({ message: 'Service temporarily unavailable', error: e?.message }, 503);
+        c.status(503 as any);
+        return c.json({ message: 'Service temporarily unavailable', error: e?.message });
       }
       await new Promise(r => setTimeout(r, 500 * Math.pow(2, attempt)));
       attempt++;
     }
   }
-  return c.json({ message: 'Unknown error', error: lastErr?.message }, 500);
+  c.status(500 as any);
+  return c.json({ message: 'Unknown error', error: lastErr?.message });
 }
 
 // Text LLM proxy
@@ -72,22 +88,26 @@ toolkitApp.post('/toolkit/text/llm', async (c) => {
 toolkitApp.post('/toolkit/stt/transcribe', async (c) => {
   const contentType = c.req.header('content-type') || '';
   if (!contentType.includes('multipart/form-data')) {
-    return c.json({ message: 'Expected multipart/form-data' }, 400);
+    c.status(400 as any);
+    return c.json({ message: 'Expected multipart/form-data' });
   }
   const url = new URL('/stt/transcribe/', BASE).toString();
   try {
+    const headers: Record<string, string> = {};
+    if (API_KEY) headers['Authorization'] = `Bearer ${API_KEY}`;
+
     const res = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Authorization': API_KEY ? `Bearer ${API_KEY}` : undefined,
-      },
+      headers,
       body: c.req.raw.body as any,
     } as RequestInit);
     const text = await res.text();
     const json = text ? JSON.parse(text) : {};
-    return c.json(json, res.status);
+    c.status(res.status as any);
+    return c.json(json);
   } catch (e: any) {
-    return c.json({ message: 'Service temporarily unavailable', error: e?.message }, 503);
+    c.status(503 as any);
+    return c.json({ message: 'Service temporarily unavailable', error: e?.message });
   }
 });
 
