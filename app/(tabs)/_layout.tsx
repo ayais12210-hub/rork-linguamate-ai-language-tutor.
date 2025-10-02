@@ -122,7 +122,12 @@ export default function TabLayout() {
           href: null,
         }}
       />
-      {/* Settings routes live under /(tabs)/settings but are not a visible tab */}
+      <Tabs.Screen
+        name="settings"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }
