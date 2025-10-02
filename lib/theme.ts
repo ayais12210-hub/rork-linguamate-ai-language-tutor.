@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import { COLORS, FONT_SIZES, SPACING, BORDER_RADIUS, SHADOWS } from './constants';
+import { useUser } from '@/hooks/user-store';
 
 // Theme configuration for the language learning app
 
@@ -444,6 +445,13 @@ export const typography = {
     textAlign: 'center' as const,
   },
 } as const;
+
+// Theme hook for accessing current theme
+export function useTheme(): Theme {
+  const { user } = useUser();
+  const isDarkMode = user?.settings?.darkMode ?? false;
+  return isDarkMode ? darkTheme : theme;
+}
 
 // Export default theme
 export default theme;

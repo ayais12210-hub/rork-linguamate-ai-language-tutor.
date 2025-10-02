@@ -50,6 +50,7 @@ import LanguageSelector from '@/components/LanguageSelector';
 import UpgradeModal from '@/components/UpgradeModal';
 import { useNotifications } from '@/hooks/use-notifications';
 import { useOfflineStatus } from '@/modules/offline/index';
+import { useTheme } from '@/lib/theme';
 
 type SettingItem = {
   icon: LucideIcon;
@@ -70,6 +71,7 @@ export default function SettingsScreen() {
   const { user, updateUser, upgradeToPremium } = useUser();
   const notifications = useNotifications();
   const { isOffline, isConnected, unsyncedCount, lastSync } = useOfflineStatus();
+  const theme = useTheme();
 
   const defaultSettings: UserSettings = {
     darkMode: false,
@@ -767,26 +769,26 @@ export default function SettingsScreen() {
         options={{ 
           title: 'Settings',
           headerStyle: {
-            backgroundColor: 'white',
+            backgroundColor: theme.colors.background.primary,
           },
           headerTitleStyle: {
             fontSize: 20,
             fontWeight: 'bold',
-            color: '#1F2937',
+            color: theme.colors.text.primary,
           },
         }} 
       />
-      <SafeAreaView style={styles.container} testID="settings-screen-root">
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background.secondary }]} testID="settings-screen-root">
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* Daily Progress Summary */}
-          <View style={styles.progressCard}>
+          <View style={[styles.progressCard, { backgroundColor: theme.colors.background.primary }]}>
             <View style={styles.progressHeader}>
               <View style={styles.progressIconContainer}>
                 <TrendingUp size={24} color="#10B981" />
               </View>
               <View style={styles.progressInfo}>
-                <Text style={styles.progressTitle}>Today&apos;s Progress</Text>
-                <Text style={styles.progressSubtitle}>
+                <Text style={[styles.progressTitle, { color: theme.colors.text.primary }]}>Today&apos;s Progress</Text>
+                <Text style={[styles.progressSubtitle, { color: theme.colors.text.secondary }]}>
                   {dailyProgress} of {dailyGoalMinutes} minutes
                 </Text>
               </View>
@@ -805,8 +807,8 @@ export default function SettingsScreen() {
               </View>
             </View>
             <View style={styles.streakContainer}>
-              <Calendar size={16} color="#6B7280" />
-              <Text style={styles.streakText}>
+              <Calendar size={16} color={theme.colors.text.secondary} />
+              <Text style={[styles.streakText, { color: theme.colors.text.secondary }]}>
                 {currentStats.streakDays > 0 
                   ? `🔥 ${currentStats.streakDays} day streak!` 
                   : 'Start your learning streak today!'}
@@ -815,8 +817,8 @@ export default function SettingsScreen() {
           </View>
           {settingSections.map((section) => (
             <View key={section.title} style={styles.section}>
-              <Text style={styles.sectionTitle}>{section.title}</Text>
-              <View style={styles.sectionContent}>
+              <Text style={[styles.sectionTitle, { color: theme.colors.text.tertiary }]}>{section.title}</Text>
+              <View style={[styles.sectionContent, { backgroundColor: theme.colors.background.primary }]}>
                 {section.items.map((item) => {
                   const IconComponent = item.icon;
                   const isDisabled = item.isPremium && !user.isPremium && !item.onPress;
@@ -827,6 +829,7 @@ export default function SettingsScreen() {
                       key={item.label}
                       style={[
                         styles.settingItem,
+                        { borderBottomColor: theme.colors.border.light },
                         section.items.indexOf(item) === section.items.length - 1 && styles.lastSettingItem,
                         isDisabled && styles.disabledItem,
                       ]}
@@ -848,8 +851,9 @@ export default function SettingsScreen() {
                       <View style={styles.settingLeft}>
                         <View style={[
                           styles.settingIcon,
-                          item.isPremium && styles.premiumIcon,
-                          isDisabled && styles.disabledIcon,
+                          { backgroundColor: theme.colors.background.secondary },
+                          item.isPremium && [styles.premiumIcon, { backgroundColor: '#F0F0FF', borderColor: '#E0E0FF' }],
+                          isDisabled && [styles.disabledIcon, { backgroundColor: theme.colors.background.tertiary }],
                         ]}>
                           <IconComponent 
                             size={20} 
@@ -860,6 +864,7 @@ export default function SettingsScreen() {
                           <View style={styles.settingLabelContainer}>
                             <Text style={[
                               styles.settingLabel,
+                              { color: theme.colors.text.primary },
                               item.isPremium && !user.isPremium && styles.premiumLabel,
                               isDisabled && styles.disabledLabel,
                             ]}>
@@ -874,6 +879,7 @@ export default function SettingsScreen() {
                           {item.description && (
                             <Text style={[
                               styles.settingDescription,
+                              { color: theme.colors.text.secondary },
                               isDisabled && styles.disabledDescription,
                             ]}>
                               {item.description}
@@ -918,9 +924,9 @@ export default function SettingsScreen() {
           ))}
 
           <View style={styles.footer}>
-            <Text style={styles.footerText}>LinguaMate v1.2.0</Text>
-            <Text style={styles.footerSubtext}>Made with ❤️ for language learners worldwide</Text>
-            <Text style={styles.footerSubtext}>© 2024 LinguaMate. All rights reserved.</Text>
+            <Text style={[styles.footerText, { color: theme.colors.text.tertiary }]}>LinguaMate v1.2.0</Text>
+            <Text style={[styles.footerSubtext, { color: theme.colors.text.tertiary }]}>Made with ❤️ for language learners worldwide</Text>
+            <Text style={[styles.footerSubtext, { color: theme.colors.text.tertiary }]}>© 2024 LinguaMate. All rights reserved.</Text>
           </View>
         </ScrollView>
 
@@ -938,7 +944,6 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
   },
   section: {
     marginBottom: 24,
@@ -947,14 +952,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#6B7280',
     marginBottom: 12,
     marginLeft: 20,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   sectionContent: {
-    backgroundColor: 'white',
     marginHorizontal: 16,
     borderRadius: 12,
     shadowColor: '#000',
@@ -970,7 +973,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
   },
   lastSettingItem: {
     borderBottomWidth: 0,
@@ -987,19 +989,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   premiumIcon: {
-    backgroundColor: '#F0F0FF',
     borderWidth: 1,
-    borderColor: '#E0E0FF',
   },
-  disabledIcon: {
-    backgroundColor: '#F9FAFB',
-  },
+  disabledIcon: {},
   settingText: {
     flex: 1,
   },
