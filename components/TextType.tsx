@@ -70,19 +70,12 @@ export default function TextType({
 
   useEffect(() => {
     if (!showCursor) return;
-    const durationMs = cursorBlinkDuration <= 10 ? cursorBlinkDuration * 1000 : cursorBlinkDuration;
-    console.log('[TextType] Starting cursor blink animation with duration (ms):', durationMs);
-    const loop = Animated.loop(
+    Animated.loop(
       Animated.sequence([
-        Animated.timing(cursorOpacity, { toValue: 0, duration: durationMs, easing: Easing.inOut(Easing.quad), useNativeDriver: false }),
-        Animated.timing(cursorOpacity, { toValue: 1, duration: durationMs, easing: Easing.inOut(Easing.quad), useNativeDriver: false }),
+        Animated.timing(cursorOpacity, { toValue: 0, duration: cursorBlinkDuration, easing: Easing.inOut(Easing.quad), useNativeDriver: false }),
+        Animated.timing(cursorOpacity, { toValue: 1, duration: cursorBlinkDuration, easing: Easing.inOut(Easing.quad), useNativeDriver: false }),
       ])
-    );
-    loop.start();
-    return () => {
-      console.log('[TextType] Stopping cursor blink animation');
-      loop.stop();
-    };
+    ).start();
   }, [showCursor, cursorBlinkDuration, cursorOpacity]);
 
   useEffect(() => {
@@ -96,7 +89,6 @@ export default function TextType({
     const run = () => {
       if (isDeleting) {
         if (displayedText.length === 0) {
-          console.log('[TextType] Finished deleting, moving to next text index', currentTextIndex);
           setIsDeleting(false);
           if (onSentenceComplete) onSentenceComplete(textArray[currentTextIndex] ?? '', currentTextIndex);
           if (currentTextIndex === textArray.length - 1 && !loop) return;
@@ -122,7 +114,6 @@ export default function TextType({
     };
 
     if (currentCharIndex === 0 && !isDeleting && displayedText.length === 0) {
-      console.log('[TextType] Initial delay before starting typing:', initialDelay);
       timeout = setTimeout(run, initialDelay);
     } else {
       run();
