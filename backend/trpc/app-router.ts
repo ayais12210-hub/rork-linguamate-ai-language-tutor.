@@ -48,6 +48,7 @@ import {
 } from "./routes/analytics/analytics";
 import { getLearnContentProcedure } from "./routes/learn/learn";
 import preferencesRouter from './routes/preferences/preferences';
+import dialogueRouter from './routes/dialogue/dialogue';
 import {
   getLeaderboardProcedure as getLeaderboardDataProcedure,
   searchUsersProcedure,
@@ -142,6 +143,9 @@ export const appRouter = createTRPCRouter({
     compareUsers: compareUsersProcedure,
     getGlobalStats: getGlobalStatsProcedure,
   }),
+
+  // Dialogue
+  dialogue: dialogueRouter,
 });
 
 export type AppRouter = typeof appRouter;
