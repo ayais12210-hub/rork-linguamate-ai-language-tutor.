@@ -38,8 +38,18 @@ const getBaseUrl = () => {
 
   if (Platform.OS === "web" && typeof window !== "undefined") {
     const origin = window.location.origin.replace(/\/$/, "");
-    console.log("[tRPC] Web detected, using same-origin base:", origin);
-    return origin; // Backend is mounted at same origin under /api
+    let basePath = "";
+    try {
+      const match = window.location.pathname.match(/^\/p\/[^/]+/);
+      if (match && match[0]) {
+        basePath = match[0];
+      }
+    } catch (e) {
+      console.log("[tRPC] Path prefix detection failed", e);
+    }
+    const full = `${origin}${basePath}`.replace(/\/$/, "");
+    console.log("[tRPC] Web detected, using base:", full, "(origin:", origin, "path:", basePath, ")");
+    return full; // Backend is mounted at same origin (and possibly project prefix) under /api
   }
 
   const hostUri =
