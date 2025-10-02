@@ -188,7 +188,7 @@ export default function LessonsScreen() {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [lessonProgress, setLessonProgress] = useState<LessonProgress | null>(null);
   const [showAchievement, setShowAchievement] = useState<Achievement | null>(null);
-  const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'beginner' | 'intermediate' | 'advanced' | 'expert' | 'professional'>('all');
+  const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'beginner' | 'intermediate' | 'advanced'>('all');
   const [currentUnit, setCurrentUnit] = useState<number>(1);
   const [results, setResults] = useState<ExerciseResult[]>([]);
   const [showCompletion, setShowCompletion] = useState<boolean>(false);
@@ -1629,7 +1629,7 @@ Return ONLY valid JSON with this structure:
           <Text style={styles.sectionTitle}>Lessons</Text>
 
           <View style={styles.filterRow}>
-            {(['all','beginner','intermediate','advanced','expert','professional'] as const).map((lvl) => (
+            {(['all','beginner','intermediate','advanced'] as const).map((lvl) => (
               <Pressable
                 key={lvl}
                 testID={`filter-${lvl}`}
