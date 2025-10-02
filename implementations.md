@@ -4,6 +4,11 @@ This document is a running, append-only log of implementation changes made in th
 
 ---
 
+## 2025-10-02 — Ratings and monitoring improvements
+- Initialized comprehensive MonitoringUtils at app startup tied to current user in app/_layout.tsx via MonitoringInitializer component for better analytics and stability insights.
+- Added global, cross-platform RatingPrompt component with smart prompt timing, web/mobile support, AsyncStorage persistence, and direct deep-links to store review pages.
+- Wired RatingPrompt into RootLayout so it can surface from anywhere without extra wiring.
+
 ## 2025-10-02 — Baseline established for implementation tracking
 - Created implementations.md to track all future implementation steps.
 - Established current repository snapshot as baseline without attributing prior work to this log.
