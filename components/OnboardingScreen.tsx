@@ -1,17 +1,9 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
+import React, { useState, useMemo, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MessageCircle, Zap, Trophy, ChevronRight, Clock } from 'lucide-react-native';
 import { OnboardingData } from '@/types/user';
 import { useUser } from '@/hooks/user-store';
-
-
 
 interface OnboardingScreenProps {
   onComplete: () => void;
@@ -67,15 +59,6 @@ const TOPICS = [
   { id: 'social', label: 'Social Situations', icon: '👥' },
 ];
 
-const MOTIVATIONS = [
-  { id: 'career', label: 'Career advancement', icon: '📈' },
-  { id: 'travel', label: 'Travel preparation', icon: '🌎' },
-  { id: 'education', label: 'Educational goals', icon: '🎓' },
-  { id: 'personal', label: 'Personal growth', icon: '🌱' },
-  { id: 'family', label: 'Connect with family', icon: '❤️' },
-  { id: 'culture', label: 'Cultural exploration', icon: '🏛️' },
-];
-
 export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [showQuestionnaire, setShowQuestionnaire] = useState<boolean>(false);
@@ -91,36 +74,40 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
   });
   const { completeOnboarding } = useUser();
 
-  const nextPage = () => {
+  const totalQuestions = 4 as const;
+
+  const nextPage = useCallback(() => {
     if (currentPage < introData.length - 1) {
       setCurrentPage(currentPage + 1);
     } else {
       setShowQuestionnaire(true);
     }
-  };
+  }, [currentPage]);
 
-  const skipOnboarding = () => {
+  const skipOnboarding = useCallback(() => {
+    console.log('[Onboarding] Skipping onboarding');
     completeOnboarding({});
     onComplete();
-  };
+  }, [completeOnboarding, onComplete]);
 
-  const handleMultiSelect = (field: keyof OnboardingData, value: string) => {
+  const handleMultiSelect = useCallback((field: keyof OnboardingData, value: string) => {
     if (!value || value.trim().length === 0) return;
     if (value.length > 50) return;
     const sanitizedValue = value.trim();
-    
-    const currentValues = onboardingData[field] as string[];
+
+    const currentValues = (onboardingData[field] as unknown as string[]) ?? [];
     const newValues = currentValues.includes(sanitizedValue)
       ? currentValues.filter(v => v !== sanitizedValue)
       : [...currentValues, sanitizedValue];
-    
-    setOnboardingData(prev => ({ ...prev, [field]: newValues }));
-  };
 
-  const nextQuestion = () => {
-    if (questionStep < 4) {
+    setOnboardingData(prev => ({ ...prev, [field]: newValues }));
+  }, [onboardingData]);
+
+  const nextQuestion = useCallback(() => {
+    if (questionStep < totalQuestions - 1) {
       setQuestionStep(questionStep + 1);
     } else {
+      console.log('[Onboarding] Questionnaire finished', onboardingData);
       completeOnboarding({
         learningGoals: onboardingData.learningGoals,
         interests: onboardingData.interests,
@@ -130,18 +117,17 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
       });
       onComplete();
     }
-  };
+  }, [questionStep, totalQuestions, onboardingData, completeOnboarding, onComplete]);
 
-  const canProceed = () => {
+  const canProceed = useMemo(() => {
     switch (questionStep) {
       case 0: return onboardingData.learningGoals.length > 0;
       case 1: return onboardingData.interests.length > 0;
       case 2: return onboardingData.preferredTopics.length > 0;
       case 3: return onboardingData.dailyGoalMinutes > 0;
-      case 4: return onboardingData.motivations.length > 0;
       default: return false;
     }
-  };
+  }, [questionStep, onboardingData]);
 
   const renderQuestionnaire = () => {
     const questions = [
@@ -149,7 +135,6 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
       { title: 'Your Interests', subtitle: 'What topics interest you?' },
       { title: 'Conversation Topics', subtitle: 'What would you like to practice?' },
       { title: 'Daily Goals', subtitle: 'How much time can you dedicate?' },
-      { title: 'Motivation', subtitle: 'What drives your learning?' },
     ];
 
     const renderQuestionStep = () => {
@@ -261,34 +246,6 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
               ))}
             </View>
           );
-
-        case 4:
-          return (
-            <View>
-              <Text style={styles.questionDescription}>
-                What motivates you to learn this language?
-              </Text>
-              {MOTIVATIONS.map(motivation => (
-                <TouchableOpacity
-                  key={motivation.id}
-                  style={[
-                    styles.optionButton,
-                    onboardingData.motivations.includes(motivation.id) && styles.selectedOption
-                  ]}
-                  onPress={() => handleMultiSelect('motivations', motivation.id)}
-                >
-                  <Text style={styles.optionIcon}>{motivation.icon}</Text>
-                  <Text style={[
-                    styles.optionText,
-                    onboardingData.motivations.includes(motivation.id) && styles.selectedOptionText
-                  ]}>
-                    {motivation.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          );
-
         default:
           return null;
       }
@@ -299,18 +256,18 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
         <View style={styles.questionHeader}>
           <View style={styles.progressContainer}>
             <View style={styles.progressBar}>
-              <View 
+              <View
                 style={[
-                  styles.progressFill, 
-                  { width: `${((questionStep + 1) / 5) * 100}%` }
-                ]} 
+                  styles.progressFill,
+                  { width: `${((questionStep + 1) / totalQuestions) * 100}%` }
+                ]}
               />
             </View>
             <Text style={styles.progressText}>
-              {questionStep + 1} of 5
+              {questionStep + 1} of {totalQuestions as number}
             </Text>
           </View>
-          
+
           <Text style={styles.questionTitle}>{questions[questionStep].title}</Text>
           <Text style={styles.questionSubtitle}>{questions[questionStep].subtitle}</Text>
         </View>
@@ -323,21 +280,18 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
           <TouchableOpacity
             style={[
               styles.questionNextButton,
-              !canProceed() && styles.questionNextButtonDisabled
+              !canProceed && styles.questionNextButtonDisabled
             ]}
             onPress={nextQuestion}
-            disabled={!canProceed()}
+            disabled={!canProceed}
           >
             <Text style={[
               styles.questionNextButtonText,
-              !canProceed() && styles.questionNextButtonTextDisabled
+              !canProceed && styles.questionNextButtonTextDisabled
             ]}>
-              {questionStep === 4 ? 'Complete Setup' : 'Continue'}
+              {questionStep === totalQuestions - 1 ? 'Complete Setup' : 'Continue'}
             </Text>
-            <ChevronRight 
-              size={20} 
-              color={!canProceed() ? '#9CA3AF' : 'white'} 
-            />
+            <ChevronRight size={20} color={!canProceed ? '#9CA3AF' : 'white'} />
           </TouchableOpacity>
         </View>
       </View>
@@ -352,10 +306,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
   const IconComponent = currentData.icon;
 
   return (
-    <LinearGradient
-      colors={['#667eea', '#764ba2']}
-      style={styles.container}
-    >
+    <LinearGradient colors={['#667eea', '#764ba2']} style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={skipOnboarding} style={styles.skipButton}>
           <Text style={styles.skipText}>Skip</Text>
@@ -376,17 +327,14 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
           {introData.map((item, index) => (
             <View
               key={`intro-${index}-${item.title}`}
-              style={[
-                styles.dot,
-                index === currentPage ? styles.activeDot : styles.inactiveDot,
-              ]}
+              style={[styles.dot, index === currentPage ? styles.activeDot : styles.inactiveDot]}
             />
           ))}
         </View>
       </View>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.nextButton} onPress={nextPage}>
+        <TouchableOpacity testID="onboarding-next" style={styles.nextButton} onPress={nextPage}>
           <Text style={styles.nextButtonText}>
             {currentPage === introData.length - 1 ? 'Personalize Experience' : 'Next'}
           </Text>
@@ -397,229 +345,42 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    alignItems: 'flex-end',
-  },
-  skipButton: {
-    padding: 10,
-  },
-  skipText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-  },
-  iconContainer: {
-    marginBottom: 40,
-  },
-  iconCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: 'white',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  description: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.9)',
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 40,
-  },
-  pagination: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginHorizontal: 5,
-  },
-  activeDot: {
-    backgroundColor: 'white',
-  },
-  inactiveDot: {
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-  },
-  footer: {
-    paddingHorizontal: 40,
-    paddingBottom: 50,
-  },
-  nextButton: {
-    backgroundColor: 'white',
-    paddingVertical: 16,
-    borderRadius: 25,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  nextButtonText: {
-    color: '#667eea',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  questionContainer: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
-  },
-  questionHeader: {
-    paddingHorizontal: 24,
-    paddingVertical: 20,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  progressContainer: {
-    marginBottom: 20,
-  },
-  progressBar: {
-    height: 4,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 2,
-    marginBottom: 8,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#3B82F6',
-    borderRadius: 2,
-  },
-  progressText: {
-    fontSize: 12,
-    color: '#6B7280',
-    textAlign: 'center',
-  },
-  questionTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 4,
-  },
-  questionSubtitle: {
-    fontSize: 16,
-    color: '#6B7280',
-  },
-  questionContent: {
-    flex: 1,
-    padding: 24,
-  },
-  questionDescription: {
-    fontSize: 16,
-    color: '#4B5563',
-    marginBottom: 24,
-    lineHeight: 24,
-  },
-  optionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: 'white',
-    borderRadius: 12,
-    marginBottom: 12,
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
-  },
-  selectedOption: {
-    backgroundColor: '#3B82F6',
-    borderColor: '#3B82F6',
-  },
-  optionIcon: {
-    fontSize: 20,
-    marginRight: 12,
-  },
-  optionText: {
-    fontSize: 16,
-    color: '#1F2937',
-    fontWeight: '500',
-  },
-  selectedOptionText: {
-    color: 'white',
-  },
-  levelButton: {
-    padding: 20,
-    backgroundColor: 'white',
-    borderRadius: 12,
-    marginBottom: 12,
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
-  },
-  levelTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 4,
-  },
-  levelDesc: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  timeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: 'white',
-    borderRadius: 12,
-    marginBottom: 12,
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
-  },
-  timeText: {
-    fontSize: 16,
-    color: '#1F2937',
-    fontWeight: '500',
-    marginLeft: 12,
-  },
-  questionFooter: {
-    padding: 24,
-    backgroundColor: 'white',
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-  },
-  questionNextButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#3B82F6',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-  },
-  questionNextButtonDisabled: {
-    backgroundColor: '#E5E7EB',
-  },
-  questionNextButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: 'white',
-    marginRight: 8,
-  },
-  questionNextButtonTextDisabled: {
-    color: '#9CA3AF',
-  },
+  container: { flex: 1 },
+  header: { paddingTop: 60, paddingHorizontal: 20, alignItems: 'flex-end' },
+  skipButton: { padding: 10 },
+  skipText: { color: 'white', fontSize: 16, fontWeight: '500' },
+  content: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40 },
+  iconContainer: { marginBottom: 40 },
+  iconCircle: { width: 120, height: 120, borderRadius: 60, justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 10 },
+  title: { fontSize: 28, fontWeight: 'bold', color: 'white', textAlign: 'center', marginBottom: 20 },
+  description: { fontSize: 16, color: 'rgba(255, 255, 255, 0.9)', textAlign: 'center', lineHeight: 24, marginBottom: 40 },
+  pagination: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+  dot: { width: 10, height: 10, borderRadius: 5, marginHorizontal: 5 },
+  activeDot: { backgroundColor: 'white' },
+  inactiveDot: { backgroundColor: 'rgba(255, 255, 255, 0.4)' },
+  footer: { paddingHorizontal: 40, paddingBottom: 50 },
+  nextButton: { backgroundColor: 'white', paddingVertical: 16, borderRadius: 25, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.2, shadowRadius: 10, elevation: 5 },
+  nextButtonText: { color: '#667eea', fontSize: 18, fontWeight: 'bold' },
+  questionContainer: { flex: 1, backgroundColor: '#F9FAFB' },
+  questionHeader: { paddingHorizontal: 24, paddingVertical: 20, backgroundColor: 'white', borderBottomWidth: 1, borderBottomColor: '#E5E7EB' },
+  progressContainer: { marginBottom: 20 },
+  progressBar: { height: 4, backgroundColor: '#E5E7EB', borderRadius: 2, marginBottom: 8 },
+  progressFill: { height: '100%', backgroundColor: '#3B82F6', borderRadius: 2 },
+  progressText: { fontSize: 12, color: '#6B7280', textAlign: 'center' },
+  questionTitle: { fontSize: 24, fontWeight: '700', color: '#1F2937', marginBottom: 4 },
+  questionSubtitle: { fontSize: 16, color: '#6B7280' },
+  questionContent: { flex: 1, padding: 24 },
+  questionDescription: { fontSize: 16, color: '#4B5563', marginBottom: 24, lineHeight: 24 },
+  optionButton: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: 'white', borderRadius: 12, marginBottom: 12, borderWidth: 2, borderColor: '#E5E7EB' },
+  selectedOption: { backgroundColor: '#3B82F6', borderColor: '#3B82F6' },
+  optionIcon: { fontSize: 20, marginRight: 12 },
+  optionText: { fontSize: 16, color: '#1F2937', fontWeight: '500' },
+  selectedOptionText: { color: 'white' },
+  timeButton: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: 'white', borderRadius: 12, marginBottom: 12, borderWidth: 2, borderColor: '#E5E7EB' },
+  timeText: { fontSize: 16, color: '#1F2937', fontWeight: '500', marginLeft: 12 },
+  questionFooter: { padding: 24, backgroundColor: 'white', borderTopWidth: 1, borderTopColor: '#E5E7EB' },
+  questionNextButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#3B82F6', paddingVertical: 16, paddingHorizontal: 24, borderRadius: 12 },
+  questionNextButtonDisabled: { backgroundColor: '#E5E7EB' },
+  questionNextButtonText: { fontSize: 16, fontWeight: '600', color: 'white', marginRight: 8 },
+  questionNextButtonTextDisabled: { color: '#9CA3AF' },
 });
