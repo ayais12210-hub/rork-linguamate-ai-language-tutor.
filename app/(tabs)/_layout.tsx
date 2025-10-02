@@ -1,41 +1,56 @@
 import { Tabs, useRouter } from 'expo-router';
 import { MessageCircle, User, BookOpen, Layers, GraduationCap, Settings } from 'lucide-react-native';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
+import { useUser } from '@/hooks/user-store';
 
 export default function TabLayout() {
   const router = useRouter();
+  const { user } = useUser();
+
+  const isDark = user?.settings?.darkMode ?? false;
+  const colors = useMemo(() => ({
+    headerBg: isDark ? '#0B1220' : 'white',
+    headerBorder: isDark ? '#1f2937' : '#E5E7EB',
+    headerText: isDark ? '#F3F4F6' : '#1F2937',
+    tabBg: isDark ? '#0B1220' : 'white',
+    tabBorder: isDark ? '#1f2937' : '#E5E7EB',
+    active: '#10B981',
+    inactive: isDark ? '#9CA3AF' : '#9CA3AF',
+    icon: isDark ? '#9CA3AF' : '#6B7280',
+  }), [isDark]);
 
   const SettingsButton = () => (
     <TouchableOpacity
       onPress={() => router.push('/settings')}
       style={styles.settingsButton}
+      testID="open-settings"
     >
-      <Settings size={24} color="#6B7280" />
+      <Settings size={24} color={colors.icon} />
     </TouchableOpacity>
   );
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#10B981',
-        tabBarInactiveTintColor: '#9CA3AF',
+        tabBarActiveTintColor: colors.active,
+        tabBarInactiveTintColor: colors.inactive,
         headerShown: true,
         headerStyle: {
-          backgroundColor: 'white',
+          backgroundColor: colors.headerBg,
           borderBottomWidth: 1,
-          borderBottomColor: '#E5E7EB',
+          borderBottomColor: colors.headerBorder,
         },
         headerTitleStyle: {
           fontSize: 20,
           fontWeight: 'bold',
-          color: '#1F2937',
+          color: colors.headerText,
         },
         headerRight: () => <SettingsButton />,
         tabBarStyle: {
-          backgroundColor: 'white',
+          backgroundColor: colors.tabBg,
           borderTopWidth: 1,
-          borderTopColor: '#E5E7EB',
+          borderTopColor: colors.tabBorder,
         },
         tabBarLabelStyle: {
           fontSize: 12,
