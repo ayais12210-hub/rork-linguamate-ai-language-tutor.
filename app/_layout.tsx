@@ -9,6 +9,7 @@ import { ChatProvider } from '@/hooks/chat-store';
 import { LearningProgressProvider } from '@/state/learning-progress';
 import { trpc, trpcClient } from '@/lib/trpc';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { PreferenceProvider } from '@/app/modules/personalisation/profile-store';
 import SplashCursor from '@/components/SplashCursor';
 import { MonitoringUtils } from '@/lib/monitoring';
 import RatingPrompt from '@/components/RatingPrompt';
@@ -77,7 +78,9 @@ export default function RootLayout() {
                     <MonitoringInitializer />
                     <OfflineInitializer />
                     <OnlineStatusSync />
-                    <RootLayoutNav />
+                    <PreferenceProvider>
+                      <RootLayoutNav />
+                    </PreferenceProvider>
                     <RatingPrompt />
                     <NetworkStatusBanner />
                     <OfflineBanner />

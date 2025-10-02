@@ -45,6 +45,7 @@ import {
   generateProgressReportProcedure
 } from "./routes/analytics/analytics";
 import { getLearnContentProcedure } from "./routes/learn/learn";
+import preferencesRouter from './routes/preferences/preferences';
 import {
   getLeaderboardProcedure as getLeaderboardDataProcedure,
   searchUsersProcedure,
@@ -117,6 +118,9 @@ export const appRouter = createTRPCRouter({
   learn: createTRPCRouter({
     getContent: getLearnContentProcedure,
   }),
+
+  // Preferences
+  preferences: preferencesRouter,
 
   // Leaderboard
   leaderboard: createTRPCRouter({
