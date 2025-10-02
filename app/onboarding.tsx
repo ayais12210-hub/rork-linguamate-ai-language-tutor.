@@ -21,6 +21,8 @@ import {
   Sparkles,
   Trophy,
   Users,
+  ChevronDown,
+  Edit2,
 } from 'lucide-react-native';
 import { useUser } from '@/hooks/user-store';
 import Animated, { FadeInUp } from 'react-native-reanimated';
@@ -88,6 +90,13 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     icon: BookOpen,
     color: '#EC4899',
   },
+  {
+    id: 'review',
+    title: 'Review & Confirm',
+    subtitle: 'Check your choices before we begin',
+    icon: Check,
+    color: '#10B981',
+  },
 ];
 
 const PROFICIENCY_LEVELS = [
@@ -135,6 +144,7 @@ export default function OnboardingScreen() {
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [nativeSearchQuery, setNativeSearchQuery] = useState('');
   const [targetSearchQuery, setTargetSearchQuery] = useState('');
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
   const nativeLanguages = React.useMemo(
     () => rankLanguages(nativeSearchQuery),
@@ -190,6 +200,8 @@ export default function OnboardingScreen() {
         return true;
       case 'topics':
         return selectedTopics.length > 0;
+      case 'review':
+        return true;
       default:
         return true;
     }
@@ -434,6 +446,93 @@ export default function OnboardingScreen() {
                 </TouchableOpacity>
               ))}
             </View>
+          </ScrollView>
+        );
+
+      case 'review':
+        const nativeLang = nativeLanguages.find(l => l.code === nativeLanguage);
+        const targetLang = targetLanguages.find(l => l.code === targetLanguage);
+        const selectedGoalLabels = LEARNING_GOALS.filter(g => selectedGoals.includes(g.id));
+        const selectedTopicLabels = TOPICS.filter(t => selectedTopics.includes(t.id));
+        const dailyGoalLabel = DAILY_GOALS.find(g => g.minutes === dailyGoal);
+        const levelLabel = PROFICIENCY_LEVELS.find(l => l.id === selectedLevel);
+
+        const ReviewSection = ({ title, value, onEdit, sectionId }: { title: string; value: string; onEdit: () => void; sectionId: string }) => (
+          <View style={styles.reviewSection}>
+            <TouchableOpacity
+              style={styles.reviewHeader}
+              onPress={() => setExpandedSection(expandedSection === sectionId ? null : sectionId)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.reviewHeaderLeft}>
+                <Text style={styles.reviewTitle}>{title}</Text>
+                <Text style={styles.reviewValue}>{value}</Text>
+              </View>
+              <View style={styles.reviewHeaderRight}>
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    onEdit();
+                  }}
+                >
+                  <Edit2 size={16} color="white" />
+                </TouchableOpacity>
+                <ChevronDown
+                  size={20}
+                  color="rgba(255, 255, 255, 0.7)"
+                  style={{
+                    transform: [{ rotate: expandedSection === sectionId ? '180deg' : '0deg' }],
+                  }}
+                />
+              </View>
+            </TouchableOpacity>
+            {expandedSection === sectionId && (
+              <View style={styles.reviewContent}>
+                <Text style={styles.reviewContentText}>{value}</Text>
+              </View>
+            )}
+          </View>
+        );
+
+        return (
+          <ScrollView style={styles.reviewContainer} showsVerticalScrollIndicator={false}>
+            <ReviewSection
+              title="Native Language"
+              value={nativeLang ? `${nativeLang.flag} ${nativeLang.name}` : 'Not selected'}
+              onEdit={() => setCurrentStep(1)}
+              sectionId="native"
+            />
+            <ReviewSection
+              title="Learning Language"
+              value={targetLang ? `${targetLang.flag} ${targetLang.name}` : 'Not selected'}
+              onEdit={() => setCurrentStep(2)}
+              sectionId="target"
+            />
+            <ReviewSection
+              title="Current Level"
+              value={levelLabel ? levelLabel.label : 'Not selected'}
+              onEdit={() => setCurrentStep(3)}
+              sectionId="level"
+            />
+            <ReviewSection
+              title="Learning Goals"
+              value={selectedGoalLabels.map(g => `${g.icon} ${g.label}`).join(', ') || 'None selected'}
+              onEdit={() => setCurrentStep(4)}
+              sectionId="goals"
+            />
+            <ReviewSection
+              title="Daily Commitment"
+              value={dailyGoalLabel ? `${dailyGoalLabel.label} (${dailyGoalLabel.description})` : 'Not selected'}
+              onEdit={() => setCurrentStep(5)}
+              sectionId="time"
+            />
+            <ReviewSection
+              title="Interests"
+              value={selectedTopicLabels.map(t => `${t.icon} ${t.label}`).join(', ') || 'None selected'}
+              onEdit={() => setCurrentStep(6)}
+              sectionId="topics"
+            />
           </ScrollView>
         );
 
@@ -759,6 +858,56 @@ const styles = StyleSheet.create({
   },
   selectedTopicLabel: {
     fontWeight: '600' as const,
+  },
+  reviewContainer: {
+    flex: 1,
+  },
+  reviewSection: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    marginBottom: 12,
+    overflow: 'hidden' as const,
+  },
+  reviewHeader: {
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+    alignItems: 'center' as const,
+    padding: 16,
+  },
+  reviewHeaderLeft: {
+    flex: 1,
+  },
+  reviewHeaderRight: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 12,
+  },
+  reviewTitle: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginBottom: 4,
+    fontWeight: '500' as const,
+  },
+  reviewValue: {
+    fontSize: 16,
+    color: 'white',
+    fontWeight: '600' as const,
+  },
+  editButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 8,
+    padding: 8,
+  },
+  reviewContent: {
+    padding: 16,
+    paddingTop: 0,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  reviewContentText: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.9)',
+    lineHeight: 20,
   },
   footer: {
     flexDirection: 'row' as const,
