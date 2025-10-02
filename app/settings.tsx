@@ -53,6 +53,8 @@ import { Modal } from '@/home/project/components/Modal';
 import { useNotifications } from '@/hooks/use-notifications';
 import { useOfflineStatus } from '@/modules/offline/index';
 import { useTheme } from '@/lib/theme';
+import { usePreferences } from '@/state/preferencesStore';
+import { trackDifficultySelect } from '@/lib/analytics';
 
 type SettingItem = {
   icon: LucideIcon;
@@ -76,6 +78,7 @@ export default function SettingsScreen() {
   const notifications = useNotifications();
   const { isOffline, isConnected, unsyncedCount, lastSync } = useOfflineStatus();
   const theme = useTheme();
+  const { difficulty, autoAdapt, setDifficulty, setAutoAdapt } = usePreferences();
 
   const defaultSettings: UserSettings = {
     darkMode: false,
@@ -157,8 +160,11 @@ export default function SettingsScreen() {
   };
 
   const updateDifficulty = (level: 'beginner' | 'intermediate' | 'advanced') => {
-    const previousLevel = user.proficiencyLevel;
+    const previousLevel = difficulty;
+    setDifficulty(level);
     updateUser({ proficiencyLevel: level });
+    
+    trackDifficultySelect(level, 'settings');
     
     triggerHaptic('success');
     
@@ -175,6 +181,19 @@ export default function SettingsScreen() {
     }
     
     Alert.alert('Level Updated', message);
+  };
+
+  const toggleAutoAdapt = (value: boolean) => {
+    setAutoAdapt(value);
+    triggerHaptic();
+    
+    if (value) {
+      Alert.alert(
+        'Auto-Adapt Enabled',
+        'Your difficulty level will automatically adjust based on your performance. We\'ll promote you when you consistently exceed targets and demote you if you\'re struggling.',
+        [{ text: 'Got it!' }]
+      );
+    }
   };
 
   const handleReminderTimeChange = () => {
@@ -516,10 +535,18 @@ export default function SettingsScreen() {
         {
           icon: BookOpen,
           label: 'Difficulty Level',
-          description: `${user.proficiencyLevel === 'beginner' ? 'Building foundations' : user.proficiencyLevel === 'intermediate' ? 'Expanding skills' : 'Advanced challenges'}`,
-          value: `${user.proficiencyLevel === 'beginner' ? '🌱' : user.proficiencyLevel === 'intermediate' ? '📚' : '🎓'} ${user.proficiencyLevel.charAt(0).toUpperCase() + user.proficiencyLevel.slice(1)}`,
+          description: `${difficulty === 'beginner' ? 'Building foundations' : difficulty === 'intermediate' ? 'Expanding skills' : 'Advanced challenges'}`,
+          value: `${difficulty === 'beginner' ? '🌱' : difficulty === 'intermediate' ? '📚' : '🎓'} ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}`,
           onPress: handleDifficultyChange,
           showChevron: true,
+        },
+        {
+          icon: TrendingUp,
+          label: 'Auto-Adapt Difficulty',
+          description: autoAdapt ? 'Adjusts based on performance' : 'Manual difficulty control',
+          value: autoAdapt,
+          onPress: toggleAutoAdapt,
+          isSwitch: true,
         },
       ],
     },
@@ -938,8 +965,13 @@ export default function SettingsScreen() {
         >
           <View>
             {(['beginner','intermediate','advanced'] as const).map((d) => {
-              const selected = d === user.proficiencyLevel;
+              const selected = d === difficulty;
               const label = d === 'beginner' ? '🌱 Beginner' : d === 'intermediate' ? '📚 Intermediate' : '🎓 Advanced';
+              const desc = d === 'beginner' 
+                ? 'More hints, slower pace, simpler exercises'
+                : d === 'intermediate'
+                ? 'Balanced challenge, some hints'
+                : 'Advanced exercises, minimal hints';
               return (
                 <TouchableOpacity
                   key={`diff-${d}`}
@@ -950,7 +982,10 @@ export default function SettingsScreen() {
                     updateDifficulty(d);
                   }}
                 >
-                  <Text style={[styles.optionText, { color: theme.colors.text.primary }]}>{label}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.optionText, { color: theme.colors.text.primary }]}>{label}</Text>
+                    <Text style={[styles.settingDescription, { color: theme.colors.text.secondary, marginTop: 2 }]}>{desc}</Text>
+                  </View>
                   {selected && <Check size={20} color="#10B981" />}
                 </TouchableOpacity>
               );

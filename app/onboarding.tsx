@@ -25,6 +25,8 @@ import {
   Edit2,
 } from 'lucide-react-native';
 import { useUser } from '@/hooks/user-store';
+import { usePreferences } from '@/state/preferencesStore';
+import { trackDifficultySelect } from '@/lib/analytics';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import LanguageSearchBar from '@/components/search/LanguageSearchBar';
 import { rankLanguages } from '@/modules/languages/logic/filter';
@@ -135,6 +137,7 @@ const TOPICS = [
 export default function OnboardingScreen() {
   const router = useRouter();
   const { completeOnboarding: saveOnboarding } = useUser();
+  const { setDifficulty } = usePreferences();
   const [currentStep, setCurrentStep] = useState(0);
   const [nativeLanguage, setNativeLanguage] = useState('');
   const [targetLanguage, setTargetLanguage] = useState('');
@@ -173,6 +176,8 @@ export default function OnboardingScreen() {
   };
 
   const finishOnboarding = () => {
+    setDifficulty(selectedLevel);
+    trackDifficultySelect(selectedLevel, 'onboarding');
     saveOnboarding({
       nativeLanguage,
       selectedLanguage: targetLanguage,
@@ -335,6 +340,7 @@ export default function OnboardingScreen() {
                   selectedLevel === level.id && styles.selectedLevelCard,
                 ]}
                 onPress={() => setSelectedLevel(level.id as 'beginner' | 'intermediate' | 'advanced')}
+                testID={`difficulty-option-${level.id}`}
               >
                 <Text style={[
                   styles.levelTitle,
