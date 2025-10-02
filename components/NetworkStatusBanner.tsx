@@ -1,20 +1,50 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
-import { useIsRestoring, useIsFetching, useIsMutating, useOnline } from '@tanstack/react-query';
+import { useIsRestoring, onlineManager } from '@tanstack/react-query';
 import { WifiOff } from 'lucide-react-native';
 
 export default function NetworkStatusBanner() {
-  const online = useOnline();
+  const [online, setOnline] = useState<boolean>(onlineManager.isOnline());
   const restoring = useIsRestoring();
-  const fetching = useIsFetching();
-  const mutating = useIsMutating();
+
+  useEffect(() => {
+    const unsubscribe = onlineManager.subscribe((isOnline?: boolean) => {
+      console.log('[NetworkStatusBanner] onlineManager change', isOnline);
+      setOnline(Boolean(isOnline));
+    });
+
+    if (Platform.OS === 'web') {
+      const handleOnline = () => {
+        console.log('[NetworkStatusBanner] browser online');
+        onlineManager.setOnline(true);
+      };
+      const handleOffline = () => {
+        console.log('[NetworkStatusBanner] browser offline');
+        onlineManager.setOnline(false);
+      };
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+
+      // initialize from navigator.onLine
+      if (typeof navigator !== 'undefined' && 'onLine' in navigator) {
+        onlineManager.setOnline(Boolean(navigator.onLine));
+      }
+
+      return () => {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+        unsubscribe?.();
+      };
+    }
+
+    return unsubscribe;
+  }, []);
 
   const show = useMemo(() => {
     if (!online) return true;
     if (restoring) return true;
-    if (fetching > 0 || mutating > 0) return false;
     return false;
-  }, [online, restoring, fetching, mutating]);
+  }, [online, restoring]);
 
   if (!show) return null;
 
