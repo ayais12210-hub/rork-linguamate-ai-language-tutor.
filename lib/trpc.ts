@@ -9,7 +9,10 @@ export const trpc = createTRPCReact<AppRouter>();
 
 const getNativeBaseFromHostUri = (hostUri: string) => {
   let cleaned = hostUri.trim();
-  cleaned = cleaned.replace(/^exp:\/\//i, '').replace(/^ws:\/\//i, '').replace(/^wss:\/\//i, '');
+  cleaned = cleaned
+    .replace(/^exp:\/\//i, "")
+    .replace(/^ws:\/\//i, "")
+    .replace(/^wss:\/\//i, "");
   if (!/^https?:\/\//i.test(cleaned)) cleaned = `http://${cleaned}`;
   return cleaned;
 };
@@ -22,8 +25,8 @@ const getEnvBaseUrl = () => {
   ];
   for (const url of candidates) {
     if (url && url.length > 0) {
-      console.log('[tRPC] Using env base URL:', url);
-      return url.replace(/\/$/, '');
+      console.log("[tRPC] Using env base URL:", url);
+      return url.replace(/\/$/, "");
     }
   }
   return null;
@@ -33,31 +36,28 @@ const getBaseUrl = () => {
   const envUrl = getEnvBaseUrl();
   if (envUrl) return envUrl;
 
-  if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    const host = window.location.hostname;
-    const isLocal = /^(localhost|127\.0\.0\.1|192\.168\.|10\.)/.test(host);
-    if (isLocal) {
-      console.log('[tRPC] Web local dev detected, using http://localhost:8081');
-      return 'http://localhost:8081';
-    }
-    console.log('[tRPC] Web production detected, using same-origin relative');
-    return window.location.origin.replace(/\/$/, '');
+  if (Platform.OS === "web" && typeof window !== "undefined") {
+    const origin = window.location.origin.replace(/\/$/, "");
+    console.log("[tRPC] Web detected, using same-origin base:", origin);
+    return origin; // Backend is mounted at same origin under /api
   }
 
-  const hostUri = (Constants?.expoConfig as any)?.hostUri || (Constants as any)?.manifest2?.extra?.expoClient?.hostUri;
-  if (hostUri && typeof hostUri === 'string') {
+  const hostUri =
+    (Constants as any)?.expoConfig?.hostUri ||
+    (Constants as any)?.manifest2?.extra?.expoClient?.hostUri;
+  if (hostUri && typeof hostUri === "string") {
     const base = getNativeBaseFromHostUri(hostUri);
-    console.log('[tRPC] Using Expo hostUri for native:', base);
-    return base.replace(/\/$/, '');
+    console.log("[tRPC] Using Expo hostUri for native:", base);
+    return base.replace(/\/$/, "");
   }
 
-  console.log('[tRPC] Fallback base URL http://localhost:8081');
+  console.log("[tRPC] Fallback base URL http://localhost:8081");
   return "http://localhost:8081";
 };
 
 const base = getBaseUrl();
 const apiUrl = `${base}/api/trpc`;
-console.log('[tRPC] Final API URL:', apiUrl);
+console.log("[tRPC] Final API URL:", apiUrl);
 
 export const trpcClient = trpc.createClient({
   links: [
@@ -75,12 +75,20 @@ export const trpcClient = trpc.createClient({
               ...(options?.headers || {}),
             },
           });
-          const ct = res.headers.get('content-type') ?? '';
-          if (ct.includes('text/html')) {
-            console.error('[tRPC] HTML response received at', url, '— likely frontend index. Check backend base URL.');
-            throw new Error('Backend endpoint not found at ' + url + '. Set EXPO_PUBLIC_BACKEND_URL to your API origin.');
+          const ct = res.headers.get("content-type") ?? "";
+          if (ct.includes("text/html")) {
+            console.error(
+              "[tRPC] HTML response received at",
+              url,
+              "— likely frontend index. Check backend base URL."
+            );
+            throw new Error(
+              "Backend endpoint not found at " +
+                url +
+                ". Set EXPO_PUBLIC_BACKEND_URL to your API origin."
+            );
           }
-          return res;
+          return res as Response;
         } finally {
           clearTimeout(id);
         }
