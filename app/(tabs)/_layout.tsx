@@ -1,29 +1,10 @@
-import { Tabs, useRouter, usePathname } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { MessageCircle, User, BookOpen, Layers, GraduationCap, Settings } from 'lucide-react-native';
-import React, { useMemo } from 'react';
-import { TouchableOpacity, StyleSheet, View } from 'react-native';
-import GooeyNav from '@/components/GooeyNav';
+import React from 'react';
+import { TouchableOpacity, StyleSheet } from 'react-native';
 
 export default function TabLayout() {
   const router = useRouter();
-  const pathname = usePathname();
-
-  const navItems = useMemo(() => [
-    { label: 'Learn', href: '/learn' },
-    { label: 'Lessons', href: '/lessons' },
-    { label: 'Modules', href: '/modules' },
-    { label: 'Chat', href: '/chat' },
-    { label: 'Profile', href: '/profile' },
-  ], []);
-
-  const initialActiveIndex = useMemo(() => {
-    const index = navItems.findIndex(item => pathname.startsWith(item.href));
-    return index >= 0 ? index : 0;
-  }, [pathname, navItems]);
-
-  const handleNavPress = (index: number, href: string) => {
-    router.push(href as any);
-  };
 
   const SettingsButton = () => (
     <TouchableOpacity
@@ -34,16 +15,6 @@ export default function TabLayout() {
     </TouchableOpacity>
   );
 
-  const GooeyNavHeader = () => (
-    <View style={styles.gooeyNavContainer}>
-      <GooeyNav
-        items={navItems}
-        initialActiveIndex={initialActiveIndex}
-        onItemPress={handleNavPress}
-      />
-    </View>
-  );
-
   return (
     <Tabs
       screenOptions={{
@@ -51,18 +22,25 @@ export default function TabLayout() {
         tabBarInactiveTintColor: '#9CA3AF',
         headerShown: true,
         headerStyle: {
-          backgroundColor: '#1F2937',
-          borderBottomWidth: 0,
+          backgroundColor: 'white',
+          borderBottomWidth: 1,
+          borderBottomColor: '#E5E7EB',
         },
         headerTitleStyle: {
           fontSize: 20,
           fontWeight: 'bold',
-          color: '#FFFFFF',
+          color: '#1F2937',
         },
-        headerTitle: () => <GooeyNavHeader />,
         headerRight: () => <SettingsButton />,
         tabBarStyle: {
-          display: 'none',
+          backgroundColor: 'white',
+          borderTopWidth: 1,
+          borderTopColor: '#E5E7EB',
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '500',
+          marginTop: 4,
         },
       }}
     >
@@ -125,11 +103,5 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   settingsButton: {
     marginRight: 16,
-  },
-  gooeyNavContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginHorizontal: 16,
   },
 });
