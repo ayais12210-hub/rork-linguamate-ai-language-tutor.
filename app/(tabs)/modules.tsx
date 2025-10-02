@@ -41,6 +41,7 @@ import PronunciationModule from '@/modules/pronunciation/PronunciationModule';
 import CultureModule from '@/modules/culture/CultureModule';
 import type { LearningModule, ModuleType } from '@/modules/types';
 import AIQuiz from '@/components/AIQuiz';
+import PlacementQuiz from '@/components/PlacementQuiz';
 
 export default function ModulesScreen() {
   const [modules, setModules] = useState<LearningModule[]>([]);
@@ -50,6 +51,7 @@ export default function ModulesScreen() {
   const [challengeView, setChallengeView] = useState<'daily' | 'weekly'>('daily');
   const [quizVisible, setQuizVisible] = useState<boolean>(false);
   const [quizModuleType, setQuizModuleType] = useState<ModuleType | null>(null);
+  const [placementVisible, setPlacementVisible] = useState<boolean>(false);
 
   const { user, updateStats } = useUser();
   const { skills } = useLearningProgress();
@@ -415,6 +417,24 @@ export default function ModulesScreen() {
               <Text style={styles.statLabel}>Progress</Text>
             </View>
           </View>
+
+          <TouchableOpacity
+            testID="open-placement-quiz"
+            accessibilityRole="button"
+            onPress={() => setPlacementVisible(true)}
+            style={styles.placementCta}
+          >
+            <View style={styles.placementCtaLeft}>
+              <Brain color="#4338CA" size={20} />
+              <Text style={styles.placementCtaTitle}>
+                {user.placementCompleted ? 'Retake Placement Quiz' : 'Take Placement Quiz'}
+              </Text>
+            </View>
+            <View style={styles.placementCtaRight}>
+              <Text style={styles.placementCtaBadge}>{user.proficiencyLevel ?? 'unset'}</Text>
+              <ChevronRight color="#4338CA" size={18} />
+            </View>
+          </TouchableOpacity>
         </LinearGradient>
 
         {/* Modules Grid */}
@@ -566,6 +586,30 @@ export default function ModulesScreen() {
           }}
         />
       )}
+
+      <Modal
+        visible={placementVisible}
+        animationType="slide"
+        onRequestClose={() => setPlacementVisible(false)}
+        transparent={false}
+      >
+        <View style={styles.placementContainer}>
+          <View style={styles.placementHeader}>
+            <TouchableOpacity
+              accessibilityRole="button"
+              testID="close-placement-quiz"
+              onPress={() => setPlacementVisible(false)}
+              style={styles.closeBtn}
+            >
+              <X color="#111827" size={20} />
+              <Text style={styles.closeBtnText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.placementContent}>
+            <PlacementQuiz onComplete={() => setPlacementVisible(false)} />
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -791,6 +835,75 @@ const styles = StyleSheet.create({
   },
   challengeTabTextActive: {
     color: '#3730A3',
+  },
+  placementCta: {
+    marginTop: 12,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  placementCtaLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  placementCtaTitle: {
+    color: '#111827',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  placementCtaRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  placementCtaBadge: {
+    backgroundColor: '#EEF2FF',
+    color: '#4338CA',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'capitalize',
+  },
+  placementContainer: {
+    flex: 1,
+    backgroundColor: '#0B1220',
+  },
+  placementHeader: {
+    paddingTop: 48,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    backgroundColor: 'white',
+    borderBottomColor: '#E5E7EB',
+    borderBottomWidth: 1,
+  },
+  closeBtn: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  closeBtnText: {
+    color: '#111827',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  placementContent: {
+    flex: 1,
   },
   comingSoonContainer: {
     flex: 1,
