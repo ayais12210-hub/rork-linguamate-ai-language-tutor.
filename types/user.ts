@@ -9,6 +9,8 @@ export interface User {
   stats?: UserStats;
   settings?: UserSettings;
   onboardingCompleted: boolean;
+  placementCompleted?: boolean;
+  profileCompleted?: boolean;
   learningGoals?: string[];
   interests?: string[];
   preferredTopics?: string[];

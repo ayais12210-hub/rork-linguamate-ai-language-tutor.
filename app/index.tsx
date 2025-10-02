@@ -4,11 +4,15 @@ import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import OnboardingScreen from '@/components/OnboardingScreen';
 import LanguageSetupScreen from '@/components/LanguageSetupScreen';
+import PlacementQuiz from '@/components/PlacementQuiz';
+import ProfileSetup from '@/components/ProfileSetup';
 import { useUser } from '@/hooks/user-store';
 
 export default function IndexScreen() {
   const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
   const [showLanguageSetup, setShowLanguageSetup] = useState<boolean>(false);
+  const [showPlacement, setShowPlacement] = useState<boolean>(false);
+  const [showProfileSetup, setShowProfileSetup] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { user, isLoading: userLoading } = useUser();
 
@@ -18,6 +22,10 @@ export default function IndexScreen() {
         setShowOnboarding(true);
       } else if (!user.selectedLanguage || !user.nativeLanguage) {
         setShowLanguageSetup(true);
+      } else if (!user.placementCompleted) {
+        setShowPlacement(true);
+      } else if (!user.profileCompleted) {
+        setShowProfileSetup(true);
       }
     } catch (error) {
       console.error('Error checking onboarding status:', error);
@@ -25,7 +33,7 @@ export default function IndexScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [user.onboardingCompleted, user.selectedLanguage, user.nativeLanguage]);
+  }, [user.onboardingCompleted, user.selectedLanguage, user.nativeLanguage, user.placementCompleted, user.profileCompleted]);
 
   useEffect(() => {
     checkOnboardingStatus();
@@ -33,7 +41,13 @@ export default function IndexScreen() {
 
   useEffect(() => {
     if (!userLoading && !isLoading) {
-      if (user.onboardingCompleted && user.selectedLanguage && user.nativeLanguage) {
+      if (
+        user.onboardingCompleted &&
+        user.selectedLanguage &&
+        user.nativeLanguage &&
+        user.placementCompleted &&
+        user.profileCompleted
+      ) {
         router.replace('/(tabs)/chat');
       }
     }
@@ -43,12 +57,37 @@ export default function IndexScreen() {
     setShowOnboarding(false);
     if (!user.selectedLanguage || !user.nativeLanguage) {
       setShowLanguageSetup(true);
+    } else if (!user.placementCompleted) {
+      setShowPlacement(true);
+    } else if (!user.profileCompleted) {
+      setShowProfileSetup(true);
     } else {
       router.replace('/(tabs)/chat');
     }
   };
 
   const handleLanguageSetupComplete = () => {
+    setShowLanguageSetup(false);
+    if (!user.placementCompleted) {
+      setShowPlacement(true);
+    } else if (!user.profileCompleted) {
+      setShowProfileSetup(true);
+    } else {
+      router.replace('/(tabs)/chat');
+    }
+  };
+
+  const handlePlacementComplete = () => {
+    setShowPlacement(false);
+    if (!user.profileCompleted) {
+      setShowProfileSetup(true);
+    } else {
+      router.replace('/(tabs)/chat');
+    }
+  };
+
+  const handleProfileComplete = () => {
+    setShowProfileSetup(false);
     router.replace('/(tabs)/chat');
   };
 
@@ -66,6 +105,14 @@ export default function IndexScreen() {
 
   if (showLanguageSetup) {
     return <LanguageSetupScreen onComplete={handleLanguageSetupComplete} />;
+  }
+
+  if (showPlacement) {
+    return <PlacementQuiz onComplete={handlePlacementComplete} />;
+  }
+
+  if (showProfileSetup) {
+    return <ProfileSetup onComplete={handleProfileComplete} />;
   }
 
   return (

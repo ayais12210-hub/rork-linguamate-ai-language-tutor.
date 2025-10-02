@@ -134,14 +134,16 @@ export const [ChatProvider, useChat] = createContextHook(() => {
     try {
       const targetLanguage = getLanguageName(user.selectedLanguage);
       const nativeLanguage = getLanguageName(user.nativeLanguage);
-      
-      const recentMessages = [...messages, userMessage].slice(-10);
+
+      const recentMessages = [...messages, userMessage].slice(-20);
       const conversationHistory = recentMessages.map(msg => ({
         role: msg.isUser ? 'user' as const : 'assistant' as const,
         content: msg.text
       }));
 
-      const systemPrompt = createPersonalizedSystemPrompt(user, targetLanguage, nativeLanguage);
+      const { buildSystemPrompt, windowConversation, DEFAULT_PROMPT_CONFIG } = await import('@/lib/ai/prompts');
+      const systemPrompt = buildSystemPrompt(user as any, targetLanguage, nativeLanguage);
+      const windowed = windowConversation(conversationHistory, DEFAULT_PROMPT_CONFIG);
 
       const response = await fetch('https://toolkit.rork.com/text/llm/', {
         method: 'POST',
@@ -150,20 +152,17 @@ export const [ChatProvider, useChat] = createContextHook(() => {
         },
         body: JSON.stringify({
           messages: [
-            {
-              role: 'system',
-              content: systemPrompt,
-            },
-            ...conversationHistory,
+            { role: 'system', content: systemPrompt },
+            ...windowed,
           ],
         }),
       });
 
       const data = await response.json();
-      
+
       if (data.completion) {
         const parsedResponse = parseBilingualResponse(data.completion);
-        
+
         const aiMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),
           text: parsedResponse.mainText,
@@ -207,41 +206,7 @@ export const [ChatProvider, useChat] = createContextHook(() => {
   }, []);
 
   const createPersonalizedSystemPrompt = (user: any, targetLanguage: string, nativeLanguage: string): string => {
-    const goals = user.learningGoals?.length > 0 ? user.learningGoals.join(', ') : 'general language learning';
-    const interests = user.interests?.length > 0 ? user.interests.join(', ') : 'various topics';
-    const topics = user.preferredTopics?.length > 0 ? user.preferredTopics.join(', ') : 'everyday conversations';
-    
-    return `You are an expert AI language coach helping a ${user.proficiencyLevel} level student learn ${targetLanguage}. The student's native language is ${nativeLanguage}.
-
-Student Profile:
-- Learning Goals: ${goals}
-- Interests: ${interests}
-- Preferred Topics: ${topics}
-- Daily Goal: ${user.dailyGoalMinutes} minutes of practice
-- Proficiency Level: ${user.proficiencyLevel}
-
-Your Response Format:
-ALWAYS respond with BOTH languages in this exact format:
-
-🎯 [Your response in ${targetLanguage}]
-
-💬 [Translation in ${nativeLanguage}]
-
-📝 [Brief explanation or context in ${nativeLanguage} if needed]
-
-Guidelines:
-1. Adapt your ${targetLanguage} to the student's ${user.proficiencyLevel} level
-2. Be encouraging and supportive
-3. Gently correct mistakes and explain why
-4. Incorporate their interests (${interests}) when possible
-5. Focus on topics they prefer (${topics})
-6. Keep conversations natural and engaging
-7. Provide cultural context when relevant
-8. Use simple vocabulary for beginners, more complex for advanced
-9. Always include both the target language response and native language translation
-10. Remember previous conversations to build continuity
-
-If the student makes an error, gently correct it and explain the grammar rule or vocabulary in their native language.`;
+    return `Deprecated - use buildSystemPrompt instead`;
   };
 
   const parseBilingualResponse = (response: string) => {

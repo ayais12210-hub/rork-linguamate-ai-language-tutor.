@@ -13,6 +13,8 @@ const defaultUser: User = {
   proficiencyLevel: 'beginner',
   isPremium: false,
   onboardingCompleted: false,
+  placementCompleted: false,
+  profileCompleted: false,
   learningGoals: [],
   interests: [],
   preferredTopics: [],
