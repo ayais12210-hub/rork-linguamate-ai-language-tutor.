@@ -1,0 +1,14 @@
+node_modules
+dist
+build
+coverage
+.expo
+.expo-shared
+*.log
+bun.lock
+package-lock.json
+yarn.lock
+.next
+.vercel
+playwright-report
+test-results

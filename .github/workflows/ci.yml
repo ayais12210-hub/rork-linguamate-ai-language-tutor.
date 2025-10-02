@@ -1,7 +1,38 @@
 name: CI
-on: [push, pull_request]
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
 jobs:
-  lint_typecheck:
+  install:
+    name: Install Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm i -g bun@1
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        id: cache
+        with:
+          path: |
+            node_modules
+            ~/.cache
+          key: ${{ runner.os }}-node-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: bun install --frozen-lockfile || bun install
+
+  typecheck:
+    name: Type Check
+    needs: install
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -9,6 +40,117 @@ jobs:
         with:
           node-version: '20'
       - run: npm i -g bun@1
-      - run: bun install --frozen-lockfile || bun install
-      - run: bun run lint
-      - run: bunx tsc -p tsconfig.json --noEmit
+      - name: Restore dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.cache
+          key: ${{ runner.os }}-node-${{ hashFiles('**/bun.lock') }}
+      - name: Type check
+        run: bunx tsc -p tsconfig.json --noEmit
+
+  lint:
+    name: Lint
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm i -g bun@1
+      - name: Restore dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.cache
+          key: ${{ runner.os }}-node-${{ hashFiles('**/bun.lock') }}
+      - name: Run ESLint
+        run: bun run lint
+      - name: Check formatting
+        run: bun run format
+
+  test:
+    name: Unit Tests
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm i -g bun@1
+      - name: Restore dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.cache
+          key: ${{ runner.os }}-node-${{ hashFiles('**/bun.lock') }}
+      - name: Run tests
+        run: bun run test:ci
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: ./coverage/coverage-final.json
+          flags: unittests
+          fail_ci_if_error: false
+
+  e2e-web:
+    name: E2E Tests (Web)
+    needs: [typecheck, lint, test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm i -g bun@1
+      - name: Restore dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.cache
+          key: ${{ runner.os }}-node-${{ hashFiles('**/bun.lock') }}
+      - name: Install Playwright browsers
+        run: bunx playwright install --with-deps chromium webkit
+      - name: Run E2E tests
+        run: bun run e2e
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  build-web:
+    name: Build Web
+    needs: [typecheck, lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm i -g bun@1
+      - name: Restore dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.cache
+          key: ${{ runner.os }}-node-${{ hashFiles('**/bun.lock') }}
+      - name: Build web app
+        run: bun run build:web
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: dist/
+          retention-days: 7
