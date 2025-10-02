@@ -101,26 +101,24 @@ export default function LearnScreen() {
     enabled: !!targetLang && !!nativeLang,
     queryFn: async () => {
       if (!targetLang || !nativeLang) throw new Error('Languages not selected');
-      const payload = await trpcClient.learn.getContent.query({ targetName: targetLang.name, nativeName: nativeLang.name });
-      return payload as LearnPayload;
+      try {
+        const payload = await trpcClient.learn.getContent.query({ targetName: targetLang.name, nativeName: nativeLang.name });
+        return payload as LearnPayload;
+      } catch (err) {
+        console.error('[Learn] tRPC query failed, using fallback:', err);
+        return buildFallbackContent(nativeLang.name, targetLang.name);
+      }
     },
-    retry: 1,
+    retry: false,
     staleTime: 1000 * 60 * 5,
   });
 
   React.useEffect(() => {
     if (learnQuery.data) {
       setData(learnQuery.data);
+      setError(null);
     }
-    if (learnQuery.error) {
-      console.error('[Learn] tRPC error', learnQuery.error);
-      setError('Could not load learning content. Using basic offline set. Tap refresh to try again.');
-      if (!data) {
-        const fallback: LearnPayload = buildFallbackContent(nativeLang?.name ?? 'English', targetLang?.name ?? 'Target');
-        setData(fallback);
-      }
-    }
-  }, [learnQuery.data, learnQuery.error]);
+  }, [learnQuery.data]);
 
   const fetchLearnData = useCallback(async () => {
     if (!targetLang || !nativeLang) {
