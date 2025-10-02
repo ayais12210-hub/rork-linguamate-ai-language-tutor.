@@ -84,3 +84,17 @@ export function sanitiseObject<T extends Record<string, unknown>>(
   
   return sanitised;
 }
+
+export function sanitiseDeep<T>(value: T): T {
+  if (value === null || value === undefined) return value;
+  if (typeof value === 'string') return sanitiseInput(value) as unknown as T;
+  if (Array.isArray(value)) return value.map((v) => sanitiseDeep(v)) as unknown as T;
+  if (typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    Object.entries(value as Record<string, unknown>).forEach(([k, v]) => {
+      out[k] = sanitiseDeep(v);
+    });
+    return out as T;
+  }
+  return value;
+}

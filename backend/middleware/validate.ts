@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { parseBody, parseQuery, parseParams, ValidationException } from '../validation/parser';
 import { logger } from '../logging/pino';
 import { ERROR_CODES } from '@/schemas/errors';
+import { sanitiseDeep } from '@/backend/validation/sanitise';
 
 export interface ValidationSchemas {
   body?: z.ZodTypeAny;
@@ -14,19 +15,22 @@ export function validateMiddleware(schemas: ValidationSchemas) {
   return async (c: Context, next: Next) => {
     try {
       if (schemas.body) {
-        const body = await c.req.json();
+        const raw = await c.req.json();
+        const body = sanitiseDeep(raw);
         const validated = parseBody(schemas.body, body);
         c.set('validatedBody', validated);
       }
 
       if (schemas.query) {
-        const query = c.req.query();
+        const rawQuery = c.req.query();
+        const query = sanitiseDeep(rawQuery);
         const validated = parseQuery(schemas.query, query);
         c.set('validatedQuery', validated);
       }
 
       if (schemas.params) {
-        const params = c.req.param();
+        const rawParams = c.req.param();
+        const params = sanitiseDeep(rawParams);
         const validated = parseParams(schemas.params, params);
         c.set('validatedParams', validated);
       }
@@ -52,12 +56,10 @@ export function validateMiddleware(schemas: ValidationSchemas) {
           'Input validation failed'
         );
 
-        return c.json(
-          {
-            error: error.validationError,
-          },
-          error.statusCode as 400
-        );
+        c.status(error.statusCode as any);
+        return c.json({
+          error: error.validationError,
+        });
       }
 
       throw error;
