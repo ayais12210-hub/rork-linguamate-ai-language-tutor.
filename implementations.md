@@ -4,6 +4,16 @@ This document is a running, append-only log of implementation changes made in th
 
 ---
 
+## 2025-10-02 — Feature-first scaffolding and shared services
+- Created scaffold folders: app/features/lessons, app/shared/components, app/shared/services, app/shared/i18n.
+- Added shared/services/api/client.ts re-exporting tRPC client for a stable import path.
+- Added shared/services/analytics.ts thin adapter over MonitoringUtils.
+- Added shared/i18n/index.ts to centralize i18n entry.
+
+## 2025-10-02 — CI typecheck enforcement
+- Updated .github/workflows/ci.yml to run TypeScript typecheck via `bunx tsc -p tsconfig.json --noEmit`.
+- Ensures PRs fail on type errors even if lint passes.
+
 ## 2025-10-02 — Quality gates and infra
 - Added .eslintrc.cjs with Expo preset to enforce linting across TS/TSX.
 - Added .prettierrc for consistent formatting.

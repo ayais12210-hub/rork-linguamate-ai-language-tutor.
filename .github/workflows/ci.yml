@@ -11,4 +11,4 @@ jobs:
       - run: npm i -g bun@1
       - run: bun install --frozen-lockfile || bun install
       - run: bun run lint
-      - run: bun run typecheck
+      - run: bunx tsc -p tsconfig.json --noEmit
