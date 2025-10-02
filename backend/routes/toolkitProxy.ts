@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import type { Context } from 'hono';
 
 const toolkitApp = new Hono();
 
@@ -41,8 +42,9 @@ function buildHeaders(initHeaders?: HeadersInit): HeadersInit {
   return base;
 }
 
-async function proxyJson(c: any, path: string, body?: unknown, init?: RequestInit) {
-  const ip = (c.req.header('x-forwarded-for') ?? c.req.header('cf-connecting-ip') ?? 'anon') as string;
+async function proxyJson(c: Context, path: string, body?: unknown, init?: RequestInit) {
+  const ipHeader = c.req.header('x-forwarded-for') ?? c.req.header('cf-connecting-ip');
+  const ip = (ipHeader ?? 'anon') as string;
   const rl = rateLimit(ip);
   c.header('X-RateLimit-Limit', String(MAX_REQ));
   c.header('X-RateLimit-Remaining', String(rl.remaining));
@@ -52,7 +54,7 @@ async function proxyJson(c: any, path: string, body?: unknown, init?: RequestIni
     return c.json({ message: 'Rate limit exceeded' });
   }
 
-  const correlationId = c.req.header('x-request-id') ?? crypto.randomUUID();
+  const correlationId = c.req.header('x-request-id') ?? (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
   const url = new URL(path, BASE).toString();
   const retries = 2;
   let attempt = 0;
@@ -129,7 +131,7 @@ toolkitApp.post('/toolkit/v1/stt/transcribe', async (c) => {
     const res = await fetch(url, {
       method: 'POST',
       headers,
-      body: c.req.raw.body as unknown as BodyInit,
+      body: (c.req as any).raw?.body as unknown as BodyInit,
     });
     const text = await res.text();
     const json = text ? JSON.parse(text) : {};
@@ -156,7 +158,7 @@ toolkitApp.post('/toolkit/stt/transcribe', async (c) => {
     const res = await fetch(url, {
       method: 'POST',
       headers,
-      body: c.req.raw.body as unknown as BodyInit,
+      body: (c.req as any).raw?.body as unknown as BodyInit,
     });
     const text = await res.text();
     const json = text ? JSON.parse(text) : {};
@@ -190,7 +192,7 @@ toolkitApp.post('/toolkit/v1/images/edit', async (c) => {
     const res = await fetch(url, {
       method: 'POST',
       headers,
-      body: c.req.raw.body as unknown as BodyInit,
+      body: (c.req as any).raw?.body as unknown as BodyInit,
     });
     const text = await res.text();
     const json = text ? JSON.parse(text) : {};
