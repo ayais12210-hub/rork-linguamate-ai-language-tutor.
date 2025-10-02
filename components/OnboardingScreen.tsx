@@ -118,7 +118,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
   };
 
   const nextQuestion = () => {
-    if (questionStep < 5) {
+    if (questionStep < 4) {
       setQuestionStep(questionStep + 1);
     } else {
       completeOnboarding({
@@ -137,9 +137,8 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
       case 0: return onboardingData.learningGoals.length > 0;
       case 1: return onboardingData.interests.length > 0;
       case 2: return onboardingData.preferredTopics.length > 0;
-      case 3: return onboardingData.currentLevel !== 'beginner' || onboardingData.currentLevel === 'beginner';
-      case 4: return onboardingData.dailyGoalMinutes > 0;
-      case 5: return onboardingData.motivations.length > 0;
+      case 3: return onboardingData.dailyGoalMinutes > 0;
+      case 4: return onboardingData.motivations.length > 0;
       default: return false;
     }
   };
@@ -149,7 +148,6 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
       { title: 'Learning Goals', subtitle: 'What do you want to achieve?' },
       { title: 'Your Interests', subtitle: 'What topics interest you?' },
       { title: 'Conversation Topics', subtitle: 'What would you like to practice?' },
-      { title: 'Experience Level', subtitle: 'Tell us about your background' },
       { title: 'Daily Goals', subtitle: 'How much time can you dedicate?' },
       { title: 'Motivation', subtitle: 'What drives your learning?' },
     ];
@@ -241,42 +239,6 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
           return (
             <View>
               <Text style={styles.questionDescription}>
-                What&apos;s your current level with this language?
-              </Text>
-              {[
-                { id: 'beginner', label: 'Beginner', desc: 'Just starting out' },
-                { id: 'intermediate', label: 'Intermediate', desc: 'Some basic knowledge' },
-                { id: 'advanced', label: 'Advanced', desc: 'Comfortable with basics' },
-              ].map(level => (
-                <TouchableOpacity
-                  key={level.id}
-                  style={[
-                    styles.levelButton,
-                    onboardingData.currentLevel === level.id && styles.selectedOption
-                  ]}
-                  onPress={() => setOnboardingData(prev => ({ ...prev, currentLevel: level.id as any }))}
-                >
-                  <Text style={[
-                    styles.levelTitle,
-                    onboardingData.currentLevel === level.id && styles.selectedOptionText
-                  ]}>
-                    {level.label}
-                  </Text>
-                  <Text style={[
-                    styles.levelDesc,
-                    onboardingData.currentLevel === level.id && styles.selectedOptionText
-                  ]}>
-                    {level.desc}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          );
-
-        case 4:
-          return (
-            <View>
-              <Text style={styles.questionDescription}>
                 How many minutes per day would you like to practice?
               </Text>
               {[5, 10, 15, 20, 30, 45, 60].map(minutes => (
@@ -300,7 +262,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
             </View>
           );
 
-        case 5:
+        case 4:
           return (
             <View>
               <Text style={styles.questionDescription}>
@@ -340,12 +302,12 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
               <View 
                 style={[
                   styles.progressFill, 
-                  { width: `${((questionStep + 1) / 6) * 100}%` }
+                  { width: `${((questionStep + 1) / 5) * 100}%` }
                 ]} 
               />
             </View>
             <Text style={styles.progressText}>
-              {questionStep + 1} of 6
+              {questionStep + 1} of 5
             </Text>
           </View>
           
@@ -370,7 +332,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
               styles.questionNextButtonText,
               !canProceed() && styles.questionNextButtonTextDisabled
             ]}>
-              {questionStep === 5 ? 'Complete Setup' : 'Continue'}
+              {questionStep === 4 ? 'Complete Setup' : 'Continue'}
             </Text>
             <ChevronRight 
               size={20} 
