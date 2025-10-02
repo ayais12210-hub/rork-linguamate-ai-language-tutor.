@@ -23,8 +23,10 @@ import {
   Users,
 } from 'lucide-react-native';
 import { useUser } from '@/hooks/user-store';
-import { LANGUAGES } from '@/constants/languages';
 import Animated, { FadeInUp } from 'react-native-reanimated';
+import LanguageSearchBar from '@/components/search/LanguageSearchBar';
+import { rankLanguages } from '@/modules/languages/logic/filter';
+import type { Lang } from '@/modules/languages/data/languages';
 
 const { width } = Dimensions.get('window');
 
@@ -45,9 +47,16 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     color: '#10B981',
   },
   {
-    id: 'language',
-    title: 'Choose Your Language',
-    subtitle: 'What language would you like to learn?',
+    id: 'nativeLanguage',
+    title: "What's your native language?",
+    subtitle: 'This helps us translate from your language to your target language',
+    icon: Globe,
+    color: '#6366F1',
+  },
+  {
+    id: 'targetLanguage',
+    title: 'What language do you want to learn?',
+    subtitle: 'Choose the language you\'d like to practice and improve',
     icon: Globe,
     color: '#3B82F6',
   },
@@ -118,11 +127,23 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const { completeOnboarding: saveOnboarding } = useUser();
   const [currentStep, setCurrentStep] = useState(0);
-  const [selectedLanguage, setSelectedLanguage] = useState('');
+  const [nativeLanguage, setNativeLanguage] = useState('');
+  const [targetLanguage, setTargetLanguage] = useState('');
   const [selectedLevel, setSelectedLevel] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner');
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const [dailyGoal, setDailyGoal] = useState(15);
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
+  const [nativeSearchQuery, setNativeSearchQuery] = useState('');
+  const [targetSearchQuery, setTargetSearchQuery] = useState('');
+
+  const nativeLanguages = React.useMemo(
+    () => rankLanguages(nativeSearchQuery),
+    [nativeSearchQuery]
+  );
+  const targetLanguages = React.useMemo(
+    () => rankLanguages(targetSearchQuery),
+    [targetSearchQuery]
+  );
 
   const currentStepData = ONBOARDING_STEPS[currentStep];
   const Icon = currentStepData.icon;
@@ -143,7 +164,8 @@ export default function OnboardingScreen() {
 
   const finishOnboarding = () => {
     saveOnboarding({
-      selectedLanguage,
+      nativeLanguage,
+      selectedLanguage: targetLanguage,
       proficiencyLevel: selectedLevel,
       learningGoals: selectedGoals,
       dailyGoalMinutes: dailyGoal,
@@ -156,8 +178,10 @@ export default function OnboardingScreen() {
     switch (currentStepData.id) {
       case 'welcome':
         return true;
-      case 'language':
-        return selectedLanguage !== '';
+      case 'nativeLanguage':
+        return nativeLanguage !== '';
+      case 'targetLanguage':
+        return targetLanguage !== '';
       case 'level':
         return true;
       case 'goals':
@@ -198,30 +222,94 @@ export default function OnboardingScreen() {
           </AnimatedView>
         );
 
-      case 'language':
+      case 'nativeLanguage':
         return (
-          <ScrollView style={styles.optionsScroll} showsVerticalScrollIndicator={false}>
-            <View style={styles.languageGrid}>
-              {LANGUAGES.map((lang) => (
+          <View style={styles.languagePickerContainer}>
+            <LanguageSearchBar
+              value={nativeSearchQuery}
+              onChange={setNativeSearchQuery}
+              placeholder="Search by name or code (e.g., en, pa)"
+              testID="native-language-search"
+            />
+            <ScrollView
+              style={styles.languageList}
+              showsVerticalScrollIndicator={false}
+              testID="native-language-list"
+            >
+              {nativeLanguages.map((lang: Lang) => (
                 <TouchableOpacity
                   key={lang.code}
                   style={[
-                    styles.languageCard,
-                    selectedLanguage === lang.code && styles.selectedCard,
+                    styles.languageRow,
+                    nativeLanguage === lang.code && styles.selectedRow,
                   ]}
-                  onPress={() => setSelectedLanguage(lang.code)}
+                  onPress={() => setNativeLanguage(lang.code)}
+                  testID={`language-item-${lang.code}`}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Choose ${lang.name}`}
                 >
-                  <Text style={styles.languageFlag}>{lang.flag}</Text>
-                  <Text style={styles.languageName}>{lang.name}</Text>
-                  {selectedLanguage === lang.code && (
-                    <View style={styles.checkIcon}>
-                      <Check size={16} color="white" />
-                    </View>
+                  <Text style={styles.languageFlag}>{lang.flag ?? '🌐'}</Text>
+                  <View style={styles.languageInfo}>
+                    <Text style={styles.languageName}>{lang.name}</Text>
+                    {lang.endonym && lang.endonym !== lang.name && (
+                      <Text style={styles.languageEndonym}>{lang.endonym}</Text>
+                    )}
+                  </View>
+                  {nativeLanguage === lang.code && (
+                    <Check size={20} color="white" />
+                  )}
+                  {nativeLanguage !== lang.code && (
+                    <Text style={styles.chevron}>›</Text>
                   )}
                 </TouchableOpacity>
               ))}
-            </View>
-          </ScrollView>
+            </ScrollView>
+          </View>
+        );
+
+      case 'targetLanguage':
+        return (
+          <View style={styles.languagePickerContainer}>
+            <LanguageSearchBar
+              value={targetSearchQuery}
+              onChange={setTargetSearchQuery}
+              placeholder="Search by name or code (e.g., en, pa)"
+              testID="target-language-search"
+            />
+            <ScrollView
+              style={styles.languageList}
+              showsVerticalScrollIndicator={false}
+              testID="target-language-list"
+            >
+              {targetLanguages.map((lang: Lang) => (
+                <TouchableOpacity
+                  key={lang.code}
+                  style={[
+                    styles.languageRow,
+                    targetLanguage === lang.code && styles.selectedRow,
+                  ]}
+                  onPress={() => setTargetLanguage(lang.code)}
+                  testID={`language-item-${lang.code}`}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Choose ${lang.name}`}
+                >
+                  <Text style={styles.languageFlag}>{lang.flag ?? '🌐'}</Text>
+                  <View style={styles.languageInfo}>
+                    <Text style={styles.languageName}>{lang.name}</Text>
+                    {lang.endonym && lang.endonym !== lang.name && (
+                      <Text style={styles.languageEndonym}>{lang.endonym}</Text>
+                    )}
+                  </View>
+                  {targetLanguage === lang.code && (
+                    <Check size={20} color="white" />
+                  )}
+                  {targetLanguage !== lang.code && (
+                    <Text style={styles.chevron}>›</Text>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
         );
 
       case 'level':
@@ -491,47 +579,50 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500' as const,
   },
-  optionsScroll: {
+  languagePickerContainer: {
     flex: 1,
   },
-  languageGrid: {
-    flexDirection: 'row' as const,
-    flexWrap: 'wrap' as const,
-    justifyContent: 'space-between' as const,
-    gap: 12,
+  languageList: {
+    flex: 1,
+    marginTop: 8,
   },
-  languageCard: {
-    width: (width - 72) / 3,
+  languageRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginHorizontal: 16,
+    marginBottom: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 12,
-    padding: 16,
-    alignItems: 'center' as const,
     borderWidth: 2,
     borderColor: 'transparent',
   },
-  selectedCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  selectedRow: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     borderColor: 'white',
   },
   languageFlag: {
-    fontSize: 32,
-    marginBottom: 8,
+    fontSize: 24,
+    marginRight: 12,
+  },
+  languageInfo: {
+    flex: 1,
   },
   languageName: {
     color: 'white',
-    fontSize: 12,
-    textAlign: 'center' as const,
+    fontSize: 16,
+    fontWeight: '600' as const,
   },
-  checkIcon: {
-    position: 'absolute' as const,
-    top: 8,
-    right: 8,
-    backgroundColor: '#10B981',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    justifyContent: 'center' as const,
-    alignItems: 'center' as const,
+  languageEndonym: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 13,
+    marginTop: 2,
+  },
+  chevron: {
+    color: 'rgba(255, 255, 255, 0.4)',
+    fontSize: 24,
+    marginLeft: 8,
   },
   levelContainer: {
     gap: 16,

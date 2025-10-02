@@ -1,167 +1,77 @@
 # TestID Conventions
 
-This document outlines the testID naming conventions for Linguamate to ensure consistent and maintainable E2E and integration tests.
+This document outlines the testID naming conventions used throughout the Linguamate app for UI testing.
 
-## Naming Pattern
+## General Rules
 
-Use kebab-case with descriptive, hierarchical names:
+1. Use kebab-case for all testIDs
+2. Be descriptive and specific
+3. Include the component type or purpose
+4. Use consistent prefixes for related components
 
-```
-{screen}-{component}-{element}
-```
+## Onboarding & Language Selection
 
-## Critical TestIDs
+### Search Components
+- `language-search` - Main language search input
+- `native-language-search` - Native language search input (Step 1)
+- `target-language-search` - Target language search input (Step 2)
 
-### Navigation & Tabs
-- `learn-tab` - Learn tab button
-- `lessons-tab` - Lessons tab button
-- `modules-tab` - Modules tab button
-- `chat-tab` - Chat tab button
-- `profile-tab` - Profile tab button
-- `leaderboard-tab` - Leaderboard tab button
-- `translator-tab` - Translator tab button
+### Language Lists
+- `language-list` - Generic language list container
+- `native-language-list` - Native language list (Step 1)
+- `target-language-list` - Target language list (Step 2)
+- `language-item-{code}` - Individual language item (e.g., `language-item-en`, `language-item-pa`)
 
-### Learn Screen
-- `learn-surface` - Main learn screen container
-- `learn-alphabet-section` - Alphabet learning section
-- `learn-phonics-section` - Phonics training section
-- `learn-grammar-section` - Grammar section
-- `learn-dialogue-section` - Dialogue practice section
-- `learn-character-card` - Individual character card
-- `learn-play-audio` - Play pronunciation button
-- `learn-next-button` - Next exercise button
-- `learn-submit-button` - Submit answer button
+### Onboarding Steps
+- `onboarding-next` - Next/Continue button in onboarding
 
-### Lessons Screen
-- `lessons-list` - Main lessons list container
-- `lessons-filter` - Filter dropdown/button
-- `lessons-search` - Search input
-- `lesson-card-{id}` - Individual lesson card
-- `lesson-start-button` - Start lesson button
-- `lesson-progress-bar` - Lesson progress indicator
-- `lesson-xp-badge` - XP reward badge
+## Screen-Level TestIDs
 
-### Modules Screen
+### Main Screens
+- `learn-surface` - Learn screen root container
+- `lessons-list` - Lessons list container
 - `modules-grid` - Modules grid container
-- `module-card-{type}` - Module card (alphabet, vowels, consonants, etc.)
-- `module-locked-badge` - Locked module indicator
-- `module-progress-badge` - Module progress indicator
+- `chat-input` - Chat input field
+- `profile-leaderboard` - Profile leaderboard section
 
-### Profile Screen
-- `profile-avatar` - User avatar
-- `profile-username` - Username display
-- `profile-xp-total` - Total XP display
-- `profile-level-badge` - User level badge
-- `profile-streak-counter` - Streak counter
-- `profile-stats-section` - Statistics section
-- `profile-achievements-list` - Achievements list
-- `profile-edit-button` - Edit profile button
-- `profile-settings-button` - Settings button
+## Accessibility
 
-### Chat Screen
-- `chat-input` - Message input field
-- `chat-send-button` - Send message button
-- `chat-messages-list` - Messages list container
-- `chat-message-{id}` - Individual message
-- `chat-clear-button` - Clear conversation button
+All testIDs should be accompanied by proper accessibility attributes:
+- `accessibilityLabel` - Descriptive label for screen readers
+- `accessibilityRole` - Semantic role (button, text, etc.)
+- `accessibilityHint` - Additional context when needed
 
-### Leaderboard Screen
-- `leaderboard-list` - Leaderboard list container
-- `leaderboard-filter` - Time period filter
-- `leaderboard-user-rank` - Current user's rank
-- `leaderboard-item-{rank}` - Individual leaderboard entry
-
-### Auth Screens
-- `auth-email-input` - Email input field
-- `auth-password-input` - Password input field
-- `auth-login-button` - Login button
-- `auth-signup-button` - Sign up button
-- `auth-forgot-password-link` - Forgot password link
-- `auth-social-google` - Google sign-in button
-- `auth-social-facebook` - Facebook sign-in button
-
-### Common Components
-- `modal-overlay` - Modal backdrop
-- `modal-close-button` - Modal close button
-- `loading-spinner` - Loading indicator
-- `error-message` - Error message display
-- `success-message` - Success message display
-- `back-button` - Back navigation button
-- `menu-button` - Menu/hamburger button
-
-## Usage in Components
-
-### React Native
+## Examples
 
 ```tsx
-<View testID="learn-surface">
-  <TouchableOpacity testID="learn-play-audio">
-    <Text>Play</Text>
-  </TouchableOpacity>
-</View>
-```
+// Language search bar
+<TextInput
+  testID="language-search"
+  accessibilityLabel="Search languages"
+  accessibilityRole="search"
+/>
 
-### React Native Web
-
-TestIDs automatically map to `data-testid` attributes in web:
-
-```tsx
-<View testID="lessons-list">
-  {/* Becomes <div data-testid="lessons-list"> in web */}
-</View>
-```
-
-## Testing with TestIDs
-
-### Jest + React Testing Library
-
-```tsx
-import { render, screen } from '@testing-library/react';
-
-const { getByTestId } = render(<LearnScreen />);
-expect(getByTestId('learn-surface')).toBeTruthy();
-
-// Or with screen
-expect(screen.getByTestId('learn-play-audio')).toBeTruthy();
-```
-
-### Playwright
-
-```ts
-await page.getByTestId('lessons-list').waitFor();
-await page.getByTestId('lesson-start-button').click();
-```
-
-## Best Practices
-
-1. **Be Specific**: Use descriptive names that clearly identify the element
-2. **Be Consistent**: Follow the `{screen}-{component}-{element}` pattern
-3. **Avoid Duplication**: Each testID should be unique within a screen
-4. **Use Dynamic IDs**: For lists, append unique identifiers (e.g., `lesson-card-${id}`)
-5. **Document New IDs**: Add new testIDs to this document when creating them
-6. **Accessibility First**: Prefer semantic roles and labels when possible, use testIDs as fallback
-
-## Accessibility Considerations
-
-Always pair testIDs with proper accessibility props:
-
-```tsx
+// Language list item
 <TouchableOpacity
-  testID="learn-play-audio"
+  testID={`language-item-${lang.code}`}
   accessibilityRole="button"
-  accessibilityLabel="Play pronunciation"
-  accessibilityHint="Plays the audio pronunciation of the character"
+  accessibilityLabel={`Choose ${lang.name}`}
 >
-  <Play />
+  {/* ... */}
 </TouchableOpacity>
 ```
 
-## Migration Strategy
+## Testing
 
-When adding testIDs to existing components:
+Use these testIDs in your tests:
 
-1. Start with critical user flows (auth, main navigation, core features)
-2. Add testIDs to list containers before individual items
-3. Prioritize interactive elements (buttons, inputs, links)
-4. Update E2E tests to use new testIDs
-5. Remove brittle selectors (text content, class names)
+```typescript
+// Find by testID
+const searchBar = screen.getByTestId('language-search');
+
+// Find language item
+const punjabi = screen.getByTestId('language-item-pa');
+
+// Check list exists
+expect(screen.getByTestId('language-list')).toBeTruthy();
+```
