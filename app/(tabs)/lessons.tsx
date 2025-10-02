@@ -1310,6 +1310,114 @@ Return ONLY valid JSON with this structure:
             </View>
           )}
           
+          {exercise.type === 'listening' && exercise.options && (
+            <View style={styles.listeningContainer}>
+              <View style={styles.listeningPrompt}>
+                <Headphones size={48} color="#3B82F6" />
+                <Text style={styles.listeningText}>
+                  Listen carefully and select the correct answer
+                </Text>
+                <Text style={styles.listeningHint}>
+                  {exercise.nativeText || 'Audio exercise'}
+                </Text>
+              </View>
+              
+              <View style={styles.optionsContainer}>
+                {exercise.options.map((option, index) => (
+                  <TouchableOpacity
+                    key={`listening_${index}`}
+                    testID={`listening-option-${index}`}
+                    style={[
+                      styles.optionButton,
+                      selectedAnswer === option && styles.selectedOption,
+                      showResult && option === exercise.correctAnswer && styles.correctOption,
+                      showResult && selectedAnswer === option && selectedAnswer !== exercise.correctAnswer && styles.incorrectOption,
+                    ]}
+                    onPress={() => !showResult && setSelectedAnswer(option)}
+                    disabled={showResult}
+                  >
+                    <Text style={[
+                      styles.optionText,
+                      selectedAnswer === option && styles.selectedOptionText,
+                    ]}>
+                      {option}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+          
+          {exercise.type === 'speaking' && exercise.options && (
+            <View style={styles.speakingContainer}>
+              <View style={styles.speakingPrompt}>
+                <Volume2 size={48} color="#10B981" />
+                <Text style={styles.speakingText}>
+                  Practice speaking this phrase
+                </Text>
+                <Text style={styles.speakingPhrase}>
+                  {exercise.targetText || exercise.correctAnswer}
+                </Text>
+              </View>
+              
+              <View style={styles.optionsContainer}>
+                {exercise.options.map((option, index) => (
+                  <TouchableOpacity
+                    key={`speaking_${index}`}
+                    testID={`speaking-option-${index}`}
+                    style={[
+                      styles.optionButton,
+                      selectedAnswer === option && styles.selectedOption,
+                      showResult && option === exercise.correctAnswer && styles.correctOption,
+                      showResult && selectedAnswer === option && selectedAnswer !== exercise.correctAnswer && styles.incorrectOption,
+                    ]}
+                    onPress={() => !showResult && setSelectedAnswer(option)}
+                    disabled={showResult}
+                  >
+                    <Text style={[
+                      styles.optionText,
+                      selectedAnswer === option && styles.selectedOptionText,
+                    ]}>
+                      {option}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+          
+          {exercise.type === 'select_missing' && exercise.options && (
+            <View style={styles.selectMissingContainer}>
+              <Text style={styles.selectMissingPrompt}>
+                Select the missing word or phrase:
+              </Text>
+              
+              <View style={styles.optionsContainer}>
+                {exercise.options.map((option, index) => (
+                  <TouchableOpacity
+                    key={`select_missing_${index}`}
+                    testID={`select-missing-option-${index}`}
+                    style={[
+                      styles.optionButton,
+                      selectedAnswer === option && styles.selectedOption,
+                      showResult && option === exercise.correctAnswer && styles.correctOption,
+                      showResult && selectedAnswer === option && selectedAnswer !== exercise.correctAnswer && styles.incorrectOption,
+                    ]}
+                    onPress={() => !showResult && setSelectedAnswer(option)}
+                    disabled={showResult}
+                  >
+                    <Text style={[
+                      styles.optionText,
+                      selectedAnswer === option && styles.selectedOptionText,
+                    ]}>
+                      {option}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+          
           {exercise.type === 'match_pairs' && exercise.pairs && (
             <View style={styles.matchPairsContainer}>
               <Text style={styles.matchPairsPrompt}>
@@ -2539,6 +2647,74 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#1F2937',
     fontWeight: '500',
+    textAlign: 'center',
+  },
+  
+  // Listening Exercise Styles
+  listeningContainer: {
+    marginBottom: 24,
+  },
+  listeningPrompt: {
+    backgroundColor: '#EFF6FF',
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: '#BFDBFE',
+  },
+  listeningText: {
+    fontSize: 16,
+    color: '#1E40AF',
+    fontWeight: '600',
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  listeningHint: {
+    fontSize: 14,
+    color: '#3B82F6',
+    marginTop: 8,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  
+  // Speaking Exercise Styles
+  speakingContainer: {
+    marginBottom: 24,
+  },
+  speakingPrompt: {
+    backgroundColor: '#F0FDF4',
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: '#BBF7D0',
+  },
+  speakingText: {
+    fontSize: 16,
+    color: '#065F46',
+    fontWeight: '600',
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  speakingPhrase: {
+    fontSize: 20,
+    color: '#10B981',
+    fontWeight: 'bold',
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  
+  // Select Missing Exercise Styles
+  selectMissingContainer: {
+    marginBottom: 24,
+  },
+  selectMissingPrompt: {
+    fontSize: 16,
+    color: '#374151',
+    fontWeight: '600',
+    marginBottom: 16,
     textAlign: 'center',
   },
 });
