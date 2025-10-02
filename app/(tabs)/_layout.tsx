@@ -2,11 +2,13 @@ import { Tabs, useRouter } from 'expo-router';
 import { MessageCircle, User, BookOpen, Layers, GraduationCap, Settings } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUser } from '@/hooks/user-store';
 
 export default function TabLayout() {
   const router = useRouter();
   const { user } = useUser();
+  const insets = useSafeAreaInsets();
 
   const isDark = user?.settings?.darkMode ?? false;
   const colors = useMemo(() => ({
@@ -51,6 +53,11 @@ export default function TabLayout() {
           backgroundColor: colors.tabBg,
           borderTopWidth: 1,
           borderTopColor: colors.tabBorder,
+          paddingBottom: Math.max(insets.bottom, 10),
+          paddingTop: 6,
+        },
+        tabBarItemStyle: {
+          paddingVertical: 6,
         },
         tabBarLabelStyle: {
           fontSize: 12,
