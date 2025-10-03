@@ -46,32 +46,93 @@ interface Translation {
   toLanguage: string;
   timestamp: string;
   isFavorite?: boolean;
-  explanation?: string;
-  culturalContext?: string;
-  grammarInsights?: string;
-  alternativeTranslations?: string[];
-  difficulty?: 'beginner' | 'intermediate' | 'advanced';
-  confidence?: number;
-  tips?: string[];
   pronunciation?: {
     text: string;
     phonetic: string;
     breakdown: string;
+    stressPattern?: string;
+    articulationNotes?: string;
+    commonMispronunciations?: string;
   };
+  meaning?: {
+    literal?: string;
+    functional?: string;
+    idiomaticity?: string;
+    semanticRange?: string;
+    emotionalWeight?: string;
+    contextualExamples?: string[];
+  };
+  structure?: {
+    wordOrder?: string;
+    morphology?: string;
+    agreement?: string;
+    auxiliaries?: string;
+    productiveForms?: string;
+    grammarTraps?: string;
+  };
+  learningProcess?: {
+    acquisitionSteps?: string[];
+    frequencyPriority?: string;
+    immersionStrategies?: string[];
+  };
+  usage?: {
+    contexts?: string[];
+    register?: string;
+    tone?: string;
+    collocations?: string[];
+    pragmaticRole?: string;
+    appropriateness?: string;
+  };
+  cognitiveHooks?: {
+    mnemonics?: string;
+    metaphors?: string;
+    soundAssociations?: string;
+    vividImagery?: string;
+  };
+  culture?: {
+    symbolism?: string;
+    worldview?: string;
+    politenessSystem?: string;
+    identityMarkers?: string;
+    historicalSignificance?: string;
+    regionalVariations?: string[];
+  };
+  crossLanguageInterference?: {
+    overLiteralTranslations?: string[];
+    falseFriends?: string[];
+    l1TransferErrors?: string[];
+    registerMismatches?: string[];
+  };
+  recap?: {
+    keySummary?: string;
+    dos?: string[];
+    donts?: string[];
+    reinforcement?: string;
+  };
+  alternativeTranslationsData?: {
+    neutral?: string;
+    formal?: string;
+    colloquial?: string;
+    situationalNotes?: string;
+  };
+  difficulty?: 'beginner' | 'intermediate' | 'advanced';
+  confidence?: number;
 }
 
 interface AITranslationResponseShape {
   translation?: string;
-  explanation?: string;
-  culturalContext?: string;
-  grammarInsights?: string;
+  pronunciation?: unknown;
+  meaning?: unknown;
+  structure?: unknown;
+  learningProcess?: unknown;
+  usage?: unknown;
+  cognitiveHooks?: unknown;
+  culture?: unknown;
+  crossLanguageInterference?: unknown;
+  recap?: unknown;
   alternativeTranslations?: unknown;
-  alternatives?: unknown;
   difficulty?: string;
   confidence?: unknown;
-  coachingTips?: string;
-  tips?: unknown;
-  pronunciation?: unknown;
 }
 
 function stripJSONCodeFences(raw: string): string {
@@ -197,22 +258,80 @@ Your task is to provide a comprehensive translation and learning analysis. Respo
 
 {
   "translation": "[accurate, natural translation that sounds native in ${toLang.name}]",
-  "explanation": "[detailed explanation of translation choices, why this specific translation works best, and what makes it natural in ${toLang.name}]",
-  "culturalContext": "[cultural context, idioms, cultural references, or social nuances that affect this translation between ${fromLang.name} and ${toLang.name}]",
-  "grammarInsights": "[key grammar patterns, structures, or linguistic differences between ${fromLang.name} and ${toLang.name} that learners should understand]",
-  "alternativeTranslations": ["[alternative 1]", "[alternative 2]", "[alternative 3]"],
-  "difficulty": "[beginner/intermediate/advanced based on language complexity for a ${user.proficiencyLevel} learner]",
-  "confidence": [0.0-1.0 confidence score],
-  "coachingTips": "[specific tips for ${user.proficiencyLevel} level learners transitioning from ${fromLang.name} to ${toLang.name}, including common mistakes to avoid]",
-  "tips": ["[practical tip 1]", "[practical tip 2]", "[practical tip 3]"],
   "pronunciation": {
     "text": "[the translated text]",
-    "phonetic": "[IPA or phonetic transcription]",
-    "breakdown": "[syllable-by-syllable pronunciation guide with stress markers]"
-  }
+    "phonetic": "[IPA transcription]",
+    "breakdown": "[syllable-by-syllable with stress markers]",
+    "stressPattern": "[stress and intonation patterns]",
+    "articulationNotes": "[mouth/tongue placement, aspirated vs unaspirated consonants, vowel length]",
+    "commonMispronunciations": "[typical errors learners make]"
+  },
+  "meaning": {
+    "literal": "[word-for-word translation]",
+    "functional": "[actual meaning in context]",
+    "idiomaticity": "[how idiomatic or natural it is]",
+    "semanticRange": "[range of meanings and contexts]",
+    "emotionalWeight": "[emotional or affective connotations]",
+    "contextualExamples": ["[example 1 in ${toLang.name}]", "[example 2 in ${toLang.name}]"]
+  },
+  "structure": {
+    "wordOrder": "[explanation of word order]",
+    "morphology": "[gender, case, tense, aspect, mood details]",
+    "agreement": "[subject-verb, noun-adjective agreement]",
+    "auxiliaries": "[auxiliary verbs and their functions]",
+    "productiveForms": "[prefixes, suffixes, derivations]",
+    "grammarTraps": "[common grammar mistakes specific to this phrase]"
+  },
+  "learningProcess": {
+    "acquisitionSteps": ["[step 1: chunking]", "[step 2: shadowing]", "[step 3: spaced repetition]"],
+    "frequencyPriority": "[high/medium/low - how common this phrase is]",
+    "immersionStrategies": ["[media suggestion]", "[journaling tip]", "[conversation practice]"]
+  },
+  "usage": {
+    "contexts": ["[formal setting]", "[informal setting]", "[workplace]"],
+    "register": "[formal/neutral/informal/slang]",
+    "tone": "[polite/casual/respectful/familiar]",
+    "collocations": ["[common word combinations]"],
+    "pragmaticRole": "[request/greeting/persuasion/etc]",
+    "appropriateness": "[when to use with elders, peers, strangers]"
+  },
+  "cognitiveHooks": {
+    "mnemonics": "[memory device]",
+    "metaphors": "[conceptual metaphor]",
+    "soundAssociations": "[sounds like...]",
+    "vividImagery": "[mental picture to remember]"
+  },
+  "culture": {
+    "symbolism": "[cultural symbolism]",
+    "worldview": "[worldview implications]",
+    "politenessSystem": "[politeness norms]",
+    "identityMarkers": "[social identity aspects]",
+    "historicalSignificance": "[historical or philosophical background]",
+    "regionalVariations": ["[dialect 1]", "[dialect 2]"]
+  },
+  "crossLanguageInterference": {
+    "overLiteralTranslations": ["[common mistake 1]"],
+    "falseFriends": ["[deceptive similarity]"],
+    "l1TransferErrors": ["[native language interference]"],
+    "registerMismatches": ["[formality level errors]"]
+  },
+  "recap": {
+    "keySummary": "[short summary of key insights]",
+    "dos": ["[do this]", "[do that]"],
+    "donts": ["[avoid this]", "[avoid that]"],
+    "reinforcement": "[encouragement and next steps]"
+  },
+  "alternativeTranslations": {
+    "neutral": "[neutral version]",
+    "formal": "[formal version]",
+    "colloquial": "[colloquial/slang version]",
+    "situationalNotes": "[when to use each alternative]"
+  },
+  "difficulty": "[beginner/intermediate/advanced]",
+  "confidence": [0.0-1.0 confidence score]
 }
 
-Focus on being an encouraging language coach who helps learners understand not just the translation, but the cultural and linguistic bridges between their native language and target language.`
+Focus on being an encouraging language coach who provides progressive learning flow: sound → meaning → structure → learning → usage → memory → culture → pitfalls → recap → alternatives.`
             },
             {
               role: 'user',
@@ -227,23 +346,22 @@ Focus on being an encouraging language coach who helps learners understand not j
       const translationText = (normalized.translation ?? '').toString();
       setTranslatedText(translationText);
 
-      const alternatives = toStringArray(
-        normalized.alternativeTranslations ?? normalized.alternatives ?? []
-      );
       const difficultyNorm = (normalized.difficulty ?? '').toString().toLowerCase();
       const difficultyValid = ['beginner', 'intermediate', 'advanced'].includes(difficultyNorm)
         ? (difficultyNorm as 'beginner' | 'intermediate' | 'advanced')
         : undefined;
       const confidenceNorm = coerceConfidence(normalized.confidence);
-      const tips = toStringArray(normalized.tips ?? []);
       
-      let pronunciation: { text: string; phonetic: string; breakdown: string } | undefined;
+      let pronunciation: Translation['pronunciation'] | undefined;
       if (normalized.pronunciation && typeof normalized.pronunciation === 'object') {
         const p = normalized.pronunciation as Record<string, unknown>;
         pronunciation = {
           text: String(p.text ?? translationText),
           phonetic: String(p.phonetic ?? ''),
           breakdown: String(p.breakdown ?? ''),
+          stressPattern: p.stressPattern ? String(p.stressPattern) : undefined,
+          articulationNotes: p.articulationNotes ? String(p.articulationNotes) : undefined,
+          commonMispronunciations: p.commonMispronunciations ? String(p.commonMispronunciations) : undefined,
         };
       }
 
@@ -256,13 +374,17 @@ Focus on being an encouraging language coach who helps learners understand not j
         fromLanguage,
         toLanguage,
         timestamp: new Date().toISOString(),
-        explanation: normalized.explanation ?? undefined,
-        culturalContext: normalized.culturalContext ?? undefined,
-        grammarInsights: normalized.grammarInsights ?? undefined,
-        alternativeTranslations: alternatives,
+        meaning: normalized.meaning ?? undefined,
+        structure: normalized.structure ?? undefined,
+        learningProcess: normalized.learningProcess ?? undefined,
+        usage: normalized.usage ?? undefined,
+        cognitiveHooks: normalized.cognitiveHooks ?? undefined,
+        culture: normalized.culture ?? undefined,
+        crossLanguageInterference: normalized.crossLanguageInterference ?? undefined,
+        recap: normalized.recap ?? undefined,
+        alternativeTranslationsData: normalized.alternativeTranslations ?? undefined,
         difficulty: difficultyValid,
         confidence: confidenceNorm,
-        tips: tips.length > 0 ? tips : undefined,
         pronunciation,
       };
 
@@ -1045,84 +1167,11 @@ Focus on being an encouraging language coach who helps learners understand not j
               <Text style={styles.insightsTitle}>AI Coach Insights</Text>
             </View>
 
-            {currentTranslation.explanation && (
-              <View style={styles.insightCard}>
-                <View style={styles.insightCardHeader}>
-                  <Lightbulb size={16} color="#F59E0B" />
-                  <Text style={styles.insightCardTitle}>Translation Analysis</Text>
-                </View>
-                <Text style={styles.insightCardText}>{currentTranslation.explanation}</Text>
-              </View>
-            )}
-
-            {currentTranslation.culturalContext && (
-              <View style={styles.insightCard}>
-                <View style={styles.insightCardHeader}>
-                  <Globe size={16} color="#06B6D4" />
-                  <Text style={styles.insightCardTitle}>Cultural Context</Text>
-                </View>
-                <Text style={styles.insightCardText}>{currentTranslation.culturalContext}</Text>
-              </View>
-            )}
-
-            {currentTranslation.grammarInsights && (
-              <View style={styles.insightCard}>
-                <View style={styles.insightCardHeader}>
-                  <BookOpen size={16} color="#10B981" />
-                  <Text style={styles.insightCardTitle}>Grammar Insights</Text>
-                </View>
-                <Text style={styles.insightCardText}>{currentTranslation.grammarInsights}</Text>
-              </View>
-            )}
-
-            {Array.isArray(currentTranslation.alternativeTranslations) &&
-              currentTranslation.alternativeTranslations.length > 0 && (
-                <View style={styles.insightCard}>
-                  <View style={styles.insightCardHeader}>
-                    <MessageCircle size={16} color="#EF4444" />
-                    <Text style={styles.insightCardTitle}>Alternative Translations</Text>
-                  </View>
-                  {currentTranslation.alternativeTranslations.map((alt, index) => (
-                    <TouchableOpacity
-                      key={`${index}-${alt}`}
-                      style={styles.alternativeItem}
-                      onPress={() => {
-                        console.log('[Translator] Alternative selected -> source input');
-                        setSourceText(alt);
-                        try { sourceInputRef.current?.focus?.(); } catch (e) { console.log('focus err', e); }
-                      }}
-                      onLongPress={() => {
-                        console.log('[Translator] Alternative long-pressed -> translated preview');
-                        setTranslatedText(alt);
-                      }}
-                      testID={`alt-${index}`}
-                    >
-                      <Text style={styles.alternativeText}>{`• ${alt}`}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-
-            {Array.isArray(currentTranslation.tips) &&
-              currentTranslation.tips.length > 0 && (
-                <View style={styles.insightCard}>
-                  <View style={styles.insightCardHeader}>
-                    <Lightbulb size={16} color="#8B5CF6" />
-                    <Text style={styles.insightCardTitle}>Tips & Best Practices</Text>
-                  </View>
-                  {currentTranslation.tips.map((tip, index) => (
-                    <View key={`tip-${index}`} style={styles.tipItem}>
-                      <Text style={styles.tipText}>{`💡 ${tip}`}</Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-
             {currentTranslation.pronunciation && (
               <View style={styles.insightCard}>
                 <View style={styles.insightCardHeader}>
                   <Volume2 size={16} color="#EC4899" />
-                  <Text style={styles.insightCardTitle}>Advanced Pronunciation</Text>
+                  <Text style={styles.insightCardTitle}>1. Sound (Advanced Pronunciation)</Text>
                   <TouchableOpacity
                     onPress={() => handleSpeakText(currentTranslation.pronunciation?.text ?? currentTranslation.translatedText, toLanguage, 'pronunciation')}
                     style={styles.pronunciationSpeakBtn}
@@ -1142,17 +1191,425 @@ Focus on being an encouraging language coach who helps learners understand not j
                   </View>
                   {currentTranslation.pronunciation.phonetic && (
                     <View style={styles.pronunciationRow}>
-                      <Text style={styles.pronunciationLabel}>Phonetic:</Text>
+                      <Text style={styles.pronunciationLabel}>IPA Transcription:</Text>
                       <Text style={styles.pronunciationPhonetic}>{currentTranslation.pronunciation.phonetic}</Text>
                     </View>
                   )}
                   {currentTranslation.pronunciation.breakdown && (
                     <View style={styles.pronunciationRow}>
-                      <Text style={styles.pronunciationLabel}>Breakdown:</Text>
+                      <Text style={styles.pronunciationLabel}>Syllable Breakdown:</Text>
                       <Text style={styles.pronunciationBreakdown}>{currentTranslation.pronunciation.breakdown}</Text>
                     </View>
                   )}
+                  {currentTranslation.pronunciation.stressPattern && (
+                    <View style={styles.pronunciationRow}>
+                      <Text style={styles.pronunciationLabel}>Stress & Intonation:</Text>
+                      <Text style={styles.pronunciationBreakdown}>{currentTranslation.pronunciation.stressPattern}</Text>
+                    </View>
+                  )}
+                  {currentTranslation.pronunciation.articulationNotes && (
+                    <View style={styles.pronunciationRow}>
+                      <Text style={styles.pronunciationLabel}>Articulation Notes:</Text>
+                      <Text style={styles.insightCardText}>{currentTranslation.pronunciation.articulationNotes}</Text>
+                    </View>
+                  )}
+                  {currentTranslation.pronunciation.commonMispronunciations && (
+                    <View style={styles.pronunciationRow}>
+                      <Text style={styles.pronunciationLabel}>Common Mispronunciations:</Text>
+                      <Text style={styles.insightCardText}>{currentTranslation.pronunciation.commonMispronunciations}</Text>
+                    </View>
+                  )}
                 </View>
+              </View>
+            )}
+
+            {currentTranslation.meaning && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <Lightbulb size={16} color="#F59E0B" />
+                  <Text style={styles.insightCardTitle}>2. Meaning (Translation Analysis)</Text>
+                </View>
+                {currentTranslation.meaning.literal && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Literal:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.meaning.literal}</Text>
+                  </View>
+                )}
+                {currentTranslation.meaning.functional && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Functional:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.meaning.functional}</Text>
+                  </View>
+                )}
+                {currentTranslation.meaning.idiomaticity && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Idiomaticity:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.meaning.idiomaticity}</Text>
+                  </View>
+                )}
+                {currentTranslation.meaning.semanticRange && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Semantic Range:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.meaning.semanticRange}</Text>
+                  </View>
+                )}
+                {currentTranslation.meaning.emotionalWeight && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Emotional Weight:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.meaning.emotionalWeight}</Text>
+                  </View>
+                )}
+                {currentTranslation.meaning.contextualExamples && currentTranslation.meaning.contextualExamples.length > 0 && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Contextual Examples:</Text>
+                    {currentTranslation.meaning.contextualExamples.map((ex, idx) => (
+                      <Text key={idx} style={styles.exampleText}>• {ex}</Text>
+                    ))}
+                  </View>
+                )}
+              </View>
+            )}
+
+            {currentTranslation.structure && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <BookOpen size={16} color="#10B981" />
+                  <Text style={styles.insightCardTitle}>3. Structure (Grammar & Syntax)</Text>
+                </View>
+                {currentTranslation.structure.wordOrder && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Word Order:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.structure.wordOrder}</Text>
+                  </View>
+                )}
+                {currentTranslation.structure.morphology && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Morphology:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.structure.morphology}</Text>
+                  </View>
+                )}
+                {currentTranslation.structure.agreement && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Agreement:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.structure.agreement}</Text>
+                  </View>
+                )}
+                {currentTranslation.structure.auxiliaries && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Auxiliaries:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.structure.auxiliaries}</Text>
+                  </View>
+                )}
+                {currentTranslation.structure.productiveForms && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Productive Forms:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.structure.productiveForms}</Text>
+                  </View>
+                )}
+                {currentTranslation.structure.grammarTraps && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>⚠️ Grammar Traps:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.structure.grammarTraps}</Text>
+                  </View>
+                )}
+              </View>
+            )}
+
+            {currentTranslation.learningProcess && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <Brain size={16} color="#8B5CF6" />
+                  <Text style={styles.insightCardTitle}>4. Learning Process</Text>
+                </View>
+                {currentTranslation.learningProcess.acquisitionSteps && currentTranslation.learningProcess.acquisitionSteps.length > 0 && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Acquisition Steps:</Text>
+                    {currentTranslation.learningProcess.acquisitionSteps.map((step, idx) => (
+                      <Text key={idx} style={styles.exampleText}>• {step}</Text>
+                    ))}
+                  </View>
+                )}
+                {currentTranslation.learningProcess.frequencyPriority && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Frequency Priority:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.learningProcess.frequencyPriority}</Text>
+                  </View>
+                )}
+                {currentTranslation.learningProcess.immersionStrategies && currentTranslation.learningProcess.immersionStrategies.length > 0 && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Immersion Strategies:</Text>
+                    {currentTranslation.learningProcess.immersionStrategies.map((strat, idx) => (
+                      <Text key={idx} style={styles.exampleText}>• {strat}</Text>
+                    ))}
+                  </View>
+                )}
+              </View>
+            )}
+
+            {currentTranslation.usage && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <MessageCircle size={16} color="#06B6D4" />
+                  <Text style={styles.insightCardTitle}>5. Usage (Context & Patterns)</Text>
+                </View>
+                {currentTranslation.usage.contexts && currentTranslation.usage.contexts.length > 0 && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Contexts:</Text>
+                    {currentTranslation.usage.contexts.map((ctx, idx) => (
+                      <Text key={idx} style={styles.exampleText}>• {ctx}</Text>
+                    ))}
+                  </View>
+                )}
+                {currentTranslation.usage.register && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Register:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.usage.register}</Text>
+                  </View>
+                )}
+                {currentTranslation.usage.tone && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Tone:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.usage.tone}</Text>
+                  </View>
+                )}
+                {currentTranslation.usage.collocations && currentTranslation.usage.collocations.length > 0 && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Collocations:</Text>
+                    {currentTranslation.usage.collocations.map((col, idx) => (
+                      <Text key={idx} style={styles.exampleText}>• {col}</Text>
+                    ))}
+                  </View>
+                )}
+                {currentTranslation.usage.pragmaticRole && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Pragmatic Role:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.usage.pragmaticRole}</Text>
+                  </View>
+                )}
+                {currentTranslation.usage.appropriateness && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Appropriateness:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.usage.appropriateness}</Text>
+                  </View>
+                )}
+              </View>
+            )}
+
+            {currentTranslation.cognitiveHooks && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <Sparkles size={16} color="#F59E0B" />
+                  <Text style={styles.insightCardTitle}>6. Cognitive & Memory Hooks</Text>
+                </View>
+                {currentTranslation.cognitiveHooks.mnemonics && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Mnemonics:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.cognitiveHooks.mnemonics}</Text>
+                  </View>
+                )}
+                {currentTranslation.cognitiveHooks.metaphors && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Metaphors:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.cognitiveHooks.metaphors}</Text>
+                  </View>
+                )}
+                {currentTranslation.cognitiveHooks.soundAssociations && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Sound Associations:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.cognitiveHooks.soundAssociations}</Text>
+                  </View>
+                )}
+                {currentTranslation.cognitiveHooks.vividImagery && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Vivid Imagery:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.cognitiveHooks.vividImagery}</Text>
+                  </View>
+                )}
+              </View>
+            )}
+
+            {currentTranslation.culture && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <Globe size={16} color="#10B981" />
+                  <Text style={styles.insightCardTitle}>7. Culture / Philosophy / Regional Dialects</Text>
+                </View>
+                {currentTranslation.culture.symbolism && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Symbolism:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.culture.symbolism}</Text>
+                  </View>
+                )}
+                {currentTranslation.culture.worldview && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Worldview:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.culture.worldview}</Text>
+                  </View>
+                )}
+                {currentTranslation.culture.politenessSystem && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Politeness System:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.culture.politenessSystem}</Text>
+                  </View>
+                )}
+                {currentTranslation.culture.identityMarkers && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Identity Markers:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.culture.identityMarkers}</Text>
+                  </View>
+                )}
+                {currentTranslation.culture.historicalSignificance && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Historical Significance:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.culture.historicalSignificance}</Text>
+                  </View>
+                )}
+                {currentTranslation.culture.regionalVariations && currentTranslation.culture.regionalVariations.length > 0 && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Regional Variations:</Text>
+                    {currentTranslation.culture.regionalVariations.map((variant, idx) => (
+                      <Text key={idx} style={styles.exampleText}>• {variant}</Text>
+                    ))}
+                  </View>
+                )}
+              </View>
+            )}
+
+            {currentTranslation.crossLanguageInterference && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <Award size={16} color="#EF4444" />
+                  <Text style={styles.insightCardTitle}>8. Cross-Language Interference Notes</Text>
+                </View>
+                {currentTranslation.crossLanguageInterference.overLiteralTranslations && currentTranslation.crossLanguageInterference.overLiteralTranslations.length > 0 && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Over-Literal Translations:</Text>
+                    {currentTranslation.crossLanguageInterference.overLiteralTranslations.map((item, idx) => (
+                      <Text key={idx} style={styles.exampleText}>• {item}</Text>
+                    ))}
+                  </View>
+                )}
+                {currentTranslation.crossLanguageInterference.falseFriends && currentTranslation.crossLanguageInterference.falseFriends.length > 0 && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>False Friends:</Text>
+                    {currentTranslation.crossLanguageInterference.falseFriends.map((item, idx) => (
+                      <Text key={idx} style={styles.exampleText}>• {item}</Text>
+                    ))}
+                  </View>
+                )}
+                {currentTranslation.crossLanguageInterference.l1TransferErrors && currentTranslation.crossLanguageInterference.l1TransferErrors.length > 0 && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>L1 Transfer Errors:</Text>
+                    {currentTranslation.crossLanguageInterference.l1TransferErrors.map((item, idx) => (
+                      <Text key={idx} style={styles.exampleText}>• {item}</Text>
+                    ))}
+                  </View>
+                )}
+                {currentTranslation.crossLanguageInterference.registerMismatches && currentTranslation.crossLanguageInterference.registerMismatches.length > 0 && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Register Mismatches:</Text>
+                    {currentTranslation.crossLanguageInterference.registerMismatches.map((item, idx) => (
+                      <Text key={idx} style={styles.exampleText}>• {item}</Text>
+                    ))}
+                  </View>
+                )}
+              </View>
+            )}
+
+            {currentTranslation.recap && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <Lightbulb size={16} color="#8B5CF6" />
+                  <Text style={styles.insightCardTitle}>9. Recap & Tips</Text>
+                </View>
+                {currentTranslation.recap.keySummary && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Key Summary:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.recap.keySummary}</Text>
+                  </View>
+                )}
+                {currentTranslation.recap.dos && currentTranslation.recap.dos.length > 0 && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>✅ Dos:</Text>
+                    {currentTranslation.recap.dos.map((item, idx) => (
+                      <Text key={idx} style={styles.exampleText}>• {item}</Text>
+                    ))}
+                  </View>
+                )}
+                {currentTranslation.recap.donts && currentTranslation.recap.donts.length > 0 && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>❌ Donts:</Text>
+                    {currentTranslation.recap.donts.map((item, idx) => (
+                      <Text key={idx} style={styles.exampleText}>• {item}</Text>
+                    ))}
+                  </View>
+                )}
+                {currentTranslation.recap.reinforcement && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Reinforcement:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.recap.reinforcement}</Text>
+                  </View>
+                )}
+              </View>
+            )}
+
+            {currentTranslation.alternativeTranslationsData && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <MessageCircle size={16} color="#06B6D4" />
+                  <Text style={styles.insightCardTitle}>10. Alternative Translations</Text>
+                </View>
+                {currentTranslation.alternativeTranslationsData.neutral && (
+                  <TouchableOpacity
+                    style={styles.alternativeItem}
+                    onPress={() => {
+                      setSourceText(currentTranslation.alternativeTranslationsData?.neutral ?? '');
+                      try { sourceInputRef.current?.focus?.(); } catch (e) { console.log('focus err', e); }
+                    }}
+                    onLongPress={() => {
+                      setTranslatedText(currentTranslation.alternativeTranslationsData?.neutral ?? '');
+                    }}
+                  >
+                    <Text style={styles.meaningLabel}>Neutral:</Text>
+                    <Text style={styles.alternativeText}>{currentTranslation.alternativeTranslationsData.neutral}</Text>
+                  </TouchableOpacity>
+                )}
+                {currentTranslation.alternativeTranslationsData.formal && (
+                  <TouchableOpacity
+                    style={styles.alternativeItem}
+                    onPress={() => {
+                      setSourceText(currentTranslation.alternativeTranslationsData?.formal ?? '');
+                      try { sourceInputRef.current?.focus?.(); } catch (e) { console.log('focus err', e); }
+                    }}
+                    onLongPress={() => {
+                      setTranslatedText(currentTranslation.alternativeTranslationsData?.formal ?? '');
+                    }}
+                  >
+                    <Text style={styles.meaningLabel}>Formal:</Text>
+                    <Text style={styles.alternativeText}>{currentTranslation.alternativeTranslationsData.formal}</Text>
+                  </TouchableOpacity>
+                )}
+                {currentTranslation.alternativeTranslationsData.colloquial && (
+                  <TouchableOpacity
+                    style={styles.alternativeItem}
+                    onPress={() => {
+                      setSourceText(currentTranslation.alternativeTranslationsData?.colloquial ?? '');
+                      try { sourceInputRef.current?.focus?.(); } catch (e) { console.log('focus err', e); }
+                    }}
+                    onLongPress={() => {
+                      setTranslatedText(currentTranslation.alternativeTranslationsData?.colloquial ?? '');
+                    }}
+                  >
+                    <Text style={styles.meaningLabel}>Colloquial/Slang:</Text>
+                    <Text style={styles.alternativeText}>{currentTranslation.alternativeTranslationsData.colloquial}</Text>
+                  </TouchableOpacity>
+                )}
+                {currentTranslation.alternativeTranslationsData.situationalNotes && (
+                  <View style={styles.meaningRow}>
+                    <Text style={styles.meaningLabel}>Situational Notes:</Text>
+                    <Text style={styles.insightCardText}>{currentTranslation.alternativeTranslationsData.situationalNotes}</Text>
+                  </View>
+                )}
               </View>
             )}
 
@@ -1812,6 +2269,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#4B5563',
     lineHeight: 20,
+  },
+  meaningRow: {
+    marginBottom: 12,
+  },
+  meaningLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 4,
+  },
+  exampleText: {
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 20,
+    marginLeft: 8,
+    marginTop: 2,
   },
   pronunciationSpeakBtn: {
     marginLeft: 'auto',
