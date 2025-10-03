@@ -51,7 +51,9 @@ export function useSpeechToText() {
 
   const onTranscript = (fn: Listener) => {
     listeners.current.add(fn);
-    return () => listeners.current.delete(fn);
+    return () => {
+      listeners.current.delete(fn);
+    };
   };
 
   const speak = (text: string, voice?: string) => {
