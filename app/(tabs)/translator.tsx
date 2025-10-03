@@ -50,6 +50,7 @@ interface Translation {
   culturalContext?: string;
   grammarInsights?: string;
   alternativeTranslations?: string[];
+  advancedSummary?: string;
   difficulty?: 'beginner' | 'intermediate' | 'advanced';
   confidence?: number;
   tips?: string[];
@@ -66,6 +67,7 @@ interface AITranslationResponseShape {
   culturalContext?: string;
   grammarInsights?: string;
   alternativeTranslations?: unknown;
+  advancedSummary?: string;
   alternatives?: unknown;
   difficulty?: string;
   confidence?: unknown;
@@ -209,7 +211,8 @@ Your task is to provide a comprehensive translation and learning analysis. Respo
     "text": "[the translated text]",
     "phonetic": "[IPA or phonetic transcription]",
     "breakdown": "[syllable-by-syllable pronunciation guide with stress markers]"
-  }
+  },
+  "advancedSummary": "[comprehensive summary synthesizing all key insights: pronunciation patterns, meaning nuances, grammatical structures, learning strategies, usage contexts, and cultural considerations - presented as a cohesive overview for quick reference]"
 }
 
 Focus on being an encouraging language coach who helps learners understand not just the translation, but the cultural and linguistic bridges between their native language and target language.`
@@ -264,6 +267,7 @@ Focus on being an encouraging language coach who helps learners understand not j
         confidence: confidenceNorm,
         tips: tips.length > 0 ? tips : undefined,
         pronunciation,
+        advancedSummary: normalized.advancedSummary ?? undefined,
       };
 
       setCurrentTranslation(newTranslation);
@@ -1087,12 +1091,22 @@ Focus on being an encouraging language coach who helps learners understand not j
               </View>
             )}
 
+            {currentTranslation.advancedSummary && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <Sparkles size={16} color="#F59E0B" />
+                  <Text style={styles.insightCardTitle}>6. Advanced Summary</Text>
+                </View>
+                <Text style={styles.insightCardText}>{currentTranslation.advancedSummary}</Text>
+              </View>
+            )}
+
             {Array.isArray(currentTranslation.alternativeTranslations) &&
               currentTranslation.alternativeTranslations.length > 0 && (
                 <View style={styles.insightCard}>
                   <View style={styles.insightCardHeader}>
                     <MessageCircle size={16} color="#EF4444" />
-                    <Text style={styles.insightCardTitle}>6. Alternative Translations</Text>
+                    <Text style={styles.insightCardTitle}>7. Alternative Translations</Text>
                   </View>
                   {currentTranslation.alternativeTranslations.map((alt, index) => (
                     <TouchableOpacity
