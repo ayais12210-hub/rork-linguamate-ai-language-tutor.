@@ -1003,23 +1003,51 @@ Focus on being an encouraging language coach who helps learners understand not j
               <Text style={styles.insightsTitle}>AI Coach Insights</Text>
             </View>
 
+            {currentTranslation.pronunciation && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <Volume2 size={16} color="#EC4899" />
+                  <Text style={styles.insightCardTitle}>1. Sound (Advanced Pronunciation)</Text>
+                  <TouchableOpacity
+                    onPress={() => handleSpeakText(currentTranslation.pronunciation?.text ?? currentTranslation.translatedText, toLanguage, 'pronunciation')}
+                    style={styles.pronunciationSpeakBtn}
+                    testID="pronunciation-speak-btn"
+                  >
+                    <Volume2
+                      size={18}
+                      color={isSpeaking && speakingTextId === 'pronunciation' ? '#10B981' : '#EC4899'}
+                      fill={isSpeaking && speakingTextId === 'pronunciation' ? '#10B981' : 'none'}
+                    />
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.pronunciationContent}>
+                  <View style={styles.pronunciationRow}>
+                    <Text style={styles.pronunciationLabel}>Text</Text>
+                    <Text style={styles.pronunciationValue}>{currentTranslation.pronunciation.text}</Text>
+                  </View>
+                  {currentTranslation.pronunciation.phonetic && (
+                    <View style={styles.pronunciationRow}>
+                      <Text style={styles.pronunciationLabel}>IPA Transcription</Text>
+                      <Text style={styles.pronunciationPhonetic}>{currentTranslation.pronunciation.phonetic}</Text>
+                    </View>
+                  )}
+                  {currentTranslation.pronunciation.breakdown && (
+                    <View style={styles.pronunciationRow}>
+                      <Text style={styles.pronunciationLabel}>Syllable Breakdown</Text>
+                      <Text style={styles.pronunciationBreakdown}>{currentTranslation.pronunciation.breakdown}</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            )}
+
             {currentTranslation.explanation && (
               <View style={styles.insightCard}>
                 <View style={styles.insightCardHeader}>
                   <Lightbulb size={16} color="#F59E0B" />
-                  <Text style={styles.insightCardTitle}>Translation Analysis</Text>
+                  <Text style={styles.insightCardTitle}>2. Meaning (Translation Analysis)</Text>
                 </View>
                 <Text style={styles.insightCardText}>{currentTranslation.explanation}</Text>
-              </View>
-            )}
-
-            {currentTranslation.culturalContext && (
-              <View style={styles.insightCard}>
-                <View style={styles.insightCardHeader}>
-                  <Globe size={16} color="#06B6D4" />
-                  <Text style={styles.insightCardTitle}>Cultural Context</Text>
-                </View>
-                <Text style={styles.insightCardText}>{currentTranslation.culturalContext}</Text>
               </View>
             )}
 
@@ -1027,9 +1055,35 @@ Focus on being an encouraging language coach who helps learners understand not j
               <View style={styles.insightCard}>
                 <View style={styles.insightCardHeader}>
                   <BookOpen size={16} color="#10B981" />
-                  <Text style={styles.insightCardTitle}>Grammar Insights</Text>
+                  <Text style={styles.insightCardTitle}>3. Structure (Grammar & Syntax)</Text>
                 </View>
                 <Text style={styles.insightCardText}>{currentTranslation.grammarInsights}</Text>
+              </View>
+            )}
+
+            {Array.isArray(currentTranslation.tips) &&
+              currentTranslation.tips.length > 0 && (
+                <View style={styles.insightCard}>
+                  <View style={styles.insightCardHeader}>
+                    <Lightbulb size={16} color="#8B5CF6" />
+                    <Text style={styles.insightCardTitle}>4. Learning Process</Text>
+                  </View>
+                  {currentTranslation.tips.map((tip, index) => (
+                    <View key={`tip-${index}`} style={styles.tipItem}>
+                      <Text style={styles.tipBullet}>💡</Text>
+                      <Text style={styles.tipText}>{tip}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+            {currentTranslation.culturalContext && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <Globe size={16} color="#06B6D4" />
+                  <Text style={styles.insightCardTitle}>5. Usage (Context & Patterns)</Text>
+                </View>
+                <Text style={styles.insightCardText}>{currentTranslation.culturalContext}</Text>
               </View>
             )}
 
@@ -1038,7 +1092,7 @@ Focus on being an encouraging language coach who helps learners understand not j
                 <View style={styles.insightCard}>
                   <View style={styles.insightCardHeader}>
                     <MessageCircle size={16} color="#EF4444" />
-                    <Text style={styles.insightCardTitle}>Alternative Translations</Text>
+                    <Text style={styles.insightCardTitle}>6. Alternative Translations</Text>
                   </View>
                   {currentTranslation.alternativeTranslations.map((alt, index) => (
                     <TouchableOpacity
@@ -1060,60 +1114,6 @@ Focus on being an encouraging language coach who helps learners understand not j
                   ))}
                 </View>
               )}
-
-            {Array.isArray(currentTranslation.tips) &&
-              currentTranslation.tips.length > 0 && (
-                <View style={styles.insightCard}>
-                  <View style={styles.insightCardHeader}>
-                    <Lightbulb size={16} color="#8B5CF6" />
-                    <Text style={styles.insightCardTitle}>Tips & Best Practices</Text>
-                  </View>
-                  {currentTranslation.tips.map((tip, index) => (
-                    <View key={`tip-${index}`} style={styles.tipItem}>
-                      <Text style={styles.tipBullet}>💡</Text>
-                      <Text style={styles.tipText}>{tip}</Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-
-            {currentTranslation.pronunciation && (
-              <View style={styles.insightCard}>
-                <View style={styles.insightCardHeader}>
-                  <Volume2 size={16} color="#EC4899" />
-                  <Text style={styles.insightCardTitle}>Advanced Pronunciation</Text>
-                  <TouchableOpacity
-                    onPress={() => handleSpeakText(currentTranslation.pronunciation?.text ?? currentTranslation.translatedText, toLanguage, 'pronunciation')}
-                    style={styles.pronunciationSpeakBtn}
-                    testID="pronunciation-speak-btn"
-                  >
-                    <Volume2
-                      size={18}
-                      color={isSpeaking && speakingTextId === 'pronunciation' ? '#10B981' : '#EC4899'}
-                      fill={isSpeaking && speakingTextId === 'pronunciation' ? '#10B981' : 'none'}
-                    />
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.pronunciationContent}>
-                  <View style={styles.pronunciationRow}>
-                    <Text style={styles.pronunciationLabel}>Text</Text>
-                    <Text style={styles.pronunciationValue}>{currentTranslation.pronunciation.text}</Text>
-                  </View>
-                  {currentTranslation.pronunciation.phonetic && (
-                    <View style={styles.pronunciationRow}>
-                      <Text style={styles.pronunciationLabel}>Phonetic</Text>
-                      <Text style={styles.pronunciationPhonetic}>{currentTranslation.pronunciation.phonetic}</Text>
-                    </View>
-                  )}
-                  {currentTranslation.pronunciation.breakdown && (
-                    <View style={styles.pronunciationRow}>
-                      <Text style={styles.pronunciationLabel}>Breakdown</Text>
-                      <Text style={styles.pronunciationBreakdown}>{currentTranslation.pronunciation.breakdown}</Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-            )}
 
             {currentTranslation.difficulty && (
               <View style={styles.difficultyBadge}>
