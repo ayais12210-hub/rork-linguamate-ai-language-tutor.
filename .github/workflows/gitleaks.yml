@@ -1,3 +1,5 @@
+name: Gitleaks
+
 on:
   pull_request: {}
   push: { branches: [ main, develop ] }
