@@ -1086,7 +1086,7 @@ Focus on being an encouraging language coach who helps learners understand not j
               <View style={styles.insightCard}>
                 <View style={styles.insightCardHeader}>
                   <Volume2 size={16} color="#EC4899" />
-                  <Text style={styles.insightCardTitle}>1. Sound (Advanced Pronunciation)</Text>
+                  <Text style={styles.insightCardTitle}>Advanced Pronunciation</Text>
                   <TouchableOpacity
                     onPress={() => handleSpeakText(currentTranslation.pronunciation?.text ?? currentTranslation.translatedText, toLanguage, 'pronunciation')}
                     style={styles.pronunciationSpeakBtn}
@@ -1106,13 +1106,13 @@ Focus on being an encouraging language coach who helps learners understand not j
                   </View>
                   {currentTranslation.pronunciation.phonetic && (
                     <View style={styles.pronunciationRow}>
-                      <Text style={styles.pronunciationLabel}>IPA / Phonetic:</Text>
+                      <Text style={styles.pronunciationLabel}>Phonetic:</Text>
                       <Text style={styles.pronunciationPhonetic}>{currentTranslation.pronunciation.phonetic}</Text>
                     </View>
                   )}
                   {currentTranslation.pronunciation.breakdown && (
                     <View style={styles.pronunciationRow}>
-                      <Text style={styles.pronunciationLabel}>Syllable Breakdown:</Text>
+                      <Text style={styles.pronunciationLabel}>Breakdown:</Text>
                       <Text style={styles.pronunciationBreakdown}>{currentTranslation.pronunciation.breakdown}</Text>
                     </View>
                   )}
@@ -1124,9 +1124,19 @@ Focus on being an encouraging language coach who helps learners understand not j
               <View style={styles.insightCard}>
                 <View style={styles.insightCardHeader}>
                   <Lightbulb size={16} color="#F59E0B" />
-                  <Text style={styles.insightCardTitle}>2. Meaning (Translation Analysis)</Text>
+                  <Text style={styles.insightCardTitle}>Translation Analysis</Text>
                 </View>
                 <Text style={styles.insightCardText}>{currentTranslation.explanation}</Text>
+              </View>
+            )}
+
+            {currentTranslation.culturalContext && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <Globe size={16} color="#06B6D4" />
+                  <Text style={styles.insightCardTitle}>Cultural Context</Text>
+                </View>
+                <Text style={styles.insightCardText}>{currentTranslation.culturalContext}</Text>
               </View>
             )}
 
@@ -1134,81 +1144,83 @@ Focus on being an encouraging language coach who helps learners understand not j
               <View style={styles.insightCard}>
                 <View style={styles.insightCardHeader}>
                   <BookOpen size={16} color="#10B981" />
-                  <Text style={styles.insightCardTitle}>3. Structure (Grammar & Syntax)</Text>
+                  <Text style={styles.insightCardTitle}>Grammar Insights</Text>
                 </View>
                 <Text style={styles.insightCardText}>{currentTranslation.grammarInsights}</Text>
               </View>
             )}
 
-            {((Array.isArray(currentTranslation.tips) && currentTranslation.tips.length > 0) ||
-              (Array.isArray(currentTranslation.memoryStrategies) && currentTranslation.memoryStrategies.length > 0)) && (
+            {Array.isArray(currentTranslation.tips) &&
+              currentTranslation.tips.length > 0 && (
+                <View style={styles.insightCard}>
+                  <View style={styles.insightCardHeader}>
+                    <Lightbulb size={16} color="#8B5CF6" />
+                    <Text style={styles.insightCardTitle}>Tips & Best Practices</Text>
+                  </View>
+                  {currentTranslation.tips.map((tip, index) => (
+                    <View key={`tip-${index}`} style={styles.tipItem}>
+                      <Text style={styles.tipBullet}>💡</Text>
+                      <Text style={styles.tipText}>{tip}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+            {currentTranslation.usageBestPractices && (
               <View style={styles.insightCard}>
                 <View style={styles.insightCardHeader}>
-                  <Brain size={16} color="#8B5CF6" />
-                  <Text style={styles.insightCardTitle}>4. Learning Process</Text>
+                  <BookOpen size={16} color="#8B5CF6" />
+                  <Text style={styles.insightCardTitle}>Usage & Best Practices</Text>
                 </View>
-                {Array.isArray(currentTranslation.tips) && currentTranslation.tips.length > 0 && (
-                  <View style={styles.subsectionBlock}>
-                    <Text style={styles.subsectionTitle}>Practical Tips:</Text>
-                    {currentTranslation.tips.map((tip, index) => (
-                      <View key={`tip-${index}`} style={styles.tipItem}>
-                        <Text style={styles.tipBullet}>💡</Text>
-                        <Text style={styles.tipText}>{tip}</Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
-                {Array.isArray(currentTranslation.memoryStrategies) && currentTranslation.memoryStrategies.length > 0 && (
-                  <View style={styles.subsectionBlock}>
-                    <Text style={styles.subsectionTitle}>Memory Strategies:</Text>
-                    {currentTranslation.memoryStrategies.map((strategy, index) => (
-                      <View key={`strategy-${index}`} style={styles.tipItem}>
-                        <Text style={styles.strategyBullet}>🧠</Text>
-                        <Text style={styles.tipText}>{strategy}</Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
+                <Text style={styles.insightCardText}>{currentTranslation.usageBestPractices}</Text>
               </View>
             )}
 
-            {(currentTranslation.usageBestPractices || currentTranslation.registerTone) && (
+            {Array.isArray(currentTranslation.commonMistakes) &&
+              currentTranslation.commonMistakes.length > 0 && (
+                <View style={styles.insightCard}>
+                  <View style={styles.insightCardHeader}>
+                    <X size={16} color="#EF4444" />
+                    <Text style={styles.insightCardTitle}>Common Mistakes & Pitfalls</Text>
+                  </View>
+                  {currentTranslation.commonMistakes.map((mistake, index) => (
+                    <View key={`mistake-${index}`} style={styles.tipItem}>
+                      <Text style={styles.mistakeBullet}>⚠️</Text>
+                      <Text style={styles.tipText}>{mistake}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+            {currentTranslation.registerTone && (
               <View style={styles.insightCard}>
                 <View style={styles.insightCardHeader}>
                   <MessageCircle size={16} color="#06B6D4" />
-                  <Text style={styles.insightCardTitle}>5. Usage (Context & Patterns)</Text>
+                  <Text style={styles.insightCardTitle}>Register & Tone (Formality)</Text>
                 </View>
-                {currentTranslation.usageBestPractices && (
-                  <View style={styles.subsectionBlock}>
-                    <Text style={styles.insightCardText}>{currentTranslation.usageBestPractices}</Text>
+                <View style={styles.registerContent}>
+                  <View style={styles.registerBadge}>
+                    <Text style={[
+                      styles.registerBadgeText,
+                      currentTranslation.registerTone.formality === 'very-formal' && styles.registerVeryFormal,
+                      currentTranslation.registerTone.formality === 'formal' && styles.registerFormal,
+                      currentTranslation.registerTone.formality === 'neutral' && styles.registerNeutral,
+                      currentTranslation.registerTone.formality === 'informal' && styles.registerInformal,
+                      currentTranslation.registerTone.formality === 'very-informal' && styles.registerVeryInformal,
+                    ]}>
+                      {currentTranslation.registerTone.formality.toUpperCase().replace('-', ' ')}
+                    </Text>
                   </View>
-                )}
-                {currentTranslation.registerTone && (
-                  <View style={styles.subsectionBlock}>
-                    <Text style={styles.subsectionTitle}>Register & Tone:</Text>
-                    <View style={styles.registerBadge}>
-                      <Text style={[
-                        styles.registerBadgeText,
-                        currentTranslation.registerTone.formality === 'very-formal' && styles.registerVeryFormal,
-                        currentTranslation.registerTone.formality === 'formal' && styles.registerFormal,
-                        currentTranslation.registerTone.formality === 'neutral' && styles.registerNeutral,
-                        currentTranslation.registerTone.formality === 'informal' && styles.registerInformal,
-                        currentTranslation.registerTone.formality === 'very-informal' && styles.registerVeryInformal,
-                      ]}>
-                        {currentTranslation.registerTone.formality.toUpperCase().replace('-', ' ')}
-                      </Text>
+                  {currentTranslation.registerTone.description && (
+                    <Text style={styles.registerText}>{currentTranslation.registerTone.description}</Text>
+                  )}
+                  {currentTranslation.registerTone.whenToUse && (
+                    <View style={styles.registerWhenToUse}>
+                      <Text style={styles.registerWhenLabel}>When to use:</Text>
+                      <Text style={styles.registerWhenText}>{currentTranslation.registerTone.whenToUse}</Text>
                     </View>
-                    {currentTranslation.registerTone.description && (
-                      <Text style={styles.registerText}>{currentTranslation.registerTone.description}</Text>
-                    )}
-                    {currentTranslation.registerTone.whenToUse && (
-                      <View style={styles.registerWhenToUse}>
-                        <Text style={styles.registerWhenLabel}>When to use:</Text>
-                        <Text style={styles.registerWhenText}>{currentTranslation.registerTone.whenToUse}</Text>
-                      </View>
-                    )}
-                  </View>
-                )}
+                  )}
+                </View>
               </View>
             )}
 
@@ -1216,7 +1228,7 @@ Focus on being an encouraging language coach who helps learners understand not j
               <View style={styles.insightCard}>
                 <View style={styles.insightCardHeader}>
                   <Sparkles size={16} color="#F59E0B" />
-                  <Text style={styles.insightCardTitle}>6. Cognitive & Memory Hooks</Text>
+                  <Text style={styles.insightCardTitle}>Idiomaticity & Naturalness</Text>
                 </View>
                 <View style={styles.idiomaticityContent}>
                   <View style={styles.idiomaticityBadge}>
@@ -1236,36 +1248,23 @@ Focus on being an encouraging language coach who helps learners understand not j
               </View>
             )}
 
-            {(currentTranslation.culturalContext || currentTranslation.symbolicResonance || currentTranslation.historicalSignificance || currentTranslation.metaReflection) && (
+            {currentTranslation.symbolicResonance && (
               <View style={styles.insightCard}>
                 <View style={styles.insightCardHeader}>
-                  <Globe size={16} color="#06B6D4" />
-                  <Text style={styles.insightCardTitle}>7. Culture / Philosophy / Regional Dialects</Text>
+                  <Star size={16} color="#A855F7" />
+                  <Text style={styles.insightCardTitle}>Symbolic or Metaphorical Resonance</Text>
                 </View>
-                {currentTranslation.culturalContext && (
-                  <View style={styles.subsectionBlock}>
-                    <Text style={styles.subsectionTitle}>Cultural Context:</Text>
-                    <Text style={styles.insightCardText}>{currentTranslation.culturalContext}</Text>
-                  </View>
-                )}
-                {currentTranslation.symbolicResonance && (
-                  <View style={styles.subsectionBlock}>
-                    <Text style={styles.subsectionTitle}>Symbolic Resonance:</Text>
-                    <Text style={styles.insightCardText}>{currentTranslation.symbolicResonance}</Text>
-                  </View>
-                )}
-                {currentTranslation.historicalSignificance && (
-                  <View style={styles.subsectionBlock}>
-                    <Text style={styles.subsectionTitle}>Historical Significance:</Text>
-                    <Text style={styles.insightCardText}>{currentTranslation.historicalSignificance}</Text>
-                  </View>
-                )}
-                {currentTranslation.metaReflection && (
-                  <View style={styles.subsectionBlock}>
-                    <Text style={styles.subsectionTitle}>Philosophical Worldview:</Text>
-                    <Text style={styles.insightCardText}>{currentTranslation.metaReflection}</Text>
-                  </View>
-                )}
+                <Text style={styles.insightCardText}>{currentTranslation.symbolicResonance}</Text>
+              </View>
+            )}
+
+            {currentTranslation.historicalSignificance && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <BookOpen size={16} color="#78716C" />
+                  <Text style={styles.insightCardTitle}>Historical or Identity Significance</Text>
+                </View>
+                <Text style={styles.insightCardText}>{currentTranslation.historicalSignificance}</Text>
               </View>
             )}
 
@@ -1274,7 +1273,7 @@ Focus on being an encouraging language coach who helps learners understand not j
                 <View style={styles.insightCard}>
                   <View style={styles.insightCardHeader}>
                     <Globe size={16} color="#DC2626" />
-                    <Text style={styles.insightCardTitle}>8. Cross-Language Interference Notes</Text>
+                    <Text style={styles.insightCardTitle}>Cross-Language Interference Notes</Text>
                   </View>
                   {currentTranslation.crossLanguageInterference.map((interference, index) => (
                     <View key={`interference-${index}`} style={styles.tipItem}>
@@ -1285,31 +1284,39 @@ Focus on being an encouraging language coach who helps learners understand not j
                 </View>
               )}
 
-            {Array.isArray(currentTranslation.commonMistakes) &&
-              currentTranslation.commonMistakes.length > 0 && (
+            {Array.isArray(currentTranslation.memoryStrategies) &&
+              currentTranslation.memoryStrategies.length > 0 && (
                 <View style={styles.insightCard}>
                   <View style={styles.insightCardHeader}>
-                    <X size={16} color="#EF4444" />
-                    <Text style={styles.insightCardTitle}>9. Recap & Tips</Text>
+                    <Brain size={16} color="#10B981" />
+                    <Text style={styles.insightCardTitle}>Memory & Learning Strategies</Text>
                   </View>
-                  <Text style={styles.subsectionTitle}>Common Mistakes to Avoid:</Text>
-                  {currentTranslation.commonMistakes.map((mistake, index) => (
-                    <View key={`mistake-${index}`} style={styles.tipItem}>
-                      <Text style={styles.mistakeBullet}>⚠️</Text>
-                      <Text style={styles.tipText}>{mistake}</Text>
+                  {currentTranslation.memoryStrategies.map((strategy, index) => (
+                    <View key={`strategy-${index}`} style={styles.tipItem}>
+                      <Text style={styles.strategyBullet}>🧠</Text>
+                      <Text style={styles.tipText}>{strategy}</Text>
                     </View>
                   ))}
                 </View>
               )}
 
+            {currentTranslation.metaReflection && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <Lightbulb size={16} color="#6366F1" />
+                  <Text style={styles.insightCardTitle}>Meta-Reflection (Philosophical/Worldview)</Text>
+                </View>
+                <Text style={styles.insightCardText}>{currentTranslation.metaReflection}</Text>
+              </View>
+            )}
+
             {Array.isArray(currentTranslation.alternativeTranslations) &&
               currentTranslation.alternativeTranslations.length > 0 && (
                 <View style={styles.insightCard}>
                   <View style={styles.insightCardHeader}>
-                    <MessageCircle size={16} color="#3B82F6" />
-                    <Text style={styles.insightCardTitle}>10. Alternative Translations</Text>
+                    <MessageCircle size={16} color="#EF4444" />
+                    <Text style={styles.insightCardTitle}>Alternative Translations</Text>
                   </View>
-                  <Text style={styles.subsectionTitle}>Other ways to express this:</Text>
                   {currentTranslation.alternativeTranslations.map((alt, index) => (
                     <TouchableOpacity
                       key={`${index}-${alt}`}
@@ -2125,15 +2132,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginRight: 8,
     marginTop: 2,
-  },
-  subsectionBlock: {
-    marginTop: 8,
-  },
-  subsectionTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
-    marginTop: 4,
   },
 });
