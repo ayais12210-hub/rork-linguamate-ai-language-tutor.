@@ -11,6 +11,9 @@ import {
   Animated,
 } from 'react-native';
 import * as Speech from 'expo-speech';
+import * as Clipboard from 'expo-clipboard';
+import { Audio } from 'expo-av';
+import { Platform } from 'react-native';
 import {
   ArrowUpDown,
   Copy,
@@ -25,6 +28,10 @@ import {
   Globe,
   Award,
   Sparkles,
+  Clipboard as ClipboardIcon,
+  Trash2,
+  FileText,
+  Mic,
 } from 'lucide-react-native';
 import { LANGUAGES } from '@/constants/languages';
 import { Language } from '@/types/user';
@@ -384,12 +391,151 @@ Focus on being an encouraging language coach who helps learners understand not j
     setTranslatedText(tempText);
   };
 
-  const handleCopyText = (text: string) => {
-    Alert.alert('Copied!', 'Text copied to clipboard');
+  const handleCopyText = async (text: string) => {
+    if (!text.trim()) return;
+    try {
+      await Clipboard.setStringAsync(text);
+      Alert.alert('Copied!', 'Text copied to clipboard');
+    } catch (error) {
+      console.error('[Translator] Copy error:', error);
+      Alert.alert('Error', 'Failed to copy text');
+    }
+  };
+
+  const handlePasteText = async () => {
+    try {
+      const text = await Clipboard.getStringAsync();
+      if (text) {
+        setSourceText(prev => {
+          const hasContent = (prev ?? '').trim().length > 0;
+          const separator = hasContent ? ' ' : '';
+          return `${prev ?? ''}${separator}${text}`;
+        });
+      }
+    } catch (error) {
+      console.error('[Translator] Paste error:', error);
+      Alert.alert('Error', 'Failed to paste text');
+    }
+  };
+
+  const handleClearText = () => {
+    setSourceText('');
+    setTranslatedText('');
+    setCurrentTranslation(null);
+    setShowInsights(false);
+  };
+
+  const handleInsertText = () => {
+    if (translatedText.trim()) {
+      setSourceText(prev => {
+        const hasContent = (prev ?? '').trim().length > 0;
+        const separator = hasContent ? ' ' : '';
+        return `${prev ?? ''}${separator}${translatedText}`;
+      });
+    }
+  };
+
+  const handleSpeechToText = async () => {
+    if (isRecording) {
+      try {
+        if (recordingRef.current) {
+          await recordingRef.current.stopAndUnloadAsync();
+          const uri = recordingRef.current.getURI();
+          setIsRecording(false);
+          recordingRef.current = null;
+
+          if (Platform.OS !== 'web') {
+            await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
+          }
+
+          if (uri) {
+            const formData = new FormData();
+            const uriParts = uri.split('.');
+            const fileType = uriParts[uriParts.length - 1];
+
+            formData.append('audio', {
+              uri,
+              name: `recording.${fileType}`,
+              type: `audio/${fileType}`,
+            } as any);
+
+            const response = await fetch('https://toolkit.rork.com/stt/transcribe/', {
+              method: 'POST',
+              body: formData,
+            });
+
+            const data = await response.json();
+            if (data.text) {
+              setSourceText(prev => {
+                const hasContent = (prev ?? '').trim().length > 0;
+                const separator = hasContent ? ' ' : '';
+                return `${prev ?? ''}${separator}${data.text}`;
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error('[Translator] STT error:', error);
+        setIsRecording(false);
+        recordingRef.current = null;
+        Alert.alert('Error', 'Failed to transcribe audio');
+      }
+    } else {
+      try {
+        const { status } = await Audio.requestPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission Required', 'Please grant microphone permission');
+          return;
+        }
+
+        if (Platform.OS !== 'web') {
+          await Audio.setAudioModeAsync({
+            allowsRecordingIOS: true,
+            playsInSilentModeIOS: true,
+          });
+        }
+
+        const recording = new Audio.Recording();
+        await recording.prepareToRecordAsync({
+          android: {
+            extension: '.m4a',
+            outputFormat: Audio.AndroidOutputFormat.MPEG_4,
+            audioEncoder: Audio.AndroidAudioEncoder.AAC,
+            sampleRate: 44100,
+            numberOfChannels: 2,
+            bitRate: 128000,
+          },
+          ios: {
+            extension: '.wav',
+            outputFormat: Audio.IOSOutputFormat.LINEARPCM,
+            audioQuality: Audio.IOSAudioQuality.HIGH,
+            sampleRate: 44100,
+            numberOfChannels: 2,
+            bitRate: 128000,
+            linearPCMBitDepth: 16,
+            linearPCMIsBigEndian: false,
+            linearPCMIsFloat: false,
+          },
+          web: {
+            mimeType: 'audio/webm',
+            bitsPerSecond: 128000,
+          },
+        });
+
+        await recording.startAsync();
+        recordingRef.current = recording;
+        setIsRecording(true);
+      } catch (error) {
+        console.error('[Translator] Recording start error:', error);
+        Alert.alert('Error', 'Failed to start recording');
+      }
+    }
   };
 
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const [speakingTextId, setSpeakingTextId] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState<boolean>(false);
+  const recordingRef = useRef<Audio.Recording | null>(null);
 
   const handleSpeakText = useCallback(async (text: string, language: string, textId?: string) => {
     if (!text.trim()) return;
@@ -630,17 +776,41 @@ Focus on being an encouraging language coach who helps learners understand not j
         <View style={styles.inputSection}>
           <View style={styles.inputHeader} testID="input-header">
             <Text style={styles.inputLabel}>Enter text</Text>
-            <TouchableOpacity
-              onPress={() => handleSpeakText(sourceText, fromLanguage, 'source')}
-              disabled={!sourceText.trim()}
-              testID="speak-source-btn"
-            >
-              <Volume2 
-                size={20} 
-                color={sourceText.trim() ? (isSpeaking && speakingTextId === 'source' ? '#10B981' : '#3B82F6') : '#9CA3AF'} 
-                fill={isSpeaking && speakingTextId === 'source' ? '#10B981' : 'none'}
-              />
-            </TouchableOpacity>
+            <View style={styles.inputHeaderActions}>
+              <TouchableOpacity
+                onPress={() => handleCopyText(sourceText)}
+                disabled={!sourceText.trim()}
+                style={styles.headerActionBtn}
+                testID="copy-source-btn"
+              >
+                <Copy 
+                  size={20} 
+                  color={sourceText.trim() ? '#3B82F6' : '#9CA3AF'} 
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handlePasteText}
+                style={styles.headerActionBtn}
+                testID="paste-source-btn"
+              >
+                <ClipboardIcon 
+                  size={20} 
+                  color="#3B82F6" 
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => handleSpeakText(sourceText, fromLanguage, 'source')}
+                disabled={!sourceText.trim()}
+                style={styles.headerActionBtn}
+                testID="speak-source-btn"
+              >
+                <Volume2 
+                  size={20} 
+                  color={sourceText.trim() ? (isSpeaking && speakingTextId === 'source' ? '#10B981' : '#3B82F6') : '#9CA3AF'} 
+                  fill={isSpeaking && speakingTextId === 'source' ? '#10B981' : 'none'}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
           <TextInput
             ref={sourceInputRef}
@@ -658,19 +828,48 @@ Focus on being an encouraging language coach who helps learners understand not j
             testID="source-input"
           />
           <View style={styles.inputFooter}>
-            <Text style={styles.characterCount}>{sourceText.length}/1000</Text>
-            <TouchableOpacity
-              style={styles.translateButton}
-              onPress={handleTranslate}
-              disabled={isTranslating || !sourceText.trim()}
-              testID="translate-button"
-            >
-              {isTranslating ? (
-                <ActivityIndicator size="small" color="white" />
-              ) : (
-                <Text style={styles.translateButtonText}>Translate</Text>
+            <View style={styles.inputFooterLeft}>
+              <Text style={styles.characterCount}>{sourceText.length}/1000</Text>
+              <TouchableOpacity
+                onPress={handleClearText}
+                style={styles.footerActionBtn}
+                testID="clear-btn"
+              >
+                <Trash2 size={16} color="#EF4444" />
+                <Text style={styles.footerActionText}>Clear</Text>
+              </TouchableOpacity>
+              {translatedText.trim() && (
+                <TouchableOpacity
+                  onPress={handleInsertText}
+                  style={styles.footerActionBtn}
+                  testID="insert-btn"
+                >
+                  <FileText size={16} color="#3B82F6" />
+                  <Text style={styles.footerActionText}>Insert</Text>
+                </TouchableOpacity>
               )}
-            </TouchableOpacity>
+            </View>
+            <View style={styles.inputFooterRight}>
+              <TouchableOpacity
+                style={[styles.sttButton, isRecording && styles.sttButtonRecording]}
+                onPress={handleSpeechToText}
+                testID="stt-button"
+              >
+                <Mic size={20} color={isRecording ? '#EF4444' : '#3B82F6'} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.translateButton}
+                onPress={handleTranslate}
+                disabled={isTranslating || !sourceText.trim()}
+                testID="translate-button"
+              >
+                {isTranslating ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <Text style={styles.translateButtonText}>Translate</Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 
@@ -1063,6 +1262,48 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  inputFooterLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  inputFooterRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  inputHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerActionBtn: {
+    padding: 4,
+  },
+  footerActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: '#F3F4F6',
+  },
+  footerActionText: {
+    fontSize: 12,
+    color: '#374151',
+    fontWeight: '500',
+  },
+  sttButton: {
+    backgroundColor: '#EBF4FF',
+    padding: 10,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sttButtonRecording: {
+    backgroundColor: '#FEE2E2',
   },
   characterCount: {
     fontSize: 12,

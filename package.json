@@ -40,6 +40,7 @@
     "expo-application": "~6.1.5",
     "expo-av": "~15.1.7",
     "expo-blur": "~14.1.4",
+    "expo-clipboard": "~7.1.5",
     "expo-constants": "~17.1.4",
     "expo-crypto": "~14.1.5",
     "expo-device": "~7.1.4",
