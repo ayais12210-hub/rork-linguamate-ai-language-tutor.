@@ -1,0 +1,43 @@
+rules:
+  - id: no-hardcoded-secrets
+    patterns:
+      - pattern: |
+          const $VAR = "$SECRET"
+      - metavariable-regex:
+          metavariable: $SECRET
+          regex: (password|secret|token|api[_-]?key|private[_-]?key)
+    message: Potential hardcoded secret detected
+    severity: ERROR
+    languages: [typescript, javascript]
+
+  - id: unsafe-eval
+    pattern: eval(...)
+    message: Use of eval() is dangerous and should be avoided
+    severity: ERROR
+    languages: [typescript, javascript]
+
+  - id: sql-injection-risk
+    patterns:
+      - pattern: |
+          db.query($QUERY + ...)
+      - pattern: |
+          db.execute(`... ${$VAR} ...`)
+    message: Potential SQL injection vulnerability
+    severity: ERROR
+    languages: [typescript, javascript]
+
+  - id: xss-dangerouslySetInnerHTML
+    pattern: dangerouslySetInnerHTML={{__html: $VAR}}
+    message: Potential XSS vulnerability with dangerouslySetInnerHTML
+    severity: WARNING
+    languages: [typescript, javascript]
+
+  - id: insecure-random
+    pattern: Math.random()
+    message: Math.random() is not cryptographically secure. Use crypto.randomBytes() instead
+    severity: WARNING
+    languages: [typescript, javascript]
+    paths:
+      include:
+        - "**/auth/**"
+        - "**/security/**"
