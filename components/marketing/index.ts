@@ -1,0 +1,11 @@
+export { default as LandingPage } from './LandingPage';
+export { default as Navbar } from './Navbar';
+export { default as Hero } from './Hero';
+export { default as TrustBar } from './TrustBar';
+export { default as Features } from './Features';
+export { default as LiveShowcase } from './LiveShowcase';
+export { default as Curriculum } from './Curriculum';
+export { default as Pricing } from './Pricing';
+export { default as SocialProof } from './SocialProof';
+export { default as CTA } from './CTA';
+export { default as Footer } from './Footer';
