@@ -55,7 +55,10 @@ export const [ChatProvider, useChat] = createContextHook(() => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-      const res = await fetch('https://toolkit.rork.com/text/llm/', {
+      const apiBaseUrl = typeof window !== 'undefined' && window.location 
+        ? `${window.location.protocol}//${window.location.host}`
+        : '';
+      const res = await fetch(`${apiBaseUrl}/api/toolkit/text/llm`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -145,7 +148,10 @@ export const [ChatProvider, useChat] = createContextHook(() => {
       const systemPrompt = buildSystemPrompt(user as any, targetLanguage, nativeLanguage);
       const windowed = windowConversation(conversationHistory, DEFAULT_PROMPT_CONFIG);
 
-      const response = await fetch('https://toolkit.rork.com/text/llm/', {
+      const apiBaseUrl = typeof window !== 'undefined' && window.location 
+        ? `${window.location.protocol}//${window.location.host}`
+        : '';
+      const response = await fetch(`${apiBaseUrl}/api/toolkit/text/llm`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -177,7 +177,10 @@ export default function ChatScreen() {
       const selectedLang = LANGUAGES.find(lang => lang.code === user.selectedLanguage)?.name ?? 'Target Language';
       const nativeLang = LANGUAGES.find(lang => lang.code === user.nativeLanguage)?.name ?? 'Native Language';
 
-      const response = await fetch('https://toolkit.rork.com/text/llm/', {
+      const apiBaseUrl = typeof window !== 'undefined' && window.location 
+        ? `${window.location.protocol}//${window.location.host}`
+        : '';
+      const response = await fetch(`${apiBaseUrl}/api/toolkit/text/llm`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

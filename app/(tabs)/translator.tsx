@@ -241,7 +241,10 @@ export default function TranslatorScreen() {
     console.log('[Translator] Starting translation request');
 
     try {
-      const response = await fetch('https://toolkit.rork.com/text/llm/', {
+      const apiBaseUrl = typeof window !== 'undefined' && window.location 
+        ? `${window.location.protocol}//${window.location.host}`
+        : '';
+      const response = await fetch(`${apiBaseUrl}/api/toolkit/text/llm`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -409,7 +412,10 @@ Focus on being an encouraging language coach who provides progressive learning f
   const generateSuggestions = useCallback(async () => {
     try {
       console.log('[Translator] Generating suggestions...');
-      const response = await fetch('https://toolkit.rork.com/text/llm/', {
+      const apiBaseUrl = typeof window !== 'undefined' && window.location 
+        ? `${window.location.protocol}//${window.location.host}`
+        : '';
+      const response = await fetch(`${apiBaseUrl}/api/toolkit/text/llm`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
