@@ -467,8 +467,11 @@ Focus on being an encouraging language coach who helps learners understand not j
               } as any);
             }
 
-            console.log('[Translator] Sending audio to STT API...');
-            const sttResponse = await fetch('https://toolkit.rork.com/stt/transcribe/', {
+            console.log('[Translator] Sending audio to backend STT API...');
+            const apiBaseUrl = typeof window !== 'undefined' && window.location 
+              ? `${window.location.protocol}//${window.location.host}/api`
+              : '/api';
+            const sttResponse = await fetch(`${apiBaseUrl}/stt/transcribe`, {
               method: 'POST',
               body: formData,
             });

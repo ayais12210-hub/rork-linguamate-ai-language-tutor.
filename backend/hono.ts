@@ -9,6 +9,7 @@ import { securityHeadersMiddleware } from "@/backend/middleware/securityHeaders"
 import ingestLogsApp from "@/backend/routes/ingestLogs";
 import healthApp from "@/backend/routes/health";
 import toolkitProxy from "@/backend/routes/toolkitProxy";
+import sttApp from "@/backend/routes/stt";
 
 // app will be mounted at /api
 const app = new Hono();
@@ -60,9 +61,10 @@ app.get("/info", (c) => {
   });
 });
 
-// Mount logging routes and toolkit proxy
+// Mount logging routes, toolkit proxy, and STT
 app.route("/", ingestLogsApp);
 app.route("/", healthApp);
 app.route("/", toolkitProxy);
+app.route("/", sttApp);
 
 export default app;
