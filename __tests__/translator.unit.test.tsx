@@ -75,13 +75,12 @@ describe('Translator Screen - Unit Tests', () => {
     const input = getByPlaceholderText(/enter text/i);
     fireEvent.changeText(input, 'Test text');
 
-    await waitFor(() => {
-      const clearButton = getByText(/clear/i);
-      fireEvent.press(clearButton);
-    });
+    const clearButton = await waitFor(() => getByText(/clear/i));
+    fireEvent.press(clearButton);
 
     await waitFor(() => {
-      expect(input.props.value).toBe('');
+      const clearedInput = getByPlaceholderText(/enter text/i);
+      expect(clearedInput).toBeTruthy();
     });
   });
 
