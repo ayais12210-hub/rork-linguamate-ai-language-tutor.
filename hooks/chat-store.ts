@@ -44,16 +44,17 @@ export const [ChatProvider, useChat] = createContextHook(() => {
   }, [messages, saveChatHistory]);
 
   const refreshSuggestions = useCallback(async () => {
+    const targetLanguage = getLanguageName(user.selectedLanguage);
+    const fallbackSuggestions = getLanguageSpecificFallbacks(targetLanguage, user.proficiencyLevel);
+
     try {
       const recent = messages.slice(-8).map(m => ({ role: m.isUser ? 'user' as const : 'assistant' as const, content: m.text }));
-      const targetLanguage = getLanguageName(user.selectedLanguage);
       const nativeLanguage = getLanguageName(user.nativeLanguage);
 
       const system = `You generate short next-message suggestions for a language learning chat between a student and an AI coach. Return ONLY a JSON array of 3-5 short suggestions (max 80 chars each) in ${targetLanguage}, tailored to user's level (${user.proficiencyLevel}), interests (${user.interests?.join?.(', ') ?? 'general'}), and previous turns. Avoid repeating the last AI message. Include a mix of question prompts, practice tasks, and cultural tidbits. Also provide beginner-friendly options when level is beginner.`;
 
-      // Add timeout to prevent hanging requests
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       const res = await fetch('https://toolkit.rork.com/text/llm/', {
         method: 'POST',
@@ -71,7 +72,9 @@ export const [ChatProvider, useChat] = createContextHook(() => {
       clearTimeout(timeoutId);
 
       if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
+        console.warn(`Suggestions API returned ${res.status}, using fallback`);
+        setSuggestions(fallbackSuggestions);
+        return;
       }
 
       const data = await res.json();
@@ -100,19 +103,18 @@ export const [ChatProvider, useChat] = createContextHook(() => {
       ));
       const limited = cleaned.slice(0, 5);
       if (limited.length === 0) {
-        const fallback = getLanguageSpecificFallbacks(targetLanguage, user.proficiencyLevel);
-        setSuggestions(fallback);
+        setSuggestions(fallbackSuggestions);
       } else {
         setSuggestions(limited);
       }
     } catch (e) {
-      console.error('Failed to refresh suggestions', e);
-      const errorType = e instanceof Error ? e.name : 'Unknown';
-      console.log(`Error type: ${errorType}, using fallback suggestions`);
-      
-      // Use language-specific fallback suggestions
-      const targetLanguage = getLanguageName(user.selectedLanguage);
-      const fallbackSuggestions = getLanguageSpecificFallbacks(targetLanguage, user.proficiencyLevel);
+      if (e instanceof Error && e.name === 'AbortError') {
+        console.warn('Suggestions request timed out, using fallback');
+      } else if (e instanceof TypeError && e.message.includes('fetch')) {
+        console.warn('Network error fetching suggestions, using fallback');
+      } else {
+        console.warn('Error refreshing suggestions, using fallback:', e);
+      }
       setSuggestions(fallbackSuggestions);
     }
   }, [messages, user.selectedLanguage, user.nativeLanguage, user.proficiencyLevel, user.interests]);
@@ -204,10 +206,6 @@ export const [ChatProvider, useChat] = createContextHook(() => {
       console.error('Error clearing chat history:', error);
     }
   }, []);
-
-  const createPersonalizedSystemPrompt = (user: any, targetLanguage: string, nativeLanguage: string): string => {
-    return `Deprecated - use buildSystemPrompt instead`;
-  };
 
   const parseBilingualResponse = (response: string) => {
     const targetMatch = response.match(/🎯\s*(.+?)(?=\n\n💬|$)/s);
