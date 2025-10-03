@@ -22,6 +22,14 @@ export type DifficultyEvent =
       sessionId: string;
     };
 
+export const Analytics = {
+  enabled: process.env.ANALYTICS_ENABLED === '1',
+  track: (event: string, props?: Record<string, any>) => {
+    if (!Analytics.enabled) return;
+    console.log('[analytics]', event, props);
+  },
+};
+
 export function trackDifficultyEvent(event: DifficultyEvent): void {
   console.log('[Analytics] Difficulty Event:', {
     ...event,
