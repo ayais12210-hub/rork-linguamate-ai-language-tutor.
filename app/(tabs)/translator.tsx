@@ -712,81 +712,6 @@ Focus on being an encouraging language coach who helps learners understand not j
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {suggestions.length > 0 && (
-          <View style={styles.suggestionsBlock}>
-            <View style={styles.suggestionsHeader}>
-              <Sparkles size={16} color="#8B5CF6" />
-              <Text style={styles.suggestionsTitle}>Suggestions</Text>
-              <TouchableOpacity 
-                onPress={generateSuggestions} 
-                style={styles.suggestionsRefresh} 
-                accessibilityLabel="Refresh suggestions" 
-                testID="refreshSuggestionsBtn"
-              >
-                <Text style={styles.suggestionsRefreshText}>Refresh</Text>
-              </TouchableOpacity>
-            </View>
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false} 
-              contentContainerStyle={styles.suggestionsRow} 
-              testID="suggestionsRow"
-            >
-              {suggestions.map((s, idx) => {
-                const selected = isSuggestionSelected(s);
-                return (
-                  <View 
-                    key={`${s}-${idx}`} 
-                    style={[styles.suggestionPill, selected ? styles.suggestionPillSelected : undefined]}
-                  >
-                    <TouchableOpacity
-                      onPress={() => handleSuggestionPress(s)}
-                      onLongPress={() => handleSuggestionTranslate(s)}
-                      accessibilityLabel={`Suggestion ${idx+1}`}
-                      testID={`suggestion-${idx}`}
-                    >
-                      <Text style={[styles.suggestionText, selected ? styles.suggestionTextSelected : undefined]}>
-                        {s}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                );
-              })}
-              {selectedSuggestions.length > 0 && (
-                <View style={styles.bulkActionsPill} testID="bulkActionsPill">
-                  <Text style={styles.bulkCountText}>{selectedSuggestions.length} selected</Text>
-                  <View style={styles.bulkButtonsRow}>
-                    <TouchableOpacity 
-                      onPress={handleBulkInsert} 
-                      style={styles.bulkBtn} 
-                      accessibilityLabel="Insert selected" 
-                      testID="bulkInsertBtn"
-                    >
-                      <Text style={styles.bulkBtnText}>Insert</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                      onPress={handleBulkTranslate} 
-                      style={[styles.bulkBtn, styles.bulkTranslateBtn]} 
-                      accessibilityLabel="Translate selected" 
-                      testID="bulkTranslateBtn"
-                    >
-                      <Text style={[styles.bulkBtnText, styles.bulkTranslateBtnText]}>Translate</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                      onPress={clearSelectedSuggestions} 
-                      style={styles.bulkClearBtn} 
-                      accessibilityLabel="Clear selected" 
-                      testID="bulkClearBtn"
-                    >
-                      <Text style={styles.bulkClearText}>Clear</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              )}
-            </ScrollView>
-          </View>
-        )}
-
         <View style={styles.languageSelector}>
           <TouchableOpacity
             style={styles.languageButton}
@@ -910,6 +835,81 @@ Focus on being an encouraging language coach who helps learners understand not j
             </View>
           </View>
         </View>
+
+        {suggestions.length > 0 && (
+          <View style={styles.suggestionsBlock}>
+            <View style={styles.suggestionsHeader}>
+              <Sparkles size={16} color="#8B5CF6" />
+              <Text style={styles.suggestionsTitle}>Suggestions</Text>
+              <TouchableOpacity 
+                onPress={generateSuggestions} 
+                style={styles.suggestionsRefresh} 
+                accessibilityLabel="Refresh suggestions" 
+                testID="refreshSuggestionsBtn"
+              >
+                <Text style={styles.suggestionsRefreshText}>Refresh</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false} 
+              contentContainerStyle={styles.suggestionsRow} 
+              testID="suggestionsRow"
+            >
+              {suggestions.map((s, idx) => {
+                const selected = isSuggestionSelected(s);
+                return (
+                  <View 
+                    key={`${s}-${idx}`} 
+                    style={[styles.suggestionPill, selected ? styles.suggestionPillSelected : undefined]}
+                  >
+                    <TouchableOpacity
+                      onPress={() => handleSuggestionPress(s)}
+                      onLongPress={() => handleSuggestionTranslate(s)}
+                      accessibilityLabel={`Suggestion ${idx+1}`}
+                      testID={`suggestion-${idx}`}
+                    >
+                      <Text style={[styles.suggestionText, selected ? styles.suggestionTextSelected : undefined]}>
+                        {s}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                );
+              })}
+              {selectedSuggestions.length > 0 && (
+                <View style={styles.bulkActionsPill} testID="bulkActionsPill">
+                  <Text style={styles.bulkCountText}>{selectedSuggestions.length} selected</Text>
+                  <View style={styles.bulkButtonsRow}>
+                    <TouchableOpacity 
+                      onPress={handleBulkInsert} 
+                      style={styles.bulkBtn} 
+                      accessibilityLabel="Insert selected" 
+                      testID="bulkInsertBtn"
+                    >
+                      <Text style={styles.bulkBtnText}>Insert</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      onPress={handleBulkTranslate} 
+                      style={[styles.bulkBtn, styles.bulkTranslateBtn]} 
+                      accessibilityLabel="Translate selected" 
+                      testID="bulkTranslateBtn"
+                    >
+                      <Text style={[styles.bulkBtnText, styles.bulkTranslateBtnText]}>Translate</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      onPress={clearSelectedSuggestions} 
+                      style={styles.bulkClearBtn} 
+                      accessibilityLabel="Clear selected" 
+                      testID="bulkClearBtn"
+                    >
+                      <Text style={styles.bulkClearText}>Clear</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        )}
 
         <View style={styles.languageDisplay}>
           <View style={styles.languageDisplayItem}>
