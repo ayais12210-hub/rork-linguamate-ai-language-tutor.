@@ -1,0 +1,29 @@
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [ main, develop ]
+    paths-ignore: [ "FILES_TREE.md" ]
+  schedule: [ { cron: "0 6 * * 1" } ] # Mondays
+
+permissions:
+  contents: write
+
+concurrency:
+  group: filetree-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - run: sudo apt-get update && sudo apt-get install -y tree
+      - run: |
+          tree -a -I "node_modules|.git|.expo|dist|build|.next|.vercel|.turbo|coverage|.cache|ios|android|.vscode|.idea" -L 50 > FILES_TREE.md
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet -- FILES_TREE.md; then
+            git add FILES_TREE.md && git commit -m "chore: update FILES_TREE.md" && git push
+          fi
