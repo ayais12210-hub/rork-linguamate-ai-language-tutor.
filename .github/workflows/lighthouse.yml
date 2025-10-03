@@ -1,3 +1,5 @@
+name: Lighthouse
+
 on:
   push: { branches: [ main ] }
   workflow_dispatch: {}
