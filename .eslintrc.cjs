@@ -7,7 +7,7 @@ module.exports = {
     'plugin:jest/recommended',
     'plugin:testing-library/react'
   ],
-  plugins: ['@typescript-eslint', 'import', 'jest', 'testing-library'],
+  plugins: ['@typescript-eslint', 'import', 'jest', 'testing-library', 'react-native'],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 2022,
@@ -32,7 +32,8 @@ module.exports = {
     ],
     'no-console': ['warn', { allow: ['warn', 'error', 'info'] }],
     'prefer-const': 'error',
-    'no-var': 'error'
+    'no-var': 'error',
+    'react-native/no-raw-text': ['error', { skip: ['Trans'] }]
   },
   overrides: [
     {
