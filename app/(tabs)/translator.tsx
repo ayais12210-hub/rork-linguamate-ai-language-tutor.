@@ -1082,80 +1082,6 @@ Focus on being an encouraging language coach who helps learners understand not j
               <Text style={styles.insightsTitle}>AI Coach Insights</Text>
             </View>
 
-            {currentTranslation.explanation && (
-              <View style={styles.insightCard}>
-                <View style={styles.insightCardHeader}>
-                  <Lightbulb size={16} color="#F59E0B" />
-                  <Text style={styles.insightCardTitle}>Translation Analysis</Text>
-                </View>
-                <Text style={styles.insightCardText}>{currentTranslation.explanation}</Text>
-              </View>
-            )}
-
-            {currentTranslation.culturalContext && (
-              <View style={styles.insightCard}>
-                <View style={styles.insightCardHeader}>
-                  <Globe size={16} color="#06B6D4" />
-                  <Text style={styles.insightCardTitle}>Cultural Context</Text>
-                </View>
-                <Text style={styles.insightCardText}>{currentTranslation.culturalContext}</Text>
-              </View>
-            )}
-
-            {currentTranslation.grammarInsights && (
-              <View style={styles.insightCard}>
-                <View style={styles.insightCardHeader}>
-                  <BookOpen size={16} color="#10B981" />
-                  <Text style={styles.insightCardTitle}>Grammar Insights</Text>
-                </View>
-                <Text style={styles.insightCardText}>{currentTranslation.grammarInsights}</Text>
-              </View>
-            )}
-
-            {Array.isArray(currentTranslation.alternativeTranslations) &&
-              currentTranslation.alternativeTranslations.length > 0 && (
-                <View style={styles.insightCard}>
-                  <View style={styles.insightCardHeader}>
-                    <MessageCircle size={16} color="#EF4444" />
-                    <Text style={styles.insightCardTitle}>Alternative Translations</Text>
-                  </View>
-                  {currentTranslation.alternativeTranslations.map((alt, index) => (
-                    <TouchableOpacity
-                      key={`${index}-${alt}`}
-                      style={styles.alternativeItem}
-                      onPress={() => {
-                        console.log('[Translator] Alternative selected -> source input');
-                        setSourceText(alt);
-                        try { sourceInputRef.current?.focus?.(); } catch (e) { console.log('focus err', e); }
-                      }}
-                      onLongPress={() => {
-                        console.log('[Translator] Alternative long-pressed -> translated preview');
-                        setTranslatedText(alt);
-                      }}
-                      testID={`alt-${index}`}
-                    >
-                      <Text style={styles.alternativeText}>• {alt}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-
-            {Array.isArray(currentTranslation.tips) &&
-              currentTranslation.tips.length > 0 && (
-                <View style={styles.insightCard}>
-                  <View style={styles.insightCardHeader}>
-                    <Lightbulb size={16} color="#8B5CF6" />
-                    <Text style={styles.insightCardTitle}>Tips & Best Practices</Text>
-                  </View>
-                  {currentTranslation.tips.map((tip, index) => (
-                    <View key={`tip-${index}`} style={styles.tipItem}>
-                      <Text style={styles.tipBullet}>💡</Text>
-                      <Text style={styles.tipText}>{tip}</Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-
             {currentTranslation.pronunciation && (
               <View style={styles.insightCard}>
                 <View style={styles.insightCardHeader}>
@@ -1193,6 +1119,52 @@ Focus on being an encouraging language coach who helps learners understand not j
                 </View>
               </View>
             )}
+
+            {currentTranslation.explanation && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <Lightbulb size={16} color="#F59E0B" />
+                  <Text style={styles.insightCardTitle}>Translation Analysis</Text>
+                </View>
+                <Text style={styles.insightCardText}>{currentTranslation.explanation}</Text>
+              </View>
+            )}
+
+            {currentTranslation.culturalContext && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <Globe size={16} color="#06B6D4" />
+                  <Text style={styles.insightCardTitle}>Cultural Context</Text>
+                </View>
+                <Text style={styles.insightCardText}>{currentTranslation.culturalContext}</Text>
+              </View>
+            )}
+
+            {currentTranslation.grammarInsights && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <BookOpen size={16} color="#10B981" />
+                  <Text style={styles.insightCardTitle}>Grammar Insights</Text>
+                </View>
+                <Text style={styles.insightCardText}>{currentTranslation.grammarInsights}</Text>
+              </View>
+            )}
+
+            {Array.isArray(currentTranslation.tips) &&
+              currentTranslation.tips.length > 0 && (
+                <View style={styles.insightCard}>
+                  <View style={styles.insightCardHeader}>
+                    <Lightbulb size={16} color="#8B5CF6" />
+                    <Text style={styles.insightCardTitle}>Tips & Best Practices</Text>
+                  </View>
+                  {currentTranslation.tips.map((tip, index) => (
+                    <View key={`tip-${index}`} style={styles.tipItem}>
+                      <Text style={styles.tipBullet}>💡</Text>
+                      <Text style={styles.tipText}>{tip}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
 
             {currentTranslation.usageBestPractices && (
               <View style={styles.insightCard}>
@@ -1337,6 +1309,34 @@ Focus on being an encouraging language coach who helps learners understand not j
                 <Text style={styles.insightCardText}>{currentTranslation.metaReflection}</Text>
               </View>
             )}
+
+            {Array.isArray(currentTranslation.alternativeTranslations) &&
+              currentTranslation.alternativeTranslations.length > 0 && (
+                <View style={styles.insightCard}>
+                  <View style={styles.insightCardHeader}>
+                    <MessageCircle size={16} color="#EF4444" />
+                    <Text style={styles.insightCardTitle}>Alternative Translations</Text>
+                  </View>
+                  {currentTranslation.alternativeTranslations.map((alt, index) => (
+                    <TouchableOpacity
+                      key={`${index}-${alt}`}
+                      style={styles.alternativeItem}
+                      onPress={() => {
+                        console.log('[Translator] Alternative selected -> source input');
+                        setSourceText(alt);
+                        try { sourceInputRef.current?.focus?.(); } catch (e) { console.log('focus err', e); }
+                      }}
+                      onLongPress={() => {
+                        console.log('[Translator] Alternative long-pressed -> translated preview');
+                        setTranslatedText(alt);
+                      }}
+                      testID={`alt-${index}`}
+                    >
+                      <Text style={styles.alternativeText}>• {alt}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
 
             {currentTranslation.difficulty && (
               <View style={styles.difficultyBadge}>
