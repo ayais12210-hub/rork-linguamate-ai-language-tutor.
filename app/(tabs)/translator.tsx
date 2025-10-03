@@ -469,9 +469,9 @@ Focus on being an encouraging language coach who helps learners understand not j
 
             console.log('[Translator] Sending audio to backend STT API...');
             const apiBaseUrl = typeof window !== 'undefined' && window.location 
-              ? `${window.location.protocol}//${window.location.host}/api`
-              : '/api';
-            const sttResponse = await fetch(`${apiBaseUrl}/stt/transcribe`, {
+              ? `${window.location.protocol}//${window.location.host}`
+              : '';
+            const sttResponse = await fetch(`${apiBaseUrl}/api/stt/transcribe`, {
               method: 'POST',
               body: formData,
             });
