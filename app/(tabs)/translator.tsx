@@ -1096,18 +1096,18 @@ Focus on being an encouraging language coach who helps learners understand not j
                 </View>
                 <View style={styles.pronunciationContent}>
                   <View style={styles.pronunciationRow}>
-                    <Text style={styles.pronunciationLabel}>Text:</Text>
+                    <Text style={styles.pronunciationLabel}>Text</Text>
                     <Text style={styles.pronunciationValue}>{currentTranslation.pronunciation.text}</Text>
                   </View>
                   {currentTranslation.pronunciation.phonetic && (
                     <View style={styles.pronunciationRow}>
-                      <Text style={styles.pronunciationLabel}>Phonetic:</Text>
+                      <Text style={styles.pronunciationLabel}>Phonetic</Text>
                       <Text style={styles.pronunciationPhonetic}>{currentTranslation.pronunciation.phonetic}</Text>
                     </View>
                   )}
                   {currentTranslation.pronunciation.breakdown && (
                     <View style={styles.pronunciationRow}>
-                      <Text style={styles.pronunciationLabel}>Breakdown:</Text>
+                      <Text style={styles.pronunciationLabel}>Breakdown</Text>
                       <Text style={styles.pronunciationBreakdown}>{currentTranslation.pronunciation.breakdown}</Text>
                     </View>
                   )}
