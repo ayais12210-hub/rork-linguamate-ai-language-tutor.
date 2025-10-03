@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Animated,
 } from 'react-native';
+import * as Speech from 'expo-speech';
 import {
   ArrowUpDown,
   Copy,
@@ -360,13 +361,63 @@ Focus on being an encouraging language coach who helps learners understand not j
     Alert.alert('Copied!', 'Text copied to clipboard');
   };
 
-  const handleSpeakText = (text: string, language: string) => {
+  const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
+  const [speakingTextId, setSpeakingTextId] = useState<string | null>(null);
+
+  const handleSpeakText = useCallback(async (text: string, language: string, textId?: string) => {
+    if (!text.trim()) return;
+
     if (!user.isPremium) {
       setShowUpgradeModal(true);
       return;
     }
-    Alert.alert('Speaking...', `Would speak: "${text}" in ${language}`);
-  };
+
+    try {
+      if (isSpeaking) {
+        await Speech.stop();
+        setIsSpeaking(false);
+        setSpeakingTextId(null);
+        return;
+      }
+
+      setIsSpeaking(true);
+      if (textId) setSpeakingTextId(textId);
+
+      const langCode = language.split('-')[0];
+      const speechRate = 0.9;
+
+      await Speech.speak(text, {
+        language: langCode,
+        pitch: 1.0,
+        rate: speechRate,
+        onDone: () => {
+          setIsSpeaking(false);
+          setSpeakingTextId(null);
+        },
+        onStopped: () => {
+          setIsSpeaking(false);
+          setSpeakingTextId(null);
+        },
+        onError: (error) => {
+          console.error('[Translator] TTS error:', error);
+          setIsSpeaking(false);
+          setSpeakingTextId(null);
+          Alert.alert('Error', 'Failed to play audio. Please try again.');
+        },
+      });
+    } catch (error) {
+      console.error('[Translator] Speech error:', error);
+      setIsSpeaking(false);
+      setSpeakingTextId(null);
+      Alert.alert('Error', 'Failed to play audio. Please try again.');
+    }
+  }, [isSpeaking, user.isPremium]);
+
+  useEffect(() => {
+    return () => {
+      Speech.stop();
+    };
+  }, []);
 
   const toggleFavorite = (translationId: string) => {
     if (!user.isPremium) {
@@ -553,10 +604,15 @@ Focus on being an encouraging language coach who helps learners understand not j
           <View style={styles.inputHeader} testID="input-header">
             <Text style={styles.inputLabel}>Enter text</Text>
             <TouchableOpacity
-              onPress={() => handleSpeakText(sourceText, fromLanguage)}
+              onPress={() => handleSpeakText(sourceText, fromLanguage, 'source')}
               disabled={!sourceText.trim()}
+              testID="speak-source-btn"
             >
-              <Volume2 size={20} color={sourceText.trim() ? '#3B82F6' : '#9CA3AF'} />
+              <Volume2 
+                size={20} 
+                color={sourceText.trim() ? (isSpeaking && speakingTextId === 'source' ? '#10B981' : '#3B82F6') : '#9CA3AF'} 
+                fill={isSpeaking && speakingTextId === 'source' ? '#10B981' : 'none'}
+              />
             </TouchableOpacity>
           </View>
           <TextInput
@@ -615,18 +671,21 @@ Focus on being an encouraging language coach who helps learners understand not j
               <Text style={styles.outputLabel}>Professional Translation</Text>
               <View style={styles.outputActions} testID="output-actions">
                 <TouchableOpacity
-                  onPress={() => handleSpeakText(translatedText, toLanguage)}
+                  onPress={() => handleSpeakText(translatedText, toLanguage, 'translated')}
                   disabled={!translatedText.trim()}
+                  testID="speak-translated-btn"
                 >
                   <Volume2
                     size={20}
-                    color={translatedText.trim() ? '#3B82F6' : '#9CA3AF'}
+                    color={translatedText.trim() ? (isSpeaking && speakingTextId === 'translated' ? '#10B981' : '#3B82F6') : '#9CA3AF'}
+                    fill={isSpeaking && speakingTextId === 'translated' ? '#10B981' : 'none'}
                   />
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => handleCopyText(translatedText)}
                   disabled={!translatedText.trim()}
                   style={styles.actionButton}
+                  testID="copy-translated-btn"
                 >
                   <Copy size={20} color={translatedText.trim() ? '#3B82F6' : '#9CA3AF'} />
                 </TouchableOpacity>
