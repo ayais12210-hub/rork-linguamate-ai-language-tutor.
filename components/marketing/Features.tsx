@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Dimensions, Animated, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Icons from 'lucide-react-native';
 import { brand } from '@/config/brand';
@@ -9,6 +9,30 @@ const { width } = Dimensions.get('window');
 
 export default function Features() {
   const { features } = landingContent;
+  const fadeAnims = useRef(features.map(() => new Animated.Value(0))).current;
+  const scaleAnims = useRef(features.map(() => new Animated.Value(0.9))).current;
+
+  useEffect(() => {
+    const animations = features.map((_, index) =>
+      Animated.parallel([
+        Animated.timing(fadeAnims[index], {
+          toValue: 1,
+          duration: 500,
+          delay: index * 80,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnims[index], {
+          toValue: 1,
+          delay: index * 80,
+          useNativeDriver: true,
+          tension: 50,
+          friction: 7,
+        }),
+      ])
+    );
+
+    Animated.stagger(80, animations).start();
+  }, [fadeAnims, scaleAnims]);
 
   return (
     <View style={styles.container} id="features">
@@ -21,22 +45,37 @@ export default function Features() {
         </View>
 
         <View style={styles.grid}>
-          {features.map((feature) => {
+          {features.map((feature, index) => {
             const IconComponent = (Icons as any)[feature.icon] || Icons.Star;
             
             return (
-              <View key={feature.id} style={styles.card}>
-                <LinearGradient
-                  colors={['rgba(255, 255, 255, 0.08)', 'rgba(255, 255, 255, 0.02)']}
-                  style={styles.cardGradient}
-                >
-                  <View style={styles.iconContainer}>
-                    <IconComponent size={32} color={brand.palette.primary.from} />
-                  </View>
-                  <Text style={styles.featureTitle}>{feature.title}</Text>
-                  <Text style={styles.featureDescription}>{feature.description}</Text>
-                </LinearGradient>
-              </View>
+              <Animated.View
+                key={feature.id}
+                style={[
+                  styles.card,
+                  {
+                    opacity: fadeAnims[index],
+                    transform: [{ scale: scaleAnims[index] }],
+                  },
+                ]}
+              >
+                <TouchableOpacity activeOpacity={0.9}>
+                  <LinearGradient
+                    colors={['rgba(255, 255, 255, 0.08)', 'rgba(255, 255, 255, 0.02)']}
+                    style={styles.cardGradient}
+                  >
+                    <View style={styles.iconContainer}>
+                      <IconComponent size={32} color={brand.palette.primary.from} />
+                    </View>
+                    <Text style={styles.featureTitle}>{feature.title}</Text>
+                    <Text style={styles.featureDescription}>{feature.description}</Text>
+                    <View style={styles.learnMore}>
+                      <Text style={styles.learnMoreText}>Learn more</Text>
+                      <Icons.ArrowRight size={16} color={brand.palette.primary.from} />
+                    </View>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </Animated.View>
             );
           })}
         </View>
@@ -109,5 +148,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: brand.palette.fgSecondary,
     lineHeight: 22,
+    marginBottom: 16,
+  },
+  learnMore: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  learnMoreText: {
+    fontSize: 14,
+    fontWeight: '600' as any,
+    color: brand.palette.primary.from,
   },
 });

@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Animated } from 'react-native';
 import { Link } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Play } from 'lucide-react-native';
+import { Play, Sparkles, Zap, Globe } from 'lucide-react-native';
 import { brand } from '@/config/brand';
 import { landingContent } from '@/content/landing';
 
@@ -10,6 +10,62 @@ const { width } = Dimensions.get('window');
 
 export default function Hero() {
   const { hero } = landingContent;
+  const floatAnim1 = useRef(new Animated.Value(0)).current;
+  const floatAnim2 = useRef(new Animated.Value(0)).current;
+  const floatAnim3 = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(floatAnim1, {
+            toValue: -20,
+            duration: 3000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(floatAnim1, {
+            toValue: 0,
+            duration: 3000,
+            useNativeDriver: true,
+          }),
+        ])
+      ),
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(floatAnim2, {
+            toValue: -15,
+            duration: 2500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(floatAnim2, {
+            toValue: 0,
+            duration: 2500,
+            useNativeDriver: true,
+          }),
+        ])
+      ),
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(floatAnim3, {
+            toValue: -25,
+            duration: 3500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(floatAnim3, {
+            toValue: 0,
+            duration: 3500,
+            useNativeDriver: true,
+          }),
+        ])
+      ),
+    ]).start();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -19,9 +75,32 @@ export default function Hero() {
       />
       
       <View style={styles.content}>
-        <View style={styles.textContainer}>
+        <Animated.View style={[styles.textContainer, { opacity: fadeAnim }]}>
+          <View style={styles.badgeContainer}>
+            <View style={styles.badge}>
+              <Sparkles size={14} color={brand.palette.primary.from} />
+              <Text style={styles.badgeText}>AI-Powered Learning</Text>
+            </View>
+          </View>
           <Text style={styles.headline}>{hero.headline}</Text>
           <Text style={styles.subheadline}>{hero.subheadline}</Text>
+          
+          <View style={styles.statsRow}>
+            <View style={styles.stat}>
+              <Text style={styles.statNumber}>20+</Text>
+              <Text style={styles.statLabel}>Languages</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.stat}>
+              <Text style={styles.statNumber}>50K+</Text>
+              <Text style={styles.statLabel}>Learners</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.stat}>
+              <Text style={styles.statNumber}>4.9★</Text>
+              <Text style={styles.statLabel}>Rating</Text>
+            </View>
+          </View>
           
           <View style={styles.ctaContainer}>
             <Link href="/(tabs)/chat" asChild>
@@ -42,38 +121,47 @@ export default function Hero() {
               <Text style={styles.secondaryButtonText}>{hero.ctaSecondary}</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </Animated.View>
 
         <View style={styles.visualContainer}>
-          <View style={styles.mockupCard}>
+          <Animated.View style={[styles.mockupCard, { transform: [{ translateY: floatAnim1 }] }]}>
             <LinearGradient
               colors={['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.05)']}
               style={styles.mockupGradient}
             >
-              <Text style={styles.mockupEmoji}>🎯</Text>
-              <Text style={styles.mockupText}>AI-Powered Learning</Text>
+              <View style={styles.iconBadge}>
+                <Zap size={24} color={brand.palette.primary.from} />
+              </View>
+              <Text style={styles.mockupTitle}>AI-Powered</Text>
+              <Text style={styles.mockupText}>Adaptive lessons that evolve with you</Text>
             </LinearGradient>
-          </View>
+          </Animated.View>
           
-          <View style={[styles.mockupCard, styles.mockupCard2]}>
+          <Animated.View style={[styles.mockupCard, styles.mockupCard2, { transform: [{ translateY: floatAnim2 }] }]}>
             <LinearGradient
               colors={['rgba(34, 211, 238, 0.2)', 'rgba(14, 165, 233, 0.1)']}
               style={styles.mockupGradient}
             >
-              <Text style={styles.mockupEmoji}>🗣️</Text>
-              <Text style={styles.mockupText}>Real Conversations</Text>
+              <View style={styles.iconBadge}>
+                <Globe size={24} color="#22d3ee" />
+              </View>
+              <Text style={styles.mockupTitle}>Real Conversations</Text>
+              <Text style={styles.mockupText}>Practice with native-like AI</Text>
             </LinearGradient>
-          </View>
+          </Animated.View>
           
-          <View style={[styles.mockupCard, styles.mockupCard3]}>
+          <Animated.View style={[styles.mockupCard, styles.mockupCard3, { transform: [{ translateY: floatAnim3 }] }]}>
             <LinearGradient
               colors={['rgba(167, 139, 250, 0.2)', 'rgba(139, 92, 246, 0.1)']}
               style={styles.mockupGradient}
             >
-              <Text style={styles.mockupEmoji}>📈</Text>
-              <Text style={styles.mockupText}>Track Progress</Text>
+              <View style={styles.iconBadge}>
+                <Sparkles size={24} color="#a78bfa" />
+              </View>
+              <Text style={styles.mockupTitle}>Track Progress</Text>
+              <Text style={styles.mockupText}>See your improvement daily</Text>
             </LinearGradient>
-          </View>
+          </Animated.View>
         </View>
       </View>
     </View>
@@ -108,6 +196,50 @@ const styles = StyleSheet.create({
   textContainer: {
     flex: 1,
     maxWidth: 600,
+  },
+  badgeContainer: {
+    marginBottom: 24,
+  },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(251, 191, 36, 0.1)',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(251, 191, 36, 0.3)',
+    alignSelf: 'flex-start',
+  },
+  badgeText: {
+    fontSize: 14,
+    fontWeight: '600' as any,
+    color: brand.palette.primary.from,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 24,
+    marginTop: 32,
+  },
+  stat: {
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: '800' as any,
+    color: brand.palette.fg,
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: brand.palette.fgSecondary,
+  },
+  statDivider: {
+    width: 1,
+    height: 32,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   headline: {
     fontSize: width < 768 ? 36 : 56,
@@ -174,13 +306,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  mockupEmoji: {
-    fontSize: 48,
+  iconBadge: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  mockupTitle: {
+    fontSize: 18,
+    fontWeight: '700' as any,
+    color: brand.palette.fg,
+    marginBottom: 8,
   },
   mockupText: {
-    fontSize: 16,
-    fontWeight: '600' as any,
-    color: brand.palette.fg,
+    fontSize: 14,
+    color: brand.palette.fgSecondary,
+    textAlign: 'center',
   },
   mockupCard2: {
     top: 100,

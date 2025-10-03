@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Play } from 'lucide-react-native';
+import { Play, Volume2, Sparkles } from 'lucide-react-native';
 import { brand } from '@/config/brand';
 import { landingContent } from '@/content/landing';
 
@@ -12,6 +12,33 @@ export default function LiveShowcase() {
   const [selectedLanguage, setSelectedLanguage] = useState<typeof demo.languages[number]>(demo.languages[0]);
   const [selectedDifficulty, setSelectedDifficulty] = useState<typeof demo.difficulties[number]>(demo.difficulties[0]);
   const [showResponse, setShowResponse] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [displayedText, setDisplayedText] = useState('');
+
+  useEffect(() => {
+    if (showResponse && !isTyping) {
+      setIsTyping(true);
+      setDisplayedText('');
+      const text = demo.sampleDialogue.response;
+      let index = 0;
+      
+      const interval = setInterval(() => {
+        if (index < text.length) {
+          setDisplayedText(text.slice(0, index + 1));
+          index++;
+        } else {
+          setIsTyping(false);
+          clearInterval(interval);
+        }
+      }, 20);
+
+      return () => clearInterval(interval);
+    }
+  }, [showResponse, demo.sampleDialogue.response, isTyping]);
+
+  const handleGetResponse = () => {
+    setShowResponse(true);
+  };
 
   return (
     <View style={styles.container}>
@@ -90,7 +117,18 @@ export default function LiveShowcase() {
                     end={{ x: 1, y: 1 }}
                     style={styles.aiBubbleGradient}
                   >
-                    <Text style={styles.aiBubbleText}>{demo.sampleDialogue.response}</Text>
+                    <View style={styles.aiBubbleHeader}>
+                      <Sparkles size={16} color="#000" />
+                      <Text style={styles.aiBubbleLabel}>AI Tutor</Text>
+                    </View>
+                    <Text style={styles.aiBubbleText}>{displayedText}</Text>
+                    {isTyping && <ActivityIndicator size="small" color="#000" style={styles.typingIndicator} />}
+                    {!isTyping && (
+                      <TouchableOpacity style={styles.audioButton}>
+                        <Volume2 size={16} color="#000" />
+                        <Text style={styles.audioButtonText}>Listen</Text>
+                      </TouchableOpacity>
+                    )}
                   </LinearGradient>
                 </View>
               )}
@@ -98,7 +136,7 @@ export default function LiveShowcase() {
               {!showResponse && (
                 <TouchableOpacity
                   style={styles.tryButton}
-                  onPress={() => setShowResponse(true)}
+                  onPress={handleGetResponse}
                 >
                   <Play size={20} color="#000" />
                   <Text style={styles.tryButtonText}>Get AI Response</Text>
@@ -221,10 +259,43 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
+  aiBubbleHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  aiBubbleLabel: {
+    fontSize: 12,
+    fontWeight: '700' as any,
+    color: '#000',
+    textTransform: 'uppercase',
+  },
   aiBubbleText: {
     fontSize: 16,
     color: '#000',
     lineHeight: 24,
+    marginBottom: 12,
+  },
+  typingIndicator: {
+    alignSelf: 'flex-start',
+    marginTop: 8,
+  },
+  audioButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+    marginTop: 8,
+  },
+  audioButtonText: {
+    fontSize: 14,
+    fontWeight: '600' as any,
+    color: '#000',
   },
   tryButton: {
     flexDirection: 'row',
