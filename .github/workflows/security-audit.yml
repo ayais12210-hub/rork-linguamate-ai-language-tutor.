@@ -1,3 +1,5 @@
+name: Security Audit
+
 on:
   schedule: [ { cron: "0 3 * * 1" } ] # Mondays 03:00 UTC
   workflow_dispatch: {}
