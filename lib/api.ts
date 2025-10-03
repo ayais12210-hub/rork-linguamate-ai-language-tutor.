@@ -7,7 +7,8 @@ export const API_ENDPOINTS = {
   TEXT_LLM: 'https://toolkit.rork.com/text/llm/',
   IMAGE_GENERATE: 'https://toolkit.rork.com/images/generate/',
   IMAGE_EDIT: 'https://toolkit.rork.com/images/edit/',
-  SPEECH_TO_TEXT: 'https://toolkit.rork.com/stt/transcribe/',
+  // STT is proxied through our backend to ensure CORS, auth, and consistent JSON
+  SPEECH_TO_TEXT_PROXY: '/api/stt/transcribe',
   
   // External APIs (examples)
   TRANSLATE: 'https://api.mymemory.translated.net/get',
@@ -135,6 +136,30 @@ export class ApiClient {
     }
   }
 
+  private getBase(): string {
+    if (typeof window !== 'undefined' && window.location) {
+      const origin = window.location.origin.replace(/\/$/, '');
+      let basePath = '';
+      try {
+        const match = window.location.pathname.match(/^\/p\/[^/]+/);
+        if (match && match[0]) basePath = match[0];
+      } catch {}
+      return `${origin}${basePath}`.replace(/\/$/, '');
+    }
+    try {
+      // @ts-expect-error Expo Constants at runtime
+      const Constants = require('expo-constants').default;
+      const hostUri = Constants?.expoConfig?.hostUri || Constants?.manifest2?.extra?.expoClient?.hostUri;
+      if (typeof hostUri === 'string' && hostUri.length > 0) {
+        let cleaned = hostUri.trim();
+        cleaned = cleaned.replace(/^exp:\/\//i, '').replace(/^ws:\/\//i, '').replace(/^wss:\/\//i, '');
+        if (!/^https?:\/\//i.test(cleaned)) cleaned = `http://${cleaned}`;
+        return cleaned.replace(/\/$/, '');
+      }
+    } catch {}
+    return 'http://localhost:8081';
+  }
+
   // AI Text Generation
   async generateText(messages: CoreMessage[]): Promise<LLMResponse> {
     return this.request<LLMResponse>(API_ENDPOINTS.TEXT_LLM, {
@@ -169,15 +194,24 @@ export class ApiClient {
 
   // Speech to Text
   async transcribeAudio(formData: FormData): Promise<STTResponse> {
-    return this.request<STTResponse>(
-      API_ENDPOINTS.SPEECH_TO_TEXT,
-      {
-        method: 'POST',
-        body: formData,
-        headers: {},
-      },
-      (data) => STTResponseSchema.parse(data)
-    );
+    const base = this.getBase();
+    const url = `${base}${API_ENDPOINTS.SPEECH_TO_TEXT_PROXY}`;
+    const res = await fetch(url, { method: 'POST', body: formData });
+    const ct = res.headers.get('content-type') ?? '';
+    const text = await res.text();
+    if (!res.ok) {
+      let message = res.statusText || 'Request failed';
+      try {
+        const err = JSON.parse(text) as { message?: string };
+        if (typeof err.message === 'string') message = err.message;
+      } catch {}
+      throw new Error(`HTTP_${res.status}:${message}`);
+    }
+    if (!ct.includes('application/json')) {
+      throw new Error('INVALID_JSON');
+    }
+    const data = JSON.parse(text);
+    return STTResponseSchema.parse(data);
   }
 
   // Translation service

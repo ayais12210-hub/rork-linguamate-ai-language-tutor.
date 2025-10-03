@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 import { Audio, AVPlaybackStatusSuccess } from 'expo-av';
+import Constants from 'expo-constants';
 
 export interface SpeechSettings {
   rate: number;
@@ -259,6 +260,26 @@ export const useSpeech = () => {
     }
   };
 
+  const getBaseApi = (): string => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const origin = window.location.origin.replace(/\/$/, '');
+      let basePath = '';
+      try {
+        const match = window.location.pathname.match(/^\/p\/[^/]+/);
+        if (match && match[0]) basePath = match[0];
+      } catch {}
+      return `${origin}${basePath}`.replace(/\/$/, '');
+    }
+    const hostUri = (Constants as any)?.expoConfig?.hostUri || (Constants as any)?.manifest2?.extra?.expoClient?.hostUri;
+    if (hostUri && typeof hostUri === 'string') {
+      let cleaned = hostUri.trim();
+      cleaned = cleaned.replace(/^exp:\/\//i, '').replace(/^ws:\/\//i, '').replace(/^wss:\/\//i, '');
+      if (!/^https?:\/\//i.test(cleaned)) cleaned = `http://${cleaned}`;
+      return cleaned.replace(/\/$/, '');
+    }
+    return 'http://localhost:8081';
+  };
+
   const transcribeAudio = async (audioUri?: string, language?: string): Promise<TranscriptionResult | null> => {
     let effectiveUri = audioUri || recordingState.uri;
 
@@ -314,16 +335,29 @@ export const useSpeech = () => {
         }
       }
 
-      const response = await fetch('https://toolkit.rork.com/stt/transcribe/', {
+      const apiBase = getBaseApi();
+      const endpoint = `${apiBase}/api/stt/transcribe`;
+      const response = await fetch(endpoint, {
         method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error(`Transcription failed: ${response.statusText}`);
+        const respText = await response.text();
+        let message = response.statusText || 'Request failed';
+        try {
+          const errJson = JSON.parse(respText) as { message?: string };
+          if (typeof errJson.message === 'string') message = errJson.message;
+        } catch {}
+        throw new Error(`Transcription failed (${response.status}): ${message}`);
       }
 
-      const result = await response.json();
+      const ct = response.headers.get('content-type') ?? '';
+      const respText = await response.text();
+      if (!ct.includes('application/json')) {
+        throw new Error('Invalid response type from STT service');
+      }
+      const result = JSON.parse(respText) as any;
       
       const transcriptionResult: TranscriptionResult = {
         text: result.text,

@@ -42,6 +42,7 @@
 - [x] Create E2E navigation tests (`tests/e2e/navigation.spec.ts`)
 - [x] Create E2E auth tests (`tests/e2e/auth.spec.ts`)
 - [ ] Verify all tests pass locally
+- [x] STT backend proxy wired and client using /api/stt/transcribe with robust JSON/error handling
 
 ## ✅ CI/CD Pipeline
 
@@ -90,6 +91,7 @@
 
 ### Local Testing
 - [ ] Run `bun test` - All unit tests pass
+- [x] Manually verify STT transcription happy/error paths via backend proxy
 - [ ] Run `bun test -- --coverage` - Coverage meets thresholds
 - [ ] Run `bun typecheck` - No TypeScript errors
 - [ ] Run `bun lint` - No lint errors

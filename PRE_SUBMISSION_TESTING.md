@@ -12,6 +12,8 @@ Use this as a lightweight QA script before promoting a build.
 - Microphone permission prompt appears only when recording
 - STT upload and transcription success + error handling
 
+Status: STT now proxied via /api/stt/transcribe with rate limiting and robust JSON/error handling. Client updated to use proxy and validated manually on web + native dev.
+
 ## Network & Errors
 - Simulate offline: show friendly error UI; retry works
 - tRPC endpoints: learn, lessons, leaderboard, user return valid data
