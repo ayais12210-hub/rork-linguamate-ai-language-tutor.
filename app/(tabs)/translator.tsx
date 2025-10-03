@@ -344,6 +344,19 @@ Focus on being an encouraging language coach who provides progressive learning f
         }),
       });
 
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[Translator] Translation API error:', response.status, errorText);
+        throw new Error(`Translation failed: ${response.status}`);
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const errorText = await response.text();
+        console.error('[Translator] Non-JSON response:', errorText.substring(0, 200));
+        throw new Error('Server returned invalid response format');
+      }
+
       const data = await response.json();
       const normalized = normalizeAIResponse(String(data?.completion ?? ''));
       const translationText = (normalized.translation ?? '').toString();
@@ -438,6 +451,13 @@ Focus on being an encouraging language coach who provides progressive learning f
         return;
       }
       
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('[Translator] Suggestions API returned non-JSON response');
+        setSuggestions([]);
+        return;
+      }
+
       const data = await response.json();
       const completion = String(data?.completion ?? '[]');
       let parsed: string[] = [];
@@ -619,6 +639,13 @@ Focus on being an encouraging language coach who provides progressive learning f
               const errorText = await sttResponse.text();
               console.error('[Translator] STT API error:', errorText);
               throw new Error(`STT API returned ${sttResponse.status}`);
+            }
+
+            const sttContentType = sttResponse.headers.get('content-type');
+            if (!sttContentType || !sttContentType.includes('application/json')) {
+              const errorText = await sttResponse.text();
+              console.error('[Translator] STT returned non-JSON:', errorText.substring(0, 200));
+              throw new Error('Speech-to-text service returned invalid response');
             }
 
             const data = await sttResponse.json();
@@ -1289,9 +1316,11 @@ Focus on being an encouraging language coach who provides progressive learning f
                 {currentTranslation.meaning.contextualExamples && currentTranslation.meaning.contextualExamples.length > 0 && (
                   <View style={styles.meaningRow}>
                     <Text style={styles.meaningLabel}>Contextual Examples:</Text>
-                    {currentTranslation.meaning.contextualExamples.map((ex, idx) => (
-                      <Text key={idx} style={styles.exampleText}>• {ex}</Text>
-                    ))}
+                    <View>
+                      {currentTranslation.meaning.contextualExamples.map((ex, idx) => (
+                        <Text key={idx} style={styles.exampleText}>• {ex}</Text>
+                      ))}
+                    </View>
                   </View>
                 )}
               </View>
@@ -1351,9 +1380,11 @@ Focus on being an encouraging language coach who provides progressive learning f
                 {currentTranslation.learningProcess.acquisitionSteps && currentTranslation.learningProcess.acquisitionSteps.length > 0 && (
                   <View style={styles.meaningRow}>
                     <Text style={styles.meaningLabel}>Acquisition Steps:</Text>
-                    {currentTranslation.learningProcess.acquisitionSteps.map((step, idx) => (
-                      <Text key={idx} style={styles.exampleText}>• {step}</Text>
-                    ))}
+                    <View>
+                      {currentTranslation.learningProcess.acquisitionSteps.map((step, idx) => (
+                        <Text key={idx} style={styles.exampleText}>• {step}</Text>
+                      ))}
+                    </View>
                   </View>
                 )}
                 {currentTranslation.learningProcess.frequencyPriority && (
@@ -1365,9 +1396,11 @@ Focus on being an encouraging language coach who provides progressive learning f
                 {currentTranslation.learningProcess.immersionStrategies && currentTranslation.learningProcess.immersionStrategies.length > 0 && (
                   <View style={styles.meaningRow}>
                     <Text style={styles.meaningLabel}>Immersion Strategies:</Text>
-                    {currentTranslation.learningProcess.immersionStrategies.map((strat, idx) => (
-                      <Text key={idx} style={styles.exampleText}>• {strat}</Text>
-                    ))}
+                    <View>
+                      {currentTranslation.learningProcess.immersionStrategies.map((strat, idx) => (
+                        <Text key={idx} style={styles.exampleText}>• {strat}</Text>
+                      ))}
+                    </View>
                   </View>
                 )}
               </View>
@@ -1382,9 +1415,11 @@ Focus on being an encouraging language coach who provides progressive learning f
                 {currentTranslation.usage.contexts && currentTranslation.usage.contexts.length > 0 && (
                   <View style={styles.meaningRow}>
                     <Text style={styles.meaningLabel}>Contexts:</Text>
-                    {currentTranslation.usage.contexts.map((ctx, idx) => (
-                      <Text key={idx} style={styles.exampleText}>• {ctx}</Text>
-                    ))}
+                    <View>
+                      {currentTranslation.usage.contexts.map((ctx, idx) => (
+                        <Text key={idx} style={styles.exampleText}>• {ctx}</Text>
+                      ))}
+                    </View>
                   </View>
                 )}
                 {currentTranslation.usage.register && (
@@ -1402,9 +1437,11 @@ Focus on being an encouraging language coach who provides progressive learning f
                 {currentTranslation.usage.collocations && currentTranslation.usage.collocations.length > 0 && (
                   <View style={styles.meaningRow}>
                     <Text style={styles.meaningLabel}>Collocations:</Text>
-                    {currentTranslation.usage.collocations.map((col, idx) => (
-                      <Text key={idx} style={styles.exampleText}>• {col}</Text>
-                    ))}
+                    <View>
+                      {currentTranslation.usage.collocations.map((col, idx) => (
+                        <Text key={idx} style={styles.exampleText}>• {col}</Text>
+                      ))}
+                    </View>
                   </View>
                 )}
                 {currentTranslation.usage.pragmaticRole && (
@@ -1494,9 +1531,11 @@ Focus on being an encouraging language coach who provides progressive learning f
                 {currentTranslation.culture.regionalVariations && currentTranslation.culture.regionalVariations.length > 0 && (
                   <View style={styles.meaningRow}>
                     <Text style={styles.meaningLabel}>Regional Variations:</Text>
-                    {currentTranslation.culture.regionalVariations.map((variant, idx) => (
-                      <Text key={idx} style={styles.exampleText}>• {variant}</Text>
-                    ))}
+                    <View>
+                      {currentTranslation.culture.regionalVariations.map((variant, idx) => (
+                        <Text key={idx} style={styles.exampleText}>• {variant}</Text>
+                      ))}
+                    </View>
                   </View>
                 )}
               </View>
@@ -1511,33 +1550,41 @@ Focus on being an encouraging language coach who provides progressive learning f
                 {currentTranslation.crossLanguageInterference.overLiteralTranslations && currentTranslation.crossLanguageInterference.overLiteralTranslations.length > 0 && (
                   <View style={styles.meaningRow}>
                     <Text style={styles.meaningLabel}>Over-Literal Translations:</Text>
-                    {currentTranslation.crossLanguageInterference.overLiteralTranslations.map((item, idx) => (
-                      <Text key={idx} style={styles.exampleText}>• {item}</Text>
-                    ))}
+                    <View>
+                      {currentTranslation.crossLanguageInterference.overLiteralTranslations.map((item, idx) => (
+                        <Text key={idx} style={styles.exampleText}>• {item}</Text>
+                      ))}
+                    </View>
                   </View>
                 )}
                 {currentTranslation.crossLanguageInterference.falseFriends && currentTranslation.crossLanguageInterference.falseFriends.length > 0 && (
                   <View style={styles.meaningRow}>
                     <Text style={styles.meaningLabel}>False Friends:</Text>
-                    {currentTranslation.crossLanguageInterference.falseFriends.map((item, idx) => (
-                      <Text key={idx} style={styles.exampleText}>• {item}</Text>
-                    ))}
+                    <View>
+                      {currentTranslation.crossLanguageInterference.falseFriends.map((item, idx) => (
+                        <Text key={idx} style={styles.exampleText}>• {item}</Text>
+                      ))}
+                    </View>
                   </View>
                 )}
                 {currentTranslation.crossLanguageInterference.l1TransferErrors && currentTranslation.crossLanguageInterference.l1TransferErrors.length > 0 && (
                   <View style={styles.meaningRow}>
                     <Text style={styles.meaningLabel}>L1 Transfer Errors:</Text>
-                    {currentTranslation.crossLanguageInterference.l1TransferErrors.map((item, idx) => (
-                      <Text key={idx} style={styles.exampleText}>• {item}</Text>
-                    ))}
+                    <View>
+                      {currentTranslation.crossLanguageInterference.l1TransferErrors.map((item, idx) => (
+                        <Text key={idx} style={styles.exampleText}>• {item}</Text>
+                      ))}
+                    </View>
                   </View>
                 )}
                 {currentTranslation.crossLanguageInterference.registerMismatches && currentTranslation.crossLanguageInterference.registerMismatches.length > 0 && (
                   <View style={styles.meaningRow}>
                     <Text style={styles.meaningLabel}>Register Mismatches:</Text>
-                    {currentTranslation.crossLanguageInterference.registerMismatches.map((item, idx) => (
-                      <Text key={idx} style={styles.exampleText}>• {item}</Text>
-                    ))}
+                    <View>
+                      {currentTranslation.crossLanguageInterference.registerMismatches.map((item, idx) => (
+                        <Text key={idx} style={styles.exampleText}>• {item}</Text>
+                      ))}
+                    </View>
                   </View>
                 )}
               </View>
@@ -1558,17 +1605,21 @@ Focus on being an encouraging language coach who provides progressive learning f
                 {currentTranslation.recap.dos && currentTranslation.recap.dos.length > 0 && (
                   <View style={styles.meaningRow}>
                     <Text style={styles.meaningLabel}>✅ Dos:</Text>
-                    {currentTranslation.recap.dos.map((item, idx) => (
-                      <Text key={idx} style={styles.exampleText}>• {item}</Text>
-                    ))}
+                    <View>
+                      {currentTranslation.recap.dos.map((item, idx) => (
+                        <Text key={idx} style={styles.exampleText}>• {item}</Text>
+                      ))}
+                    </View>
                   </View>
                 )}
                 {currentTranslation.recap.donts && currentTranslation.recap.donts.length > 0 && (
                   <View style={styles.meaningRow}>
                     <Text style={styles.meaningLabel}>❌ Donts:</Text>
-                    {currentTranslation.recap.donts.map((item, idx) => (
-                      <Text key={idx} style={styles.exampleText}>• {item}</Text>
-                    ))}
+                    <View>
+                      {currentTranslation.recap.donts.map((item, idx) => (
+                        <Text key={idx} style={styles.exampleText}>• {item}</Text>
+                      ))}
+                    </View>
                   </View>
                 )}
                 {currentTranslation.recap.reinforcement && (
