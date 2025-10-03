@@ -45,6 +45,12 @@ interface Translation {
   alternativeTranslations?: string[];
   difficulty?: 'beginner' | 'intermediate' | 'advanced';
   confidence?: number;
+  tips?: string[];
+  pronunciation?: {
+    text: string;
+    phonetic: string;
+    breakdown: string;
+  };
 }
 
 interface AITranslationResponseShape {
@@ -57,6 +63,8 @@ interface AITranslationResponseShape {
   difficulty?: string;
   confidence?: unknown;
   coachingTips?: string;
+  tips?: unknown;
+  pronunciation?: unknown;
 }
 
 function stripJSONCodeFences(raw: string): string {
@@ -188,7 +196,13 @@ Your task is to provide a comprehensive translation and learning analysis. Respo
   "alternativeTranslations": ["[alternative 1]", "[alternative 2]", "[alternative 3]"],
   "difficulty": "[beginner/intermediate/advanced based on language complexity for a ${user.proficiencyLevel} learner]",
   "confidence": [0.0-1.0 confidence score],
-  "coachingTips": "[specific tips for ${user.proficiencyLevel} level learners transitioning from ${fromLang.name} to ${toLang.name}, including common mistakes to avoid]"
+  "coachingTips": "[specific tips for ${user.proficiencyLevel} level learners transitioning from ${fromLang.name} to ${toLang.name}, including common mistakes to avoid]",
+  "tips": ["[practical tip 1]", "[practical tip 2]", "[practical tip 3]"],
+  "pronunciation": {
+    "text": "[the translated text]",
+    "phonetic": "[IPA or phonetic transcription]",
+    "breakdown": "[syllable-by-syllable pronunciation guide with stress markers]"
+  }
 }
 
 Focus on being an encouraging language coach who helps learners understand not just the translation, but the cultural and linguistic bridges between their native language and target language.`
@@ -214,6 +228,17 @@ Focus on being an encouraging language coach who helps learners understand not j
         ? (difficultyNorm as 'beginner' | 'intermediate' | 'advanced')
         : undefined;
       const confidenceNorm = coerceConfidence(normalized.confidence);
+      const tips = toStringArray(normalized.tips ?? []);
+      
+      let pronunciation: { text: string; phonetic: string; breakdown: string } | undefined;
+      if (normalized.pronunciation && typeof normalized.pronunciation === 'object') {
+        const p = normalized.pronunciation as Record<string, unknown>;
+        pronunciation = {
+          text: String(p.text ?? translationText),
+          phonetic: String(p.phonetic ?? ''),
+          breakdown: String(p.breakdown ?? ''),
+        };
+      }
 
       setTranslationCount(prev => prev + 1);
 
@@ -230,6 +255,8 @@ Focus on being an encouraging language coach who helps learners understand not j
         alternativeTranslations: alternatives,
         difficulty: difficultyValid,
         confidence: confidenceNorm,
+        tips: tips.length > 0 ? tips : undefined,
+        pronunciation,
       };
 
       setCurrentTranslation(newTranslation);
@@ -796,6 +823,60 @@ Focus on being an encouraging language coach who helps learners understand not j
                   ))}
                 </View>
               )}
+
+            {Array.isArray(currentTranslation.tips) &&
+              currentTranslation.tips.length > 0 && (
+                <View style={styles.insightCard}>
+                  <View style={styles.insightCardHeader}>
+                    <Lightbulb size={16} color="#8B5CF6" />
+                    <Text style={styles.insightCardTitle}>Tips & Best Practices</Text>
+                  </View>
+                  {currentTranslation.tips.map((tip, index) => (
+                    <View key={`tip-${index}`} style={styles.tipItem}>
+                      <Text style={styles.tipBullet}>💡</Text>
+                      <Text style={styles.tipText}>{tip}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+            {currentTranslation.pronunciation && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <Volume2 size={16} color="#EC4899" />
+                  <Text style={styles.insightCardTitle}>Advanced Pronunciation</Text>
+                  <TouchableOpacity
+                    onPress={() => handleSpeakText(currentTranslation.pronunciation?.text ?? currentTranslation.translatedText, toLanguage, 'pronunciation')}
+                    style={styles.pronunciationSpeakBtn}
+                    testID="pronunciation-speak-btn"
+                  >
+                    <Volume2
+                      size={18}
+                      color={isSpeaking && speakingTextId === 'pronunciation' ? '#10B981' : '#EC4899'}
+                      fill={isSpeaking && speakingTextId === 'pronunciation' ? '#10B981' : 'none'}
+                    />
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.pronunciationContent}>
+                  <View style={styles.pronunciationRow}>
+                    <Text style={styles.pronunciationLabel}>Text:</Text>
+                    <Text style={styles.pronunciationValue}>{currentTranslation.pronunciation.text}</Text>
+                  </View>
+                  {currentTranslation.pronunciation.phonetic && (
+                    <View style={styles.pronunciationRow}>
+                      <Text style={styles.pronunciationLabel}>Phonetic:</Text>
+                      <Text style={styles.pronunciationPhonetic}>{currentTranslation.pronunciation.phonetic}</Text>
+                    </View>
+                  )}
+                  {currentTranslation.pronunciation.breakdown && (
+                    <View style={styles.pronunciationRow}>
+                      <Text style={styles.pronunciationLabel}>Breakdown:</Text>
+                      <Text style={styles.pronunciationBreakdown}>{currentTranslation.pronunciation.breakdown}</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            )}
 
             {currentTranslation.difficulty && (
               <View style={styles.difficultyBadge}>
@@ -1395,5 +1476,55 @@ const styles = StyleSheet.create({
   bulkClearText: {
     fontSize: 12,
     color: '#6B7280',
+  },
+  tipItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  tipBullet: {
+    fontSize: 14,
+    marginRight: 8,
+    marginTop: 2,
+  },
+  tipText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 20,
+  },
+  pronunciationSpeakBtn: {
+    marginLeft: 'auto',
+    padding: 4,
+  },
+  pronunciationContent: {
+    marginTop: 8,
+  },
+  pronunciationRow: {
+    marginBottom: 12,
+  },
+  pronunciationLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+  },
+  pronunciationValue: {
+    fontSize: 16,
+    color: '#1F2937',
+    fontWeight: '500',
+  },
+  pronunciationPhonetic: {
+    fontSize: 15,
+    color: '#EC4899',
+    fontFamily: 'monospace',
+    fontWeight: '500',
+  },
+  pronunciationBreakdown: {
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 22,
+    fontStyle: 'italic',
   },
 });
