@@ -481,8 +481,10 @@ Focus on being an encouraging language coach who helps learners understand not j
             console.log('[Translator] Sending audio to backend STT API...');
             const apiBaseUrl = typeof window !== 'undefined' && window.location 
               ? `${window.location.protocol}//${window.location.host}`
-              : '';
-            const sttResponse = await fetch(`${apiBaseUrl}/api/stt/transcribe`, {
+              : 'http://localhost:8081';
+            const sttUrl = `${apiBaseUrl}/api/stt/transcribe`;
+            console.log('[Translator] STT URL:', sttUrl);
+            const sttResponse = await fetch(sttUrl, {
               method: 'POST',
               body: formData,
             });
@@ -944,7 +946,9 @@ Focus on being an encouraging language coach who helps learners understand not j
               <Text style={styles.languageDisplayName}>{fromLang.name}</Text>
             </View>
           </View>
-          <ArrowUpDown size={16} color="#6B7280" />
+          <View style={styles.languageDisplayArrow}>
+            <ArrowUpDown size={16} color="#6B7280" />
+          </View>
           <View style={styles.languageDisplayItem}>
             <Text style={styles.languageDisplayLabel}>To</Text>
             <View style={styles.languageDisplayContent}>
@@ -1840,5 +1844,9 @@ const styles = StyleSheet.create({
     color: '#4B5563',
     lineHeight: 22,
     fontStyle: 'italic',
+  },
+  languageDisplayArrow: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
