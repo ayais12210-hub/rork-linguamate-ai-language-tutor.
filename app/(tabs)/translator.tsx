@@ -479,9 +479,7 @@ Focus on being an encouraging language coach who helps learners understand not j
             }
 
             console.log('[Translator] Sending audio to backend STT API...');
-            const apiBaseUrl = typeof window !== 'undefined' && window.location 
-              ? `${window.location.protocol}//${window.location.host}`
-              : 'http://localhost:8081';
+            const apiBaseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8081';
             const sttUrl = `${apiBaseUrl}/api/stt/transcribe`;
             console.log('[Translator] STT URL:', sttUrl);
             const sttResponse = await fetch(sttUrl, {
