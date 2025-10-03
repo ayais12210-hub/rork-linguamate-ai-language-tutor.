@@ -439,6 +439,7 @@ Focus on being an encouraging language coach who helps learners understand not j
     if (isRecording) {
       try {
         if (recordingRef.current) {
+          console.log('[Translator] Stopping recording...');
           await recordingRef.current.stopAndUnloadAsync();
           const uri = recordingRef.current.getURI();
           setIsRecording(false);
@@ -449,28 +450,57 @@ Focus on being an encouraging language coach who helps learners understand not j
           }
 
           if (uri) {
+            console.log('[Translator] Processing audio from:', uri);
             const formData = new FormData();
             const uriParts = uri.split('.');
             const fileType = uriParts[uriParts.length - 1];
 
-            formData.append('audio', {
-              uri,
-              name: `recording.${fileType}`,
-              type: `audio/${fileType}`,
-            } as any);
+            if (Platform.OS === 'web') {
+              const response = await fetch(uri);
+              const blob = await response.blob();
+              formData.append('audio', blob, `recording.${fileType}`);
+            } else {
+              formData.append('audio', {
+                uri,
+                name: `recording.${fileType}`,
+                type: `audio/${fileType}`,
+              } as any);
+            }
 
-            const response = await fetch('https://toolkit.rork.com/stt/transcribe/', {
+            console.log('[Translator] Sending audio to STT API...');
+            const sttResponse = await fetch('https://toolkit.rork.com/stt/transcribe/', {
               method: 'POST',
               body: formData,
             });
 
-            const data = await response.json();
+            if (!sttResponse.ok) {
+              throw new Error(`STT API returned ${sttResponse.status}`);
+            }
+
+            const data = await sttResponse.json();
+            console.log('[Translator] STT response:', data);
+            
             if (data.text) {
               setSourceText(prev => {
-                const hasContent = (prev ?? '').trim().length > 0;
-                const separator = hasContent ? ' ' : '';
-                return `${prev ?? ''}${separator}${data.text}`;
+                const currentText = (prev ?? '').trim();
+                const transcribedText = data.text.trim();
+                
+                if (!currentText) {
+                  return transcribedText;
+                }
+                
+                return `${currentText} ${transcribedText}`;
               });
+              
+              console.log('[Translator] Text inserted successfully');
+              
+              if (sourceInputRef.current) {
+                setTimeout(() => {
+                  sourceInputRef.current?.focus();
+                }, 100);
+              }
+            } else {
+              Alert.alert('No Speech Detected', 'Please try speaking again.');
             }
           }
         }
@@ -478,16 +508,18 @@ Focus on being an encouraging language coach who helps learners understand not j
         console.error('[Translator] STT error:', error);
         setIsRecording(false);
         recordingRef.current = null;
-        Alert.alert('Error', 'Failed to transcribe audio');
+        Alert.alert('Error', 'Failed to transcribe audio. Please try again.');
       }
     } else {
       try {
+        console.log('[Translator] Requesting microphone permission...');
         const { status } = await Audio.requestPermissionsAsync();
         if (status !== 'granted') {
-          Alert.alert('Permission Required', 'Please grant microphone permission');
+          Alert.alert('Permission Required', 'Please grant microphone permission to use speech-to-text.');
           return;
         }
 
+        console.log('[Translator] Setting up audio mode...');
         if (Platform.OS !== 'web') {
           await Audio.setAudioModeAsync({
             allowsRecordingIOS: true,
@@ -495,6 +527,7 @@ Focus on being an encouraging language coach who helps learners understand not j
           });
         }
 
+        console.log('[Translator] Starting recording...');
         const recording = new Audio.Recording();
         await recording.prepareToRecordAsync({
           android: {
@@ -525,9 +558,11 @@ Focus on being an encouraging language coach who helps learners understand not j
         await recording.startAsync();
         recordingRef.current = recording;
         setIsRecording(true);
+        console.log('[Translator] Recording started successfully');
       } catch (error) {
         console.error('[Translator] Recording start error:', error);
-        Alert.alert('Error', 'Failed to start recording');
+        setIsRecording(false);
+        Alert.alert('Error', 'Failed to start recording. Please check your microphone.');
       }
     }
   };
