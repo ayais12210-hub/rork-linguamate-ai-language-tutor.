@@ -582,11 +582,6 @@ Focus on being an encouraging language coach who helps learners understand not j
   const handleSpeakText = useCallback(async (text: string, language: string, textId?: string) => {
     if (!text.trim()) return;
 
-    if (!user.isPremium) {
-      setShowUpgradeModal(true);
-      return;
-    }
-
     try {
       if (isSpeaking) {
         await Speech.stop();
@@ -601,15 +596,19 @@ Focus on being an encouraging language coach who helps learners understand not j
       const langCode = language.split('-')[0];
       const speechRate = 0.9;
 
+      console.log(`[Translator] Speaking text in ${langCode}:`, text.substring(0, 50));
+
       await Speech.speak(text, {
         language: langCode,
         pitch: 1.0,
         rate: speechRate,
         onDone: () => {
+          console.log('[Translator] TTS completed');
           setIsSpeaking(false);
           setSpeakingTextId(null);
         },
         onStopped: () => {
+          console.log('[Translator] TTS stopped');
           setIsSpeaking(false);
           setSpeakingTextId(null);
         },
@@ -626,7 +625,7 @@ Focus on being an encouraging language coach who helps learners understand not j
       setSpeakingTextId(null);
       Alert.alert('Error', 'Failed to play audio. Please try again.');
     }
-  }, [isSpeaking, user.isPremium]);
+  }, [isSpeaking]);
 
   useEffect(() => {
     return () => {
