@@ -58,6 +58,22 @@ interface Translation {
     phonetic: string;
     breakdown: string;
   };
+  usageBestPractices?: string;
+  commonMistakes?: string[];
+  registerTone?: {
+    formality: 'very-formal' | 'formal' | 'neutral' | 'informal' | 'very-informal';
+    description: string;
+    whenToUse: string;
+  };
+  idiomaticity?: {
+    level: 'literal' | 'somewhat-idiomatic' | 'highly-idiomatic';
+    explanation: string;
+  };
+  symbolicResonance?: string;
+  historicalSignificance?: string;
+  crossLanguageInterference?: string[];
+  memoryStrategies?: string[];
+  metaReflection?: string;
 }
 
 interface AITranslationResponseShape {
@@ -72,6 +88,15 @@ interface AITranslationResponseShape {
   coachingTips?: string;
   tips?: unknown;
   pronunciation?: unknown;
+  usageBestPractices?: string;
+  commonMistakes?: unknown;
+  registerTone?: unknown;
+  idiomaticity?: unknown;
+  symbolicResonance?: string;
+  historicalSignificance?: string;
+  crossLanguageInterference?: unknown;
+  memoryStrategies?: unknown;
+  metaReflection?: string;
 }
 
 function stripJSONCodeFences(raw: string): string {
@@ -203,13 +228,28 @@ Your task is to provide a comprehensive translation and learning analysis. Respo
   "alternativeTranslations": ["[alternative 1]", "[alternative 2]", "[alternative 3]"],
   "difficulty": "[beginner/intermediate/advanced based on language complexity for a ${user.proficiencyLevel} learner]",
   "confidence": [0.0-1.0 confidence score],
-  "coachingTips": "[specific tips for ${user.proficiencyLevel} level learners transitioning from ${fromLang.name} to ${toLang.name}, including common mistakes to avoid]",
   "tips": ["[practical tip 1]", "[practical tip 2]", "[practical tip 3]"],
   "pronunciation": {
     "text": "[the translated text]",
     "phonetic": "[IPA or phonetic transcription]",
     "breakdown": "[syllable-by-syllable pronunciation guide with stress markers]"
-  }
+  },
+  "usageBestPractices": "[when and how to use this phrase/expression effectively in real conversations]",
+  "commonMistakes": ["[mistake 1 that ${user.proficiencyLevel} learners make]", "[mistake 2]", "[mistake 3]"],
+  "registerTone": {
+    "formality": "[very-formal/formal/neutral/informal/very-informal]",
+    "description": "[describe the formality level and tone]",
+    "whenToUse": "[specific contexts where this register is appropriate]"
+  },
+  "idiomaticity": {
+    "level": "[literal/somewhat-idiomatic/highly-idiomatic]",
+    "explanation": "[explain how idiomatic this expression is and what makes it natural or literal]"
+  },
+  "symbolicResonance": "[any symbolic, metaphorical, or deeper cultural meanings embedded in this phrase]",
+  "historicalSignificance": "[historical or etymological background if relevant to understanding]",
+  "crossLanguageInterference": ["[common interference pattern 1 from ${fromLang.name}]", "[pattern 2]"],
+  "memoryStrategies": ["[mnemonic or memory technique 1]", "[technique 2]", "[technique 3]"],
+  "metaReflection": "[philosophical or worldview insights about how this language expresses concepts differently, revealing cultural thinking patterns]"
 }
 
 Focus on being an encouraging language coach who helps learners understand not just the translation, but the cultural and linguistic bridges between their native language and target language.`
@@ -236,6 +276,9 @@ Focus on being an encouraging language coach who helps learners understand not j
         : undefined;
       const confidenceNorm = coerceConfidence(normalized.confidence);
       const tips = toStringArray(normalized.tips ?? []);
+      const commonMistakes = toStringArray(normalized.commonMistakes ?? []);
+      const crossLanguageInterference = toStringArray(normalized.crossLanguageInterference ?? []);
+      const memoryStrategies = toStringArray(normalized.memoryStrategies ?? []);
       
       let pronunciation: { text: string; phonetic: string; breakdown: string } | undefined;
       if (normalized.pronunciation && typeof normalized.pronunciation === 'object') {
@@ -244,6 +287,33 @@ Focus on being an encouraging language coach who helps learners understand not j
           text: String(p.text ?? translationText),
           phonetic: String(p.phonetic ?? ''),
           breakdown: String(p.breakdown ?? ''),
+        };
+      }
+
+      let registerTone: { formality: 'very-formal' | 'formal' | 'neutral' | 'informal' | 'very-informal'; description: string; whenToUse: string } | undefined;
+      if (normalized.registerTone && typeof normalized.registerTone === 'object') {
+        const r = normalized.registerTone as Record<string, unknown>;
+        const formalityRaw = String(r.formality ?? 'neutral').toLowerCase();
+        const formalityValid = ['very-formal', 'formal', 'neutral', 'informal', 'very-informal'].includes(formalityRaw)
+          ? (formalityRaw as 'very-formal' | 'formal' | 'neutral' | 'informal' | 'very-informal')
+          : 'neutral' as const;
+        registerTone = {
+          formality: formalityValid,
+          description: String(r.description ?? ''),
+          whenToUse: String(r.whenToUse ?? ''),
+        };
+      }
+
+      let idiomaticity: { level: 'literal' | 'somewhat-idiomatic' | 'highly-idiomatic'; explanation: string } | undefined;
+      if (normalized.idiomaticity && typeof normalized.idiomaticity === 'object') {
+        const i = normalized.idiomaticity as Record<string, unknown>;
+        const levelRaw = String(i.level ?? 'literal').toLowerCase();
+        const levelValid = ['literal', 'somewhat-idiomatic', 'highly-idiomatic'].includes(levelRaw)
+          ? (levelRaw as 'literal' | 'somewhat-idiomatic' | 'highly-idiomatic')
+          : 'literal' as const;
+        idiomaticity = {
+          level: levelValid,
+          explanation: String(i.explanation ?? ''),
         };
       }
 
@@ -264,6 +334,15 @@ Focus on being an encouraging language coach who helps learners understand not j
         confidence: confidenceNorm,
         tips: tips.length > 0 ? tips : undefined,
         pronunciation,
+        usageBestPractices: normalized.usageBestPractices ?? undefined,
+        commonMistakes: commonMistakes.length > 0 ? commonMistakes : undefined,
+        registerTone,
+        idiomaticity,
+        symbolicResonance: normalized.symbolicResonance ?? undefined,
+        historicalSignificance: normalized.historicalSignificance ?? undefined,
+        crossLanguageInterference: crossLanguageInterference.length > 0 ? crossLanguageInterference : undefined,
+        memoryStrategies: memoryStrategies.length > 0 ? memoryStrategies : undefined,
+        metaReflection: normalized.metaReflection ?? undefined,
       };
 
       setCurrentTranslation(newTranslation);
@@ -1115,6 +1194,150 @@ Focus on being an encouraging language coach who helps learners understand not j
               </View>
             )}
 
+            {currentTranslation.usageBestPractices && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <BookOpen size={16} color="#8B5CF6" />
+                  <Text style={styles.insightCardTitle}>Usage & Best Practices</Text>
+                </View>
+                <Text style={styles.insightCardText}>{currentTranslation.usageBestPractices}</Text>
+              </View>
+            )}
+
+            {Array.isArray(currentTranslation.commonMistakes) &&
+              currentTranslation.commonMistakes.length > 0 && (
+                <View style={styles.insightCard}>
+                  <View style={styles.insightCardHeader}>
+                    <X size={16} color="#EF4444" />
+                    <Text style={styles.insightCardTitle}>Common Mistakes & Pitfalls</Text>
+                  </View>
+                  {currentTranslation.commonMistakes.map((mistake, index) => (
+                    <View key={`mistake-${index}`} style={styles.tipItem}>
+                      <Text style={styles.mistakeBullet}>⚠️</Text>
+                      <Text style={styles.tipText}>{mistake}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+            {currentTranslation.registerTone && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <MessageCircle size={16} color="#06B6D4" />
+                  <Text style={styles.insightCardTitle}>Register & Tone (Formality)</Text>
+                </View>
+                <View style={styles.registerContent}>
+                  <View style={styles.registerBadge}>
+                    <Text style={[
+                      styles.registerBadgeText,
+                      currentTranslation.registerTone.formality === 'very-formal' && styles.registerVeryFormal,
+                      currentTranslation.registerTone.formality === 'formal' && styles.registerFormal,
+                      currentTranslation.registerTone.formality === 'neutral' && styles.registerNeutral,
+                      currentTranslation.registerTone.formality === 'informal' && styles.registerInformal,
+                      currentTranslation.registerTone.formality === 'very-informal' && styles.registerVeryInformal,
+                    ]}>
+                      {currentTranslation.registerTone.formality.toUpperCase().replace('-', ' ')}
+                    </Text>
+                  </View>
+                  {currentTranslation.registerTone.description && (
+                    <Text style={styles.registerText}>{currentTranslation.registerTone.description}</Text>
+                  )}
+                  {currentTranslation.registerTone.whenToUse && (
+                    <View style={styles.registerWhenToUse}>
+                      <Text style={styles.registerWhenLabel}>When to use:</Text>
+                      <Text style={styles.registerWhenText}>{currentTranslation.registerTone.whenToUse}</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            )}
+
+            {currentTranslation.idiomaticity && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <Sparkles size={16} color="#F59E0B" />
+                  <Text style={styles.insightCardTitle}>Idiomaticity & Naturalness</Text>
+                </View>
+                <View style={styles.idiomaticityContent}>
+                  <View style={styles.idiomaticityBadge}>
+                    <Text style={[
+                      styles.idiomaticityBadgeText,
+                      currentTranslation.idiomaticity.level === 'literal' && styles.idiomaticityLiteral,
+                      currentTranslation.idiomaticity.level === 'somewhat-idiomatic' && styles.idiomaticitySomewhat,
+                      currentTranslation.idiomaticity.level === 'highly-idiomatic' && styles.idiomaticityHighly,
+                    ]}>
+                      {currentTranslation.idiomaticity.level.toUpperCase().replace('-', ' ')}
+                    </Text>
+                  </View>
+                  {currentTranslation.idiomaticity.explanation && (
+                    <Text style={styles.idiomaticityText}>{currentTranslation.idiomaticity.explanation}</Text>
+                  )}
+                </View>
+              </View>
+            )}
+
+            {currentTranslation.symbolicResonance && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <Star size={16} color="#A855F7" />
+                  <Text style={styles.insightCardTitle}>Symbolic or Metaphorical Resonance</Text>
+                </View>
+                <Text style={styles.insightCardText}>{currentTranslation.symbolicResonance}</Text>
+              </View>
+            )}
+
+            {currentTranslation.historicalSignificance && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <BookOpen size={16} color="#78716C" />
+                  <Text style={styles.insightCardTitle}>Historical or Identity Significance</Text>
+                </View>
+                <Text style={styles.insightCardText}>{currentTranslation.historicalSignificance}</Text>
+              </View>
+            )}
+
+            {Array.isArray(currentTranslation.crossLanguageInterference) &&
+              currentTranslation.crossLanguageInterference.length > 0 && (
+                <View style={styles.insightCard}>
+                  <View style={styles.insightCardHeader}>
+                    <Globe size={16} color="#DC2626" />
+                    <Text style={styles.insightCardTitle}>Cross-Language Interference Notes</Text>
+                  </View>
+                  {currentTranslation.crossLanguageInterference.map((interference, index) => (
+                    <View key={`interference-${index}`} style={styles.tipItem}>
+                      <Text style={styles.interferenceBullet}>🔄</Text>
+                      <Text style={styles.tipText}>{interference}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+            {Array.isArray(currentTranslation.memoryStrategies) &&
+              currentTranslation.memoryStrategies.length > 0 && (
+                <View style={styles.insightCard}>
+                  <View style={styles.insightCardHeader}>
+                    <Brain size={16} color="#10B981" />
+                    <Text style={styles.insightCardTitle}>Memory & Learning Strategies</Text>
+                  </View>
+                  {currentTranslation.memoryStrategies.map((strategy, index) => (
+                    <View key={`strategy-${index}`} style={styles.tipItem}>
+                      <Text style={styles.strategyBullet}>🧠</Text>
+                      <Text style={styles.tipText}>{strategy}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+            {currentTranslation.metaReflection && (
+              <View style={styles.insightCard}>
+                <View style={styles.insightCardHeader}>
+                  <Lightbulb size={16} color="#6366F1" />
+                  <Text style={styles.insightCardTitle}>Meta-Reflection (Philosophical/Worldview)</Text>
+                </View>
+                <Text style={styles.insightCardText}>{currentTranslation.metaReflection}</Text>
+              </View>
+            )}
+
             {currentTranslation.difficulty && (
               <View style={styles.difficultyBadge}>
                 <Text
@@ -1805,5 +2028,109 @@ const styles = StyleSheet.create({
     color: '#4B5563',
     lineHeight: 22,
     fontStyle: 'italic',
+  },
+  mistakeBullet: {
+    fontSize: 14,
+    marginRight: 8,
+    marginTop: 2,
+  },
+  registerContent: {
+    marginTop: 8,
+  },
+  registerBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginBottom: 12,
+  },
+  registerBadgeText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  registerVeryFormal: {
+    backgroundColor: '#1E293B',
+    color: '#F1F5F9',
+  },
+  registerFormal: {
+    backgroundColor: '#334155',
+    color: '#F1F5F9',
+  },
+  registerNeutral: {
+    backgroundColor: '#64748B',
+    color: '#F1F5F9',
+  },
+  registerInformal: {
+    backgroundColor: '#94A3B8',
+    color: '#0F172A',
+  },
+  registerVeryInformal: {
+    backgroundColor: '#CBD5E1',
+    color: '#0F172A',
+  },
+  registerText: {
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  registerWhenToUse: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  registerWhenLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+  },
+  registerWhenText: {
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 20,
+  },
+  idiomaticityContent: {
+    marginTop: 8,
+  },
+  idiomaticityBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginBottom: 12,
+  },
+  idiomaticityBadgeText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  idiomaticityLiteral: {
+    backgroundColor: '#DBEAFE',
+    color: '#1E40AF',
+  },
+  idiomaticitySomewhat: {
+    backgroundColor: '#FEF3C7',
+    color: '#92400E',
+  },
+  idiomaticityHighly: {
+    backgroundColor: '#D1FAE5',
+    color: '#065F46',
+  },
+  idiomaticityText: {
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 20,
+  },
+  interferenceBullet: {
+    fontSize: 14,
+    marginRight: 8,
+    marginTop: 2,
+  },
+  strategyBullet: {
+    fontSize: 14,
+    marginRight: 8,
+    marginTop: 2,
   },
 });
