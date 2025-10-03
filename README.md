@@ -1,188 +1,430 @@
-# rork-linguamate-ai-language-tutor.
-Created by Rork
 
-Linguamate — AI Language Tutor (Expo + tRPC)
-Created by Rork
+🌐 Linguamate — AI Language Tutor
 
-Overview
-- Cross‑platform (iOS/Android/Web) language learning app built with Expo Router, React Native, TypeScript, and tRPC (Hono backend).
-- Five primary tabs: Learn, Lessons, Modules, Chat, Profile. Translator is embedded in Chat; Leaderboard is inside Profile.
-- Modern, production‑grade UI with accessible components, testIDs, robust error handling, and offline awareness.
-- Designed for Expo Go v53 and React Native Web (no custom native modules required).
+Cross-Platform AI-Powered Language Learning App
+(Expo + React Native + TypeScript + tRPC, with Rork Toolkit integration)
 
-Key Features
-- AI Coach Chat: Practice conversations, suggestion chips, inline “coach translator” pane, message limits for non‑premium.
-- Learn Hub: Alphabet, numbers, vocabulary, phonics, phrases, grammar, dialogues, AI tips, swipeable flashcards, quick quiz, progress.
-- Lessons: On‑demand AI‑generated lessons with multiple exercise types (MCQ, fill‑blank, match pairs, typing, word order, listening/speaking placeholders), XP rewards, perfect bonus, recap.
-- Advanced Modules: Alphabet, Numbers, Vowels, Consonants, Syllables, Grammar, Sentence, Dialogue, Pronunciation, Culture; post‑module AI Quiz.
-- Profile + Leaderboard: Stats, achievements, weekly goals, quick stats, personal journal (local only), leaderboard with filters/sorts and details modal.
-- Offline UX: Online status sync, offline banner, queues, optimistic flows.
-- Observability: Client/server logging, correlation IDs, security headers, health endpoints.
-- i18n Scaffold: Simple utilities and seeds (en), easy to extend.
 
-Architecture
-- Navigation: Expo Router
-  - Root stack in app/_layout.tsx
-  - Tab layout in app/(tabs)/_layout.tsx with 5 tabs (Learn, Lessons, Modules, Chat, Profile)
-  - Hidden routes inside tabs (translator, leaderboard) surfaced within Chat/Profile screens
-- State
-  - Server state: React Query (lib/react-query.ts)
-  - Local UI: useState; scoped providers for user, chat, learning progress, offline
-- Backend
-  - Hono server under backend/hono.ts mounted at /api
-  - tRPC router at /api/trpc (backend/trpc/app-router.ts)
-  - CORS, security headers, request logging, health/info routes
-- tRPC Client (lib/trpc.ts)
-  - Auto base‑URL detection (native/web), SuperJSON transformer, batched HTTP with HTML‑guard, 15s timeout
-- Theming & Dark Mode (lib/theme.ts)
-  - useTheme() respects user.settings.darkMode
-  - Semantic colors, spacing, radii, shadows, component presets for buttons, inputs, cards, toasts
-- Error Handling
-  - components/ErrorBoundary.tsx with retry/reset, structured debugging in dev
+---
 
-Navigation & Layout
-- Tabs: Learn, Lessons, Modules, Chat, Profile
-- Translator: app/(tabs)/translator.tsx (hidden tab); embedded UI inside Chat tab switcher
-- Leaderboard: app/(tabs)/leaderboard.tsx (hidden tab); rendered as a section within Profile
-- Onboarding flows: app/index.tsx decides onboarding, language setup, then routes to Chat (coach)
+✨ Overview
 
-Main Screens
-- Learn (app/(tabs)/learn.tsx)
-  - Alphabet grid/list (play pronunciation), Numbers, Phrases, Grammar, Dialogues, Phonics (incl. trainer), AI tips, Flashcards, Quick Quiz, Progress
-  - tRPC content fetch with safe fallback and optional AI “repair” for translations
-- Lessons (app/(tabs)/lessons.tsx)
-  - AI‑generated lesson content via toolkit.rork.com; multiple exercise types; XP, perfect bonus, recap; persisted lesson cache & completion list
-- Modules (app/(tabs)/modules.tsx)
-  - Advanced modules by skill type; per‑module progress derived from learning-progress state; AI Quiz (components/AIQuiz.tsx) grant bonus XP
-- Chat (app/(tabs)/chat.tsx)
-  - AI coach with suggestion chips, embedded Translator tab, draft translation (LLM), premium gating, remaining messages indicator
-- Profile (app/(tabs)/profile.tsx)
-  - Auth (signin/signup views), stats cards, achievements, weekly goals, friends activity mock, Leaderboard section with filters/sorts, personal journal saved locally, premium upsell
+Linguamate is a production-grade, cross-platform AI tutor designed for iOS, Android, and Web.
+It provides structured lessons, conversational practice, and advanced learning modules — all built on a modern Expo + tRPC stack with AI-driven insights.
 
-AI & Media
-- LLM Text
-  - @rork/toolkit-sdk generateObject (typed AI output) for AIQuiz
-  - Direct POST to https://toolkit.rork.com/text/llm/ for Learn tips and Lessons generation
-- STT (hooks/use-speech.ts)
-  - Web: MediaRecorder → FormData → https://toolkit.rork.com/stt/transcribe/
-  - Native: expo-av recording (HIGH_QUALITY preset) → FormData → same endpoint
-- TTS
-  - Expo Go/web compatible mock speak() with console logs (no expo-speech dependency to avoid compatibility issues)
+🚀 Expo Router Navigation (Expo Go v53 compatible)
 
-Data Usage & Privacy
-- Local Storage (AsyncStorage)
-  - Lessons: completion list, generated lessons cache
-  - Profile: personal journal
-  - Lightweight UI preferences
-  - No sensitive data persisted
-- Network
-  - tRPC under /api/trpc (user, lessons, learn, analytics, chat utilities)
-  - LLM endpoints (toolkit.rork.com) for generation/transcription; payloads minimized
-- Logging/Analytics
-  - Client logging modules; server request logging with correlation IDs; health checks
-- Privacy
-  - No secrets in client repo
-  - API base URL configured via EXPO_PUBLIC_BACKEND_URL
-  - Structured, minimally revealing error messages
+🧩 5 Primary Tabs: Learn · Lessons · Modules · Chat · Profile
+
+💬 AI Coach Chat: Translator, practice dialogues, message gating
+
+📚 Learn Hub: Alphabet, numbers, vocabulary, grammar, phonics, flashcards, quizzes
+
+🎓 Lessons: AI-generated exercises, XP rewards, recap flows
+
+📖 Modules: Advanced units (Alphabet → Culture) with post-module AI Quiz
+
+👤 Profile: Stats, achievements, journal, leaderboard with filters
+
+📡 Offline UX: Optimistic updates, banners, sync & retry
+
+🔍 Observability: Structured logs, correlation IDs, health checks
+
+🌍 i18n Scaffold: English seed, ready for extensions
+
+
+
+---
+
+📱 Features in Depth
+
+🗣️ AI Coach Chat
+
+Inline translator panel embedded in Chat
+
+Suggestion chips for guided dialogue
+
+Premium gating (message limits for free tier)
+
+Remaining messages counter
+
+
+📖 Learn Hub
+
+Alphabet + Numbers with pronunciation playback
+
+Vocabulary, phrases, grammar, dialogues
+
+Phonics trainer & quick flashcards
+
+AI Tips and Quick Quiz
+
+
+🎯 Lessons
+
+AI-generated via toolkit.rork.com
+
+Exercise types: multiple choice, fill-blank, match pairs, word order, listening/speaking placeholders
+
+XP rewards, “perfect” bonus, recap summaries
+
+Lessons cache persisted in local storage
+
+
+🧑‍🏫 Advanced Modules
+
+Alphabet, Numbers, Vowels, Consonants, Syllables
+
+Grammar, Sentences, Dialogue, Pronunciation, Culture
+
+Per-module XP tracking and AI Quiz bonus
+
+
+👤 Profile & Leaderboard
+
+Stats, achievements, weekly goals
+
+Local personal journal
+
+Leaderboard with filters, sorts, and detail modals
+
+Premium upsell paths
+
+
+🔒 Offline UX
+
+Online/offline banners, queue helpers, optimistic flows
+
+React Query onlineManager integration
+
+
+🧩 Observability & Logging
+
+Structured logs with correlation IDs
+
+Client/server error boundaries
+
+Health endpoints for monitoring
+
+
+
+---
+
+🏗 Architecture
+
+Navigation
+
+Root stack: app/_layout.tsx
+
+Tabs layout: app/(tabs)/_layout.tsx (Learn, Lessons, Modules, Chat, Profile)
+
+Hidden routes: Translator (in Chat), Leaderboard (in Profile)
+
+
+State Management
+
+Server state: React Query (lib/react-query.ts)
+
+Local UI state: React hooks + scoped providers (state/)
+
 
 Backend
-- Hono server (backend/hono.ts)
-  - Middlewares: correlation, securityHeaders, requestLogger, CORS
-  - Routes: /api (health), /api/info, /api/trpc, /api/ingest/logs
-- tRPC Router (backend/trpc/app-router.ts)
-  - Namespaces: auth, user, lessons, learn, chat, analytics, leaderboard, example.hi
-- Deployment Note
-  - Dev served on same origin by rork start; for remote API set EXPO_PUBLIC_BACKEND_URL
 
-Theming & Dark Mode
-- Toggle via user.settings.darkMode (useTheme() returns theme or darkTheme)
-- Tabs/headers reflect theme in app/(tabs)/_layout.tsx
+Hono server (backend/hono.ts) with security middleware
 
-Haptics
-- expo-haptics included. Use guarded calls:
-  - if (Platform.OS !== 'web') await Haptics.selectionAsync();
+tRPC router: backend/trpc/app-router.ts
 
-Offline & Caching
-- React Query defaults: sane stale/gc times for mobile
-- OnlineStatusSync: browser online/offline → React Query onlineManager
-- Offline provider + banners and queue helpers
+Auth · User · Lessons · Learn · Chat · Analytics · Leaderboard
 
-Accessibility & Testing
-- Accessible labels, adequate touch targets
-- testID attributes for critical UI elements across screens
-- ErrorBoundary recovery controls with dev diagnostics in __DEV__
 
-Web Compatibility
-- Only web‑safe APIs without guards; native‑only features are guarded
-- Reanimated layout limitations on web are respected or avoided
-- FormData for uploads: no manual Content‑Type on web
-- Media: MediaRecorder used on web for audio
 
-Project Structure (selected)
-- app/                       Routes (Stack + Tabs)
-- app/(tabs)                 Main tabs and hidden companion screens
-- backend/                   Hono + tRPC server
-- components/                Shared UI (ErrorBoundary, AIQuiz, banners)
-- hooks/                     chat store, user store, speech, etc.
-- lib/                       trpc client, theme, i18n, react-query config
-- modules/                   Learning feature modules and engines
-- state/                     Learning progress provider
-- constants/, schemas/       Configs, validation scaffolding
+tRPC Client
 
-Environment Variables
-- EXPO_PUBLIC_BACKEND_URL
-  - Full origin to your API (no trailing slash)
-  - Example: https://api.example.com
-- EXPO_PUBLIC_TOOLKIT_URL
-  - Base for @rork/toolkit-sdk agent endpoints (optional)
+Auto base URL detection (native/web)
 
-Getting Started
-1) Install
-   bun i
-2) Run (with tunnel)
-   bunx rork start --tunnel
-   or scripts: npm run start, npm run start-web
-3) Open
-   - Scan QR with Expo Go (iOS/Android)
-   - Or open the web URL in your browser
+Batched HTTP with HTML guard & SuperJSON transformer
 
-Troubleshooting
-- TRPCClientError: Failed to fetch
-  - Ensure API is reachable at ${EXPO_PUBLIC_BACKEND_URL}/api
-  - On web dev, base URL defaults to same origin; set EXPO_PUBLIC_BACKEND_URL if API is remote
-  - Check console: “[tRPC] Final API URL: …”
-- “Failed to load split bundle … @tanstack/query-devtools … ngrok”
-  - This is a devtools lazy‑bundle route failing due to offline tunnel; remove/disable devtools or ensure tunnel is alive
-- Suggestions/AI: Failed to fetch
-  - Verify internet and CORS to toolkit.rork.com; endpoints are public for dev
-- Audio recording (web)
-  - Grant mic permission; MediaRecorder emits webm; we wrap into File for FormData
-- Audio recording (native)
-  - Expo AV HIGH_QUALITY preset; ensure mic permission is granted
+15s timeout, typed results
 
-Quality & CI
-- Strict TypeScript patterns: explicit useState types, nullish guards, complete object creation
-- Console logs for step‑by‑step debugging
-- CI workflow (/.github/workflows/ci.yml) for lint/typecheck/test
 
-Security Notes
-- Never commit secrets; only EXPO_PUBLIC_* envs read at runtime
-- CORS wide in dev; harden for prod
-- Structured errors; never echo raw user input
+Theming
 
-Design System
-- Centralized tokens (colors, spacing, radii, shadows) in home/project/constants and lib/theme.ts
-- Clean, modern design influenced by iOS/Airbnb/Coinbase with subtle depth and strong contrast
+Dark mode aware (lib/theme.ts)
 
-Known Limitations (Expo Go)
-- Advanced TTS paths are mocked for compatibility
-- Reanimated layout animations limited on web; guarded/fallbacks applied
+Semantic tokens: colors, spacing, radii, shadows
 
-Contributing
-- Prefer React Query + tRPC for server state
-- Keep components typed, accessible, and web‑safe
-- Add testIDs to new interactive components
+Pre-styled components (buttons, inputs, cards, toasts)
 
-License
-- Proprietary. © 2025 Rork. All rights reserved.
+
+Error Handling
+
+components/ErrorBoundary.tsx with retry/reset
+
+Structured debugging output in dev mode
+
+
+
+---
+
+🎤 AI & Media
+
+LLM: @rork/toolkit-sdk generateObject for AIQuiz; POST /text/llm/ for lessons/tips
+
+Speech-to-Text (STT):
+
+Web: MediaRecorder → FormData → /stt/transcribe
+
+Native: expo-av HIGH_QUALITY → FormData → /stt/transcribe
+
+
+Text-to-Speech (TTS):
+
+Mock speak() logs for Expo Go/Web (no expo-speech dependency)
+
+
+
+
+---
+
+📡 Data Usage & Privacy
+
+Local Storage (AsyncStorage):
+
+Lessons completion & cache
+
+Profile journal
+
+UI preferences only
+
+
+Network:
+
+tRPC endpoints under /api/trpc
+
+LLM endpoints: toolkit.rork.com
+
+
+Privacy & Security:
+
+No secrets in client repo
+
+EXPO_PUBLIC_BACKEND_URL and EXPO_PUBLIC_TOOLKIT_URL for configs
+
+Error messages structured & minimal
+
+
+
+
+---
+
+⚙️ Environment Variables
+
+EXPO_PUBLIC_BACKEND_URL=https://api.example.com
+EXPO_PUBLIC_TOOLKIT_URL=https://toolkit.rork.com
+
+Both required at runtime
+
+Backend must expose /api + /api/trpc routes
+
+
+
+---
+
+📂 Project Structure (simplified)
+
+app/                # Screens & navigation
+  (tabs)/           # Main tabs + hidden routes
+backend/            # Hono server + tRPC
+components/         # Shared UI (AIQuiz, ErrorBoundary, banners)
+hooks/              # Chat store, user store, speech recorder
+lib/                # tRPC client, theme, i18n, React Query
+modules/            # Learning feature modules
+state/              # Providers for learning progress
+schemas/            # Validation schemas
+constants/          # App constants
+
+
+---
+
+🚀 Getting Started
+
+# Install dependencies
+bun install
+
+# Run with tunnel
+bunx rork start --tunnel
+
+# Or standard scripts
+npm run start
+npm run start-web
+
+Scan QR with Expo Go on iOS/Android
+
+Open browser for Web build
+
+
+
+---
+
+🛠 Troubleshooting
+
+tRPCClientError: Failed to fetch
+
+Ensure ${EXPO_PUBLIC_BACKEND_URL}/api is reachable
+
+
+Split bundle error (@tanstack/query-devtools)
+
+Disable devtools or keep ngrok tunnel alive
+
+
+STT / Audio recording fails
+
+Check mic permissions (Web: MediaRecorder; Native: expo-av preset)
+
+
+CORS / AI fetch errors
+
+Verify toolkit.rork.com is reachable
+
+
+
+
+---
+
+✅ Quality & CI/CD
+
+CI Pipelines: Lint · Typecheck · Tests · Coverage (Codecov)
+
+EAS Preview Builds: Android APK + iOS Simulator on pushes
+
+EAS Release Builds: AAB + IPA on tags (vX.Y.Z)
+
+Quality Gate: Semgrep, Gitleaks, Audit, A11y, Lighthouse, Playwright E2E
+
+Badges: Quality, Coverage, Security, Accessibility
+
+
+
+---
+
+🔒 Security Notes
+
+Never commit secrets; only use EXPO_PUBLIC_*
+
+Wide CORS allowed in dev only; harden for production
+
+Strict error boundaries; no user input echoed
+
+
+
+---
+
+🎨 Design System
+
+Centralized tokens for colors, radii, shadows, spacing
+
+Theme-aware components across tabs and headers
+
+Modern style inspired by iOS, Airbnb, Coinbase
+
+
+
+---
+
+♿ Accessibility
+
+Accessible labels & touch targets
+
+Contrast-checked themes
+
+TestIDs on critical UI components
+
+A11y tests run in CI
+
+
+
+---
+
+🧪 Testing Strategy
+
+Unit & integration tests (Jest + RTL)
+
+Playwright E2E (Web, Chromium/WebKit)
+
+Quality reports uploaded as artifacts in CI
+
+
+
+---
+
+🚦 Release Process
+
+1. Create feature branch → PR → CI passes
+
+
+2. Merge into develop → preview builds on EAS
+
+
+3. Tag vX.Y.Z → Release workflows auto-build AAB/IPA
+
+
+4. Changelog auto-drafted by Release Drafter
+
+
+5. Store checklist (docs/store/Release-Checklist-Store.md)
+
+
+
+
+---
+
+📊 Observability
+
+Logs: Correlation IDs, structured JSON logs
+
+Metrics: API health endpoints /api/health /api/info
+
+Reports: CI uploads Lighthouse, A11y, Coverage, Security artifacts
+
+
+
+---
+
+🤝 Contributing
+
+PRs must pass lint/typecheck/tests before merge
+
+Add testIDs to new UI elements
+
+Prefer tRPC + React Query for server state
+
+Follow commit conventions (semantic/Conventional Commits)
+
+
+
+---
+
+📜 License
+
+Proprietary. © 2025 Rork.
+All rights reserved.
+
+
+---
+
+📌 Roadmap
+
+[ ] Expanded i18n packs (multi-locale metadata & UI strings)
+
+[ ] Real TTS integration with expo-speech / cloud fallback
+
+[ ] Advanced AI conversation modes (roleplay, open-ended chat)
+
+[ ] Offline lesson authoring & sync
+
+[ ] Educator dashboard + classroom leaderboard
+
+
+
 
