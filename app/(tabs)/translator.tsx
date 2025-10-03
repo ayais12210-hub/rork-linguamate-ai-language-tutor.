@@ -452,13 +452,22 @@ Focus on being an encouraging language coach who provides progressive learning f
       }
       
       const contentType = response.headers.get('content-type');
+      const responseText = await response.text();
+      
       if (!contentType || !contentType.includes('application/json')) {
-        console.error('[Translator] Suggestions API returned non-JSON response');
+        console.error('[Translator] Suggestions API returned non-JSON response:', responseText.substring(0, 200));
         setSuggestions([]);
         return;
       }
 
-      const data = await response.json();
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error('[Translator] Failed to parse suggestions response:', e);
+        setSuggestions([]);
+        return;
+      }
       const completion = String(data?.completion ?? '[]');
       let parsed: string[] = [];
       try {
@@ -1318,7 +1327,9 @@ Focus on being an encouraging language coach who provides progressive learning f
                     <Text style={styles.meaningLabel}>Contextual Examples:</Text>
                     <View>
                       {currentTranslation.meaning.contextualExamples.map((ex, idx) => (
-                        <Text key={idx} style={styles.exampleText}>• {ex}</Text>
+                        <View key={idx}>
+                          <Text style={styles.exampleText}>• {ex}</Text>
+                        </View>
                       ))}
                     </View>
                   </View>
@@ -1382,7 +1393,9 @@ Focus on being an encouraging language coach who provides progressive learning f
                     <Text style={styles.meaningLabel}>Acquisition Steps:</Text>
                     <View>
                       {currentTranslation.learningProcess.acquisitionSteps.map((step, idx) => (
-                        <Text key={idx} style={styles.exampleText}>• {step}</Text>
+                        <View key={idx}>
+                          <Text style={styles.exampleText}>• {step}</Text>
+                        </View>
                       ))}
                     </View>
                   </View>
@@ -1398,7 +1411,9 @@ Focus on being an encouraging language coach who provides progressive learning f
                     <Text style={styles.meaningLabel}>Immersion Strategies:</Text>
                     <View>
                       {currentTranslation.learningProcess.immersionStrategies.map((strat, idx) => (
-                        <Text key={idx} style={styles.exampleText}>• {strat}</Text>
+                        <View key={idx}>
+                          <Text style={styles.exampleText}>• {strat}</Text>
+                        </View>
                       ))}
                     </View>
                   </View>
@@ -1417,7 +1432,9 @@ Focus on being an encouraging language coach who provides progressive learning f
                     <Text style={styles.meaningLabel}>Contexts:</Text>
                     <View>
                       {currentTranslation.usage.contexts.map((ctx, idx) => (
-                        <Text key={idx} style={styles.exampleText}>• {ctx}</Text>
+                        <View key={idx}>
+                          <Text style={styles.exampleText}>• {ctx}</Text>
+                        </View>
                       ))}
                     </View>
                   </View>
@@ -1439,7 +1456,9 @@ Focus on being an encouraging language coach who provides progressive learning f
                     <Text style={styles.meaningLabel}>Collocations:</Text>
                     <View>
                       {currentTranslation.usage.collocations.map((col, idx) => (
-                        <Text key={idx} style={styles.exampleText}>• {col}</Text>
+                        <View key={idx}>
+                          <Text style={styles.exampleText}>• {col}</Text>
+                        </View>
                       ))}
                     </View>
                   </View>
@@ -1533,7 +1552,9 @@ Focus on being an encouraging language coach who provides progressive learning f
                     <Text style={styles.meaningLabel}>Regional Variations:</Text>
                     <View>
                       {currentTranslation.culture.regionalVariations.map((variant, idx) => (
-                        <Text key={idx} style={styles.exampleText}>• {variant}</Text>
+                        <View key={idx}>
+                          <Text style={styles.exampleText}>• {variant}</Text>
+                        </View>
                       ))}
                     </View>
                   </View>
@@ -1552,7 +1573,9 @@ Focus on being an encouraging language coach who provides progressive learning f
                     <Text style={styles.meaningLabel}>Over-Literal Translations:</Text>
                     <View>
                       {currentTranslation.crossLanguageInterference.overLiteralTranslations.map((item, idx) => (
-                        <Text key={idx} style={styles.exampleText}>• {item}</Text>
+                        <View key={idx}>
+                          <Text style={styles.exampleText}>• {item}</Text>
+                        </View>
                       ))}
                     </View>
                   </View>
@@ -1562,7 +1585,9 @@ Focus on being an encouraging language coach who provides progressive learning f
                     <Text style={styles.meaningLabel}>False Friends:</Text>
                     <View>
                       {currentTranslation.crossLanguageInterference.falseFriends.map((item, idx) => (
-                        <Text key={idx} style={styles.exampleText}>• {item}</Text>
+                        <View key={idx}>
+                          <Text style={styles.exampleText}>• {item}</Text>
+                        </View>
                       ))}
                     </View>
                   </View>
@@ -1572,7 +1597,9 @@ Focus on being an encouraging language coach who provides progressive learning f
                     <Text style={styles.meaningLabel}>L1 Transfer Errors:</Text>
                     <View>
                       {currentTranslation.crossLanguageInterference.l1TransferErrors.map((item, idx) => (
-                        <Text key={idx} style={styles.exampleText}>• {item}</Text>
+                        <View key={idx}>
+                          <Text style={styles.exampleText}>• {item}</Text>
+                        </View>
                       ))}
                     </View>
                   </View>
@@ -1582,7 +1609,9 @@ Focus on being an encouraging language coach who provides progressive learning f
                     <Text style={styles.meaningLabel}>Register Mismatches:</Text>
                     <View>
                       {currentTranslation.crossLanguageInterference.registerMismatches.map((item, idx) => (
-                        <Text key={idx} style={styles.exampleText}>• {item}</Text>
+                        <View key={idx}>
+                          <Text style={styles.exampleText}>• {item}</Text>
+                        </View>
                       ))}
                     </View>
                   </View>
@@ -1607,7 +1636,9 @@ Focus on being an encouraging language coach who provides progressive learning f
                     <Text style={styles.meaningLabel}>✅ Dos:</Text>
                     <View>
                       {currentTranslation.recap.dos.map((item, idx) => (
-                        <Text key={idx} style={styles.exampleText}>• {item}</Text>
+                        <View key={idx}>
+                          <Text style={styles.exampleText}>• {item}</Text>
+                        </View>
                       ))}
                     </View>
                   </View>
@@ -1617,7 +1648,9 @@ Focus on being an encouraging language coach who provides progressive learning f
                     <Text style={styles.meaningLabel}>❌ Donts:</Text>
                     <View>
                       {currentTranslation.recap.donts.map((item, idx) => (
-                        <Text key={idx} style={styles.exampleText}>• {item}</Text>
+                        <View key={idx}>
+                          <Text style={styles.exampleText}>• {item}</Text>
+                        </View>
                       ))}
                     </View>
                   </View>
