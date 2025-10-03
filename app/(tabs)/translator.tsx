@@ -452,7 +452,9 @@ Focus on being an encouraging language coach who provides progressive learning f
   }, [fromLang.name, toLang.name, user.proficiencyLevel]);
 
   useEffect(() => {
-    generateSuggestions();
+    generateSuggestions().catch(err => {
+      console.error('[Translator] Failed to refresh suggestions:', err);
+    });
   }, [generateSuggestions]);
 
   const isSuggestionSelected = useCallback((text: string) => {
@@ -573,9 +575,8 @@ Focus on being an encouraging language coach who provides progressive learning f
           console.log('[Translator] Stopping recording...');
           await recordingRef.current.stopAndUnloadAsync();
           const uri = recordingRef.current.getURI();
-          const tempRecording = recordingRef.current;
-          setIsRecording(false);
           recordingRef.current = null;
+          setIsRecording(false);
 
           if (Platform.OS !== 'web') {
             await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
@@ -644,7 +645,14 @@ Focus on being an encouraging language coach who provides progressive learning f
       } catch (error) {
         console.error('[Translator] STT error:', error);
         setIsRecording(false);
-        recordingRef.current = null;
+        if (recordingRef.current) {
+          try {
+            await recordingRef.current.stopAndUnloadAsync();
+          } catch (e) {
+            console.log('[Translator] Error stopping recording:', e);
+          }
+          recordingRef.current = null;
+        }
         if (Platform.OS !== 'web') {
           try {
             await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
@@ -716,7 +724,14 @@ Focus on being an encouraging language coach who provides progressive learning f
       } catch (error) {
         console.error('[Translator] Recording start error:', error);
         setIsRecording(false);
-        recordingRef.current = null;
+        if (recordingRef.current) {
+          try {
+            await recordingRef.current.stopAndUnloadAsync();
+          } catch (e) {
+            console.log('[Translator] Error stopping recording:', e);
+          }
+          recordingRef.current = null;
+        }
         if (Platform.OS !== 'web') {
           try {
             await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
@@ -789,6 +804,12 @@ Focus on being an encouraging language coach who provides progressive learning f
       if (recordingRef.current) {
         recordingRef.current.stopAndUnloadAsync().catch(e => {
           console.log('[Translator] Cleanup error:', e);
+        });
+        recordingRef.current = null;
+      }
+      if (Platform.OS !== 'web') {
+        Audio.setAudioModeAsync({ allowsRecordingIOS: false }).catch(e => {
+          console.log('[Translator] Cleanup audio mode error:', e);
         });
       }
     };
