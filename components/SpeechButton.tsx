@@ -10,7 +10,7 @@ export default function SpeechButton({
   const stt = useSpeechToText();
 
   React.useEffect(() => {
-    if (!onText) return;
+    if (!onText) return undefined;
     return stt.onTranscript(onText);
   }, [onText, stt]);
 
