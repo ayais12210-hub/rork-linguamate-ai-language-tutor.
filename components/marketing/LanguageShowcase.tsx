@@ -7,9 +7,11 @@ import { landingContent } from '@/content/landing';
 
 const { width } = Dimensions.get('window');
 
+type Language = typeof landingContent.languages[number];
+
 export default function LanguageShowcase() {
   const { languages } = landingContent;
-  const [selectedLanguage, setSelectedLanguage] = useState(languages[0]);
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>(languages[0]);
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
 
@@ -55,7 +57,7 @@ export default function LanguageShowcase() {
         <View style={styles.header}>
           <Text style={styles.title}>Learn any language, anywhere</Text>
           <Text style={styles.subtitle}>
-            From Spanish to Japanese, we've got you covered with 20+ languages
+            From Spanish to Japanese, we&apos;ve got you covered with 20+ languages
           </Text>
         </View>
 
@@ -73,7 +75,7 @@ export default function LanguageShowcase() {
                     styles.languageCard,
                     selectedLanguage.code === lang.code && styles.languageCardActive,
                   ]}
-                  onPress={() => setSelectedLanguage(lang)}
+                  onPress={() => setSelectedLanguage(lang as Language)}
                 >
                   <Text style={styles.languageFlag}>{lang.flag}</Text>
                   <Text style={styles.languageName}>{lang.name}</Text>
