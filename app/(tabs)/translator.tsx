@@ -306,6 +306,13 @@ Focus on being an encouraging language coach who helps learners understand not j
           ],
         }),
       });
+      
+      if (!response.ok) {
+        console.error('[Translator] Suggestions API error:', response.status);
+        setSuggestions([]);
+        return;
+      }
+      
       const data = await response.json();
       const completion = String(data?.completion ?? '[]');
       let parsed: string[] = [];
@@ -479,13 +486,28 @@ Focus on being an encouraging language coach who helps learners understand not j
               method: 'POST',
               body: formData,
             });
+            
+            console.log('[Translator] STT response status:', sttResponse.status);
+            console.log('[Translator] STT response content-type:', sttResponse.headers.get('content-type'));
 
             if (!sttResponse.ok) {
+              const errorText = await sttResponse.text();
+              console.error('[Translator] STT API error response:', errorText);
               throw new Error(`STT API returned ${sttResponse.status}`);
             }
 
-            const data = await sttResponse.json();
-            console.log('[Translator] STT response:', data);
+            const responseText = await sttResponse.text();
+            console.log('[Translator] STT raw response:', responseText.substring(0, 200));
+            
+            let data;
+            try {
+              data = JSON.parse(responseText);
+              console.log('[Translator] STT parsed response:', data);
+            } catch (parseError) {
+              console.error('[Translator] Failed to parse STT response as JSON:', parseError);
+              console.error('[Translator] Response was:', responseText.substring(0, 500));
+              throw new Error('Invalid JSON response from STT service');
+            }
             
             if (data.text) {
               setSourceText(prev => {
