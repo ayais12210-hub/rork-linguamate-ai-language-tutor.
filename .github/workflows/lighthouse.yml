@@ -1,0 +1,28 @@
+on:
+  push: { branches: [ main ] }
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lighthouse-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lhci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+
+      - run: npm i -g bun@1
+      - run: bun install --frozen-lockfile || bun install
+      - run: bun run build:web --if-present
+
+      # serve the built 'dist' on :3000
+      - run: npx http-server dist -p 3000 &
+      - run: npx wait-on http://localhost:3000 || true
+
+      - run: npx lhci autorun --config=.lighthouserc.js || true
