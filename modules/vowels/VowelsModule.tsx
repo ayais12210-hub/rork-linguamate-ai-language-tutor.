@@ -16,13 +16,24 @@ export default function VowelsModule({ languageCode, onComplete, onBack }: Props
     { id: 'v2', symbol: 'E', sound: '/e/' },
   ];
 
-  const speak = useCallback((text: string) => {
+  const speak = useCallback(async (text: string) => {
     const t = (text ?? '').toString().trim();
     if (!t) return;
     try {
-      Speech.speak(t, { language: languageCode, rate: 0.95, pitch: 1.0 });
+      const isSpeaking = await Speech.isSpeakingAsync();
+      if (isSpeaking) {
+        await Speech.stop();
+      }
+      await Speech.speak(t, { 
+        language: languageCode || 'en', 
+        rate: 0.85, 
+        pitch: 1.0,
+        onError: (error) => {
+          console.log('[VowelsModule] Speech error:', error);
+        }
+      });
     } catch (e) {
-      console.log('vowel_speak_error', e);
+      console.log('[VowelsModule] Speech error:', e);
     }
   }, [languageCode]);
 

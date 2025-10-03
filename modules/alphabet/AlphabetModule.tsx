@@ -59,13 +59,24 @@ export default function AlphabetModule({ languageCode, onComplete, onBack }: Pro
   const selectedLanguage = LANGUAGES.find(lang => lang.code === languageCode);
   const nativeLanguage = LANGUAGES.find(lang => lang.code === user.nativeLanguage);
 
-  const speak = useCallback((text: string) => {
+  const speak = useCallback(async (text: string) => {
     const t = (text ?? '').toString().trim();
     if (!t || t.length > 120) return;
     try {
-      Speech.speak(t, { language: selectedLanguage?.code, rate: 0.95, pitch: 1.0 });
+      const isSpeaking = await Speech.isSpeakingAsync();
+      if (isSpeaking) {
+        await Speech.stop();
+      }
+      await Speech.speak(t, { 
+        language: selectedLanguage?.code || 'en', 
+        rate: 0.85, 
+        pitch: 1.0,
+        onError: (error) => {
+          console.log('[AlphabetModule] Speech error:', error);
+        }
+      });
     } catch (e) {
-      console.log('speech_error', e);
+      console.log('[AlphabetModule] Speech error:', e);
     }
   }, [selectedLanguage?.code]);
 

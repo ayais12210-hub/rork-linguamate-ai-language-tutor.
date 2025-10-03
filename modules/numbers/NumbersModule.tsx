@@ -22,6 +22,7 @@ import {
   Trophy,
   Shuffle,
 } from 'lucide-react-native';
+import * as Speech from 'expo-speech';
 import { useUser } from '@/hooks/user-store';
 import { useLearningProgress } from '@/state/learning-progress';
 import { LANGUAGES } from '@/constants/languages';
@@ -344,15 +345,24 @@ export default function NumbersModule({ languageCode, onComplete, onBack }: Prop
     onComplete?.();
   };
 
-  const playAudio = () => {
+  const playAudio = async () => {
     const t = currentGame?.numberData.word ?? '';
+    if (!t.trim()) return;
     try {
-      // Use TTS for consistent cross-platform playback
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const Speech = require('expo-speech');
-      Speech.speak(t, { language: selectedLanguage?.code, rate: 0.95, pitch: 1.0 });
+      const isSpeaking = await Speech.isSpeakingAsync();
+      if (isSpeaking) {
+        await Speech.stop();
+      }
+      await Speech.speak(t, { 
+        language: selectedLanguage?.code || 'en', 
+        rate: 0.85, 
+        pitch: 1.0,
+        onError: (error) => {
+          console.log('[NumbersModule] Speech error:', error);
+        }
+      });
     } catch (e) {
-      console.log('audio_play_error', e);
+      console.log('[NumbersModule] Audio play error:', e);
     }
   };
 
