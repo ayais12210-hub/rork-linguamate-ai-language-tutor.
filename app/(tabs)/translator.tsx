@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,6 @@ import {
   ActivityIndicator,
   Animated,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ArrowUpDown,
   Copy,
@@ -24,6 +23,7 @@ import {
   Brain,
   Globe,
   Award,
+  Sparkles,
 } from 'lucide-react-native';
 import { LANGUAGES } from '@/constants/languages';
 import { Language } from '@/types/user';
@@ -135,6 +135,8 @@ export default function TranslatorScreen() {
   const [showInsights, setShowInsights] = useState<boolean>(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const sourceInputRef = useRef<TextInput>(null);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [selectedSuggestions, setSelectedSuggestions] = useState<string[]>([]);
 
   const fromLang = LANGUAGES.find(lang => lang.code === fromLanguage) || LANGUAGES[0];
   const toLang = LANGUAGES.find(lang => lang.code === toLanguage) || LANGUAGES[1];
@@ -245,7 +247,104 @@ Focus on being an encouraging language coach who helps learners understand not j
     } finally {
       setIsTranslating(false);
     }
-  }, [canTranslate, fadeAnim, fromLang.name, fromLanguage, sourceText, toLang.name, toLanguage, user.isPremium, user.proficiencyLevel]);
+  }, [canTranslate, fadeAnim, fromLang.name, fromLanguage, sourceText, toLang.name, toLanguage, user.proficiencyLevel]);
+
+  const generateSuggestions = useCallback(async () => {
+    try {
+      const response = await fetch('https://toolkit.rork.com/text/llm/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: 'system',
+              content: `You are a language learning coach. Generate 4-6 short, practical phrases or sentences in ${fromLang.name} that a ${user.proficiencyLevel} level learner would want to translate to ${toLang.name}. Focus on common, useful expressions for daily conversation. Return ONLY a JSON array of strings, no other text. Example: ["How are you?", "Where is the bathroom?", "I would like to order"]`,
+            },
+            {
+              role: 'user',
+              content: `Generate translation practice suggestions for ${user.proficiencyLevel} level learner`,
+            },
+          ],
+        }),
+      });
+      const data = await response.json();
+      const completion = String(data?.completion ?? '[]');
+      let parsed: string[] = [];
+      try {
+        const cleaned = completion.trim().replace(/^```json\s*/, '').replace(/```\s*$/, '');
+        parsed = JSON.parse(cleaned);
+        if (!Array.isArray(parsed)) parsed = [];
+      } catch (e) {
+        console.log('[Translator] Failed to parse suggestions', e);
+        parsed = [];
+      }
+      setSuggestions(parsed.slice(0, 6));
+    } catch (error) {
+      console.error('[Translator] Failed to generate suggestions:', error);
+      setSuggestions([]);
+    }
+  }, [fromLang.name, toLang.name, user.proficiencyLevel]);
+
+  useEffect(() => {
+    generateSuggestions();
+  }, [generateSuggestions]);
+
+  const isSuggestionSelected = useCallback((text: string) => {
+    return selectedSuggestions.includes(text);
+  }, [selectedSuggestions]);
+
+  const toggleSuggestion = useCallback((text: string) => {
+    setSelectedSuggestions(prev => {
+      const exists = prev.includes(text);
+      if (exists) {
+        return prev.filter(t => t !== text);
+      }
+      return [...prev, text];
+    });
+  }, []);
+
+  const clearSelectedSuggestions = useCallback(() => {
+    setSelectedSuggestions([]);
+  }, []);
+
+  const combinedSelectedText = useMemo(() => {
+    return selectedSuggestions.join(' ');
+  }, [selectedSuggestions]);
+
+  const handleSuggestionPress = useCallback((text: string) => {
+    if (!text) return;
+    setSourceText(prev => {
+      const hasContent = (prev ?? '').trim().length > 0;
+      const separator = hasContent ? ' ' : '';
+      return `${prev ?? ''}${separator}${text}`;
+    });
+    toggleSuggestion(text);
+  }, [toggleSuggestion]);
+
+  const handleSuggestionTranslate = useCallback((text: string) => {
+    if (!text) return;
+    setSourceText(text);
+    setTimeout(() => {
+      handleTranslate();
+    }, 100);
+  }, [handleTranslate]);
+
+  const handleBulkInsert = useCallback(() => {
+    if (combinedSelectedText.trim().length === 0) return;
+    setSourceText(prev => {
+      const base = prev?.trim().length ? `${prev} ` : '';
+      return `${base}${combinedSelectedText}`;
+    });
+  }, [combinedSelectedText]);
+
+  const handleBulkTranslate = useCallback(() => {
+    if (combinedSelectedText.trim().length === 0) return;
+    setSourceText(combinedSelectedText);
+    clearSelectedSuggestions();
+    setTimeout(() => {
+      handleTranslate();
+    }, 100);
+  }, [combinedSelectedText, clearSelectedSuggestions, handleTranslate]);
 
   const handleSwapLanguages = () => {
     const tempLang = fromLanguage;
@@ -340,7 +439,7 @@ Focus on being an encouraging language coach who helps learners understand not j
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Translator</Text>
         <View style={styles.headerRight}>
@@ -351,6 +450,81 @@ Focus on being an encouraging language coach who helps learners understand not j
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {suggestions.length > 0 && (
+          <View style={styles.suggestionsBlock}>
+            <View style={styles.suggestionsHeader}>
+              <Sparkles size={16} color="#8B5CF6" />
+              <Text style={styles.suggestionsTitle}>Suggestions</Text>
+              <TouchableOpacity 
+                onPress={generateSuggestions} 
+                style={styles.suggestionsRefresh} 
+                accessibilityLabel="Refresh suggestions" 
+                testID="refreshSuggestionsBtn"
+              >
+                <Text style={styles.suggestionsRefreshText}>Refresh</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false} 
+              contentContainerStyle={styles.suggestionsRow} 
+              testID="suggestionsRow"
+            >
+              {suggestions.map((s, idx) => {
+                const selected = isSuggestionSelected(s);
+                return (
+                  <View 
+                    key={`${s}-${idx}`} 
+                    style={[styles.suggestionPill, selected ? styles.suggestionPillSelected : undefined]}
+                  >
+                    <TouchableOpacity
+                      onPress={() => handleSuggestionPress(s)}
+                      onLongPress={() => handleSuggestionTranslate(s)}
+                      accessibilityLabel={`Suggestion ${idx+1}`}
+                      testID={`suggestion-${idx}`}
+                    >
+                      <Text style={[styles.suggestionText, selected ? styles.suggestionTextSelected : undefined]}>
+                        {s}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                );
+              })}
+              {selectedSuggestions.length > 0 && (
+                <View style={styles.bulkActionsPill} testID="bulkActionsPill">
+                  <Text style={styles.bulkCountText}>{selectedSuggestions.length} selected</Text>
+                  <View style={styles.bulkButtonsRow}>
+                    <TouchableOpacity 
+                      onPress={handleBulkInsert} 
+                      style={styles.bulkBtn} 
+                      accessibilityLabel="Insert selected" 
+                      testID="bulkInsertBtn"
+                    >
+                      <Text style={styles.bulkBtnText}>Insert</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      onPress={handleBulkTranslate} 
+                      style={[styles.bulkBtn, styles.bulkTranslateBtn]} 
+                      accessibilityLabel="Translate selected" 
+                      testID="bulkTranslateBtn"
+                    >
+                      <Text style={[styles.bulkBtnText, styles.bulkTranslateBtnText]}>Translate</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      onPress={clearSelectedSuggestions} 
+                      style={styles.bulkClearBtn} 
+                      accessibilityLabel="Clear selected" 
+                      testID="bulkClearBtn"
+                    >
+                      <Text style={styles.bulkClearText}>Clear</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        )}
+
         <View style={styles.languageSelector}>
           <TouchableOpacity
             style={styles.languageButton}
@@ -647,7 +821,7 @@ Focus on being an encouraging language coach who helps learners understand not j
         reason="feature"
         testID="upgrade-modal"
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -1054,5 +1228,113 @@ const styles = StyleSheet.create({
   difficultyAdvanced: {
     backgroundColor: '#FEE2E2',
     color: '#991B1B',
+  },
+  suggestionsBlock: {
+    marginBottom: 16,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  suggestionsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  suggestionsTitle: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginLeft: 6,
+    flex: 1,
+  },
+  suggestionsRefresh: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+  },
+  suggestionsRefreshText: {
+    fontSize: 12,
+    color: '#374151',
+  },
+  suggestionsRow: {
+    flexDirection: 'row',
+  },
+  suggestionPill: {
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  suggestionPillSelected: {
+    backgroundColor: '#EEF2FF',
+    borderColor: '#A78BFA',
+  },
+  suggestionText: {
+    fontSize: 14,
+    color: '#374151',
+  },
+  suggestionTextSelected: {
+    color: '#4C1D95',
+    fontWeight: '600' as const,
+  },
+  bulkActionsPill: {
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 16,
+    marginRight: 8,
+    justifyContent: 'center',
+  },
+  bulkCountText: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginBottom: 6,
+  },
+  bulkButtonsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  bulkBtn: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    marginRight: 8,
+  },
+  bulkBtnText: {
+    fontSize: 12,
+    color: '#111827',
+  },
+  bulkTranslateBtn: {
+    backgroundColor: '#3B82F6',
+  },
+  bulkTranslateBtnText: {
+    color: 'white',
+    fontWeight: '600' as const,
+  },
+  bulkClearBtn: {
+    marginLeft: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  bulkClearText: {
+    fontSize: 12,
+    color: '#6B7280',
   },
 });
