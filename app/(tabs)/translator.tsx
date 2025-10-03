@@ -286,6 +286,7 @@ Focus on being an encouraging language coach who helps learners understand not j
 
   const generateSuggestions = useCallback(async () => {
     try {
+      console.log('[Translator] Generating suggestions...');
       const response = await fetch('https://toolkit.rork.com/text/llm/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -302,6 +303,13 @@ Focus on being an encouraging language coach who helps learners understand not j
           ],
         }),
       });
+      
+      if (!response.ok) {
+        console.error('[Translator] Suggestions API error:', response.status, response.statusText);
+        setSuggestions([]);
+        return;
+      }
+      
       const data = await response.json();
       const completion = String(data?.completion ?? '[]');
       let parsed: string[] = [];
@@ -314,6 +322,7 @@ Focus on being an encouraging language coach who helps learners understand not j
         parsed = [];
       }
       setSuggestions(parsed.slice(0, 6));
+      console.log('[Translator] Suggestions generated:', parsed.length);
     } catch (error) {
       console.error('[Translator] Failed to generate suggestions:', error);
       setSuggestions([]);
@@ -442,6 +451,7 @@ Focus on being an encouraging language coach who helps learners understand not j
           console.log('[Translator] Stopping recording...');
           await recordingRef.current.stopAndUnloadAsync();
           const uri = recordingRef.current.getURI();
+          const tempRecording = recordingRef.current;
           setIsRecording(false);
           recordingRef.current = null;
 
@@ -477,6 +487,8 @@ Focus on being an encouraging language coach who helps learners understand not j
             });
 
             if (!sttResponse.ok) {
+              const errorText = await sttResponse.text();
+              console.error('[Translator] STT API error:', errorText);
               throw new Error(`STT API returned ${sttResponse.status}`);
             }
 
@@ -511,10 +523,27 @@ Focus on being an encouraging language coach who helps learners understand not j
         console.error('[Translator] STT error:', error);
         setIsRecording(false);
         recordingRef.current = null;
+        if (Platform.OS !== 'web') {
+          try {
+            await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
+          } catch (e) {
+            console.error('[Translator] Failed to reset audio mode:', e);
+          }
+        }
         Alert.alert('Error', 'Failed to transcribe audio. Please try again.');
       }
     } else {
       try {
+        if (recordingRef.current) {
+          console.log('[Translator] Cleaning up existing recording...');
+          try {
+            await recordingRef.current.stopAndUnloadAsync();
+          } catch (e) {
+            console.log('[Translator] Error cleaning up recording:', e);
+          }
+          recordingRef.current = null;
+        }
+
         console.log('[Translator] Requesting microphone permission...');
         const { status } = await Audio.requestPermissionsAsync();
         if (status !== 'granted') {
@@ -565,6 +594,14 @@ Focus on being an encouraging language coach who helps learners understand not j
       } catch (error) {
         console.error('[Translator] Recording start error:', error);
         setIsRecording(false);
+        recordingRef.current = null;
+        if (Platform.OS !== 'web') {
+          try {
+            await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
+          } catch (e) {
+            console.error('[Translator] Failed to reset audio mode:', e);
+          }
+        }
         Alert.alert('Error', 'Failed to start recording. Please check your microphone.');
       }
     }
@@ -627,6 +664,11 @@ Focus on being an encouraging language coach who helps learners understand not j
   useEffect(() => {
     return () => {
       Speech.stop();
+      if (recordingRef.current) {
+        recordingRef.current.stopAndUnloadAsync().catch(e => {
+          console.log('[Translator] Cleanup error:', e);
+        });
+      }
     };
   }, []);
 
@@ -1055,7 +1097,7 @@ Focus on being an encouraging language coach who helps learners understand not j
                       }}
                       testID={`alt-${index}`}
                     >
-                      <Text style={styles.alternativeText}>• {alt}</Text>
+                      <Text style={styles.alternativeText}>{`• ${alt}`}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -1070,8 +1112,7 @@ Focus on being an encouraging language coach who helps learners understand not j
                   </View>
                   {currentTranslation.tips.map((tip, index) => (
                     <View key={`tip-${index}`} style={styles.tipItem}>
-                      <Text style={styles.tipBullet}>💡</Text>
-                      <Text style={styles.tipText}>{tip}</Text>
+                      <Text style={styles.tipText}>{`💡 ${tip}`}</Text>
                     </View>
                   ))}
                 </View>
