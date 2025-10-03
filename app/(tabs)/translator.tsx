@@ -582,7 +582,6 @@ Focus on being an encouraging language coach who provides progressive learning f
       }
     } catch (error) {
       console.error('[Translator] Paste error:', error);
-      Alert.alert('Error', 'Failed to paste text');
     }
   };
 
@@ -639,7 +638,7 @@ Focus on being an encouraging language coach who provides progressive learning f
             const apiBaseUrl = typeof window !== 'undefined' && window.location 
               ? `${window.location.protocol}//${window.location.host}`
               : '';
-            const sttResponse = await fetch(`${apiBaseUrl}/api/stt/transcribe`, {
+            const sttResponse = await fetch(`${apiBaseUrl}/api/toolkit/stt/transcribe`, {
               method: 'POST',
               body: formData,
             });
@@ -1327,9 +1326,7 @@ Focus on being an encouraging language coach who provides progressive learning f
                     <Text style={styles.meaningLabel}>Contextual Examples:</Text>
                     <View>
                       {currentTranslation.meaning.contextualExamples.map((ex, idx) => (
-                        <View key={idx}>
-                          <Text style={styles.exampleText}>• {ex}</Text>
-                        </View>
+                        <Text key={idx} style={styles.exampleText}>• {ex}</Text>
                       ))}
                     </View>
                   </View>
@@ -1393,9 +1390,7 @@ Focus on being an encouraging language coach who provides progressive learning f
                     <Text style={styles.meaningLabel}>Acquisition Steps:</Text>
                     <View>
                       {currentTranslation.learningProcess.acquisitionSteps.map((step, idx) => (
-                        <View key={idx}>
-                          <Text style={styles.exampleText}>• {step}</Text>
-                        </View>
+                        <Text key={idx} style={styles.exampleText}>• {step}</Text>
                       ))}
                     </View>
                   </View>
@@ -1411,9 +1406,7 @@ Focus on being an encouraging language coach who provides progressive learning f
                     <Text style={styles.meaningLabel}>Immersion Strategies:</Text>
                     <View>
                       {currentTranslation.learningProcess.immersionStrategies.map((strat, idx) => (
-                        <View key={idx}>
-                          <Text style={styles.exampleText}>• {strat}</Text>
-                        </View>
+                        <Text key={idx} style={styles.exampleText}>• {strat}</Text>
                       ))}
                     </View>
                   </View>
@@ -1432,9 +1425,7 @@ Focus on being an encouraging language coach who provides progressive learning f
                     <Text style={styles.meaningLabel}>Contexts:</Text>
                     <View>
                       {currentTranslation.usage.contexts.map((ctx, idx) => (
-                        <View key={idx}>
-                          <Text style={styles.exampleText}>• {ctx}</Text>
-                        </View>
+                        <Text key={idx} style={styles.exampleText}>• {ctx}</Text>
                       ))}
                     </View>
                   </View>
@@ -1456,9 +1447,7 @@ Focus on being an encouraging language coach who provides progressive learning f
                     <Text style={styles.meaningLabel}>Collocations:</Text>
                     <View>
                       {currentTranslation.usage.collocations.map((col, idx) => (
-                        <View key={idx}>
-                          <Text style={styles.exampleText}>• {col}</Text>
-                        </View>
+                        <Text key={idx} style={styles.exampleText}>• {col}</Text>
                       ))}
                     </View>
                   </View>
@@ -1552,9 +1541,7 @@ Focus on being an encouraging language coach who provides progressive learning f
                     <Text style={styles.meaningLabel}>Regional Variations:</Text>
                     <View>
                       {currentTranslation.culture.regionalVariations.map((variant, idx) => (
-                        <View key={idx}>
-                          <Text style={styles.exampleText}>• {variant}</Text>
-                        </View>
+                        <Text key={idx} style={styles.exampleText}>• {variant}</Text>
                       ))}
                     </View>
                   </View>
@@ -1573,9 +1560,7 @@ Focus on being an encouraging language coach who provides progressive learning f
                     <Text style={styles.meaningLabel}>Over-Literal Translations:</Text>
                     <View>
                       {currentTranslation.crossLanguageInterference.overLiteralTranslations.map((item, idx) => (
-                        <View key={idx}>
-                          <Text style={styles.exampleText}>• {item}</Text>
-                        </View>
+                        <Text key={idx} style={styles.exampleText}>• {item}</Text>
                       ))}
                     </View>
                   </View>
@@ -1585,9 +1570,7 @@ Focus on being an encouraging language coach who provides progressive learning f
                     <Text style={styles.meaningLabel}>False Friends:</Text>
                     <View>
                       {currentTranslation.crossLanguageInterference.falseFriends.map((item, idx) => (
-                        <View key={idx}>
-                          <Text style={styles.exampleText}>• {item}</Text>
-                        </View>
+                        <Text key={idx} style={styles.exampleText}>• {item}</Text>
                       ))}
                     </View>
                   </View>
@@ -1597,9 +1580,7 @@ Focus on being an encouraging language coach who provides progressive learning f
                     <Text style={styles.meaningLabel}>L1 Transfer Errors:</Text>
                     <View>
                       {currentTranslation.crossLanguageInterference.l1TransferErrors.map((item, idx) => (
-                        <View key={idx}>
-                          <Text style={styles.exampleText}>• {item}</Text>
-                        </View>
+                        <Text key={idx} style={styles.exampleText}>• {item}</Text>
                       ))}
                     </View>
                   </View>
@@ -1609,9 +1590,7 @@ Focus on being an encouraging language coach who provides progressive learning f
                     <Text style={styles.meaningLabel}>Register Mismatches:</Text>
                     <View>
                       {currentTranslation.crossLanguageInterference.registerMismatches.map((item, idx) => (
-                        <View key={idx}>
-                          <Text style={styles.exampleText}>• {item}</Text>
-                        </View>
+                        <Text key={idx} style={styles.exampleText}>• {item}</Text>
                       ))}
                     </View>
                   </View>
@@ -1636,9 +1615,7 @@ Focus on being an encouraging language coach who provides progressive learning f
                     <Text style={styles.meaningLabel}>✅ Dos:</Text>
                     <View>
                       {currentTranslation.recap.dos.map((item, idx) => (
-                        <View key={idx}>
-                          <Text style={styles.exampleText}>• {item}</Text>
-                        </View>
+                        <Text key={idx} style={styles.exampleText}>• {item}</Text>
                       ))}
                     </View>
                   </View>
@@ -1648,9 +1625,7 @@ Focus on being an encouraging language coach who provides progressive learning f
                     <Text style={styles.meaningLabel}>❌ Donts:</Text>
                     <View>
                       {currentTranslation.recap.donts.map((item, idx) => (
-                        <View key={idx}>
-                          <Text style={styles.exampleText}>• {item}</Text>
-                        </View>
+                        <Text key={idx} style={styles.exampleText}>• {item}</Text>
                       ))}
                     </View>
                   </View>
