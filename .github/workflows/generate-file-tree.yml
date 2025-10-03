@@ -1,3 +1,5 @@
+name: Generate File Tree
+
 on:
   workflow_dispatch: {}
   push:
