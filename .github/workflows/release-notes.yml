@@ -1,16 +1,11 @@
-name: Release Notes
-on:
-  push: { tags: [ "v*.*.*" ] }
-  workflow_dispatch: {}
-
-permissions:
-  contents: write
-
-jobs:
-  release:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: release-drafter/release-drafter@v6
-        with: { config-name: release-drafter.yml }
-        env: { GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+name-template: 'v$NEXT_PATCH_VERSION'
+tag-template: 'v$NEXT_PATCH_VERSION'
+categories:
+  - title: '🚀 Features'
+    labels: [feature, enhancement]
+  - title: '🐛 Fixes'
+    labels: [bug, fix]
+  - title: '🧰 Chore'
+    labels: [chore, refactor, docs]
+change-template: '- $TITLE (#$NUMBER) @$AUTHOR'
+no-changes-template: 'No user-facing changes.'
