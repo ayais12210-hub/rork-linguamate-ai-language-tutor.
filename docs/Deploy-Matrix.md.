@@ -35,191 +35,156 @@ Use it before every promotion to production to verify configs.
 
 ## 2) Environment Variables Matrix
 
-> Only `EXPO_PUBLIC_*` are bundled into the client.  
-> Secrets belong in backend or CI secrets.
+> Only `EXPO_PUBLIC_*` are bundled into the client. Secrets belong in backend or CI secrets.
 
-| Variable                  | Staging                             | Production                       |
-|---------------------------|-------------------------------------|----------------------------------|
-| EXPO_PUBLIC_BACKEND_URL   | https://api-staging.linguamate.ai   | https://api.linguamate.ai        |
-| EXPO_PUBLIC_TOOLKIT_URL   | https://toolkit.rork.com            | https://toolkit.rork.com         |
-| EXPOSURE                  | staging                             | production                       |
-| FEATURE_* toggles         | Enable experimental features        | Disabled by default              |
+| Variable                | Staging                           | Production                    |
+|-------------------------|-----------------------------------|-------------------------------|
+| EXPO_PUBLIC_BACKEND_URL | https://api-staging.linguamate.ai | https://api.linguamate.ai     |
+| EXPO_PUBLIC_TOOLKIT_URL | https://toolkit.rork.com          | https://toolkit.rork.com      |
+| EXPOSURE                | staging                           | production                    |
+| FEATURE_* toggles       | Enable experimental features      | Disabled by default           |
 
 Backend/CI-only (not client):
-- SENTRY_DSN  
-- LOGTAIL_TOKEN  
-- EAS_TOKEN  
+- SENTRY_DSN
+- LOGTAIL_TOKEN
+- EAS_TOKEN
 
 ---
 
 ## 3) Hosting Config Snippets
 
 ### Vercel (vercel.json)
-```json
-{
-  "version": 2,
-  "builds": [{ "src": "dist/**", "use": "@vercel/static" }],
-  "routes": [
-    { "src": "/(.*)", "dest": "/index.html" }
-  ],
-  "headers": [
     {
-      "source": "/(.*)",
+      "version": 2,
+      "builds": [{ "src": "dist/**", "use": "@vercel/static" }],
+      "routes": [
+        { "src": "/(.*)", "dest": "/index.html" }
+      ],
       "headers": [
-        { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains; preload" },
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+        {
+          "source": "/(.*)",
+          "headers": [
+            { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains; preload" },
+            { "key": "X-Content-Type-Options", "value": "nosniff" },
+            { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+            { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+          ]
+        }
       ]
     }
-  ]
-}
 
 CSP (set via UI or headers):
+    Content-Security-Policy: default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https://api.linguamate.ai https://toolkit.rork.com;
 
-Content-Security-Policy: default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https://api.linguamate.ai https://toolkit.rork.com;
-
-Netlify
+### Netlify
 
 _redirects
-
-/*   /index.html   200
+    /*   /index.html   200
 
 _headers
-
-/*
-  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
-  X-Content-Type-Options: nosniff
-  Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=()
-  Content-Security-Policy: default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https://api.linguamate.ai https://toolkit.rork.com;
-
+    /*
+      Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+      X-Content-Type-Options: nosniff
+      Referrer-Policy: strict-origin-when-cross-origin
+      Permissions-Policy: camera=(), microphone=(), geolocation=()
+      Content-Security-Policy: default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https://api.linguamate.ai https://toolkit.rork.com;
 
 ---
 
-4) Feature Flags & Rollout
+## 4) Feature Flags & Rollout
 
-Flag	Staging Default	Production Default	Notes
+| Flag                     | Staging Default | Production Default | Notes                         |
+|--------------------------|-----------------|-------------------|-------------------------------|
+| FEATURE_CHAT_TRANSLATOR  | ON              | OFF → ramp 10%    | Monitor latency & error rate  |
+| FEATURE_AI_QUIZ_V2       | ON              | OFF (A/B 5%)      | Compare completion & XP       |
+| FEATURE_OFFLINE_CACHE_V2 | ON              | OFF               | Watch storage & crash rate    |
 
-FEATURE_CHAT_TRANSLATOR	ON	OFF → ramp 10%	Monitor latency & error rate
-FEATURE_AI_QUIZ_V2	ON	OFF (A/B 5%)	Compare completion & XP
-FEATURE_OFFLINE_CACHE_V2	ON	OFF	Watch storage use & crash rate
-
-
-Rollout Playbook:
-
-1. Ship disabled behind flag.
-
-
-2. Enable for 5–10% of users.
-
-
-3. Monitor errors, INP/LCP, conversion.
-
-
+Rollout playbook:
+1. Ship disabled behind flag.  
+2. Enable for 5–10% of users.  
+3. Monitor errors, INP/LCP, conversion.  
 4. Ramp to 25% → 50% → 100% or roll back.
 
+---
 
+## 5) Security Guardrails
 
+- CORS:
+  - Staging → allow staging.linguamate.ai + localhost
+  - Production → only linguamate.ai + app.linguamate.ai
+- Cookies: Secure; HttpOnly; SameSite=Lax/Strict. No third-party cookies.
+- Headers: HSTS, CSP, X-Content-Type-Options, Referrer-Policy, Permissions-Policy.
+- Logs: No tokens/PII; use correlation IDs; strip query params from error reports.
+- Source maps: Upload to error tracker; never public.
 
 ---
 
-5) Security Guardrails
+## 6) Performance & Caching
 
-CORS:
-
-Staging → allow staging.linguamate.ai + localhost
-
-Production → only linguamate.ai + app.linguamate.ai
-
-
-Cookies: Secure; HttpOnly; SameSite=Lax/Strict. No third-party cookies.
-
-Headers: HSTS, CSP, X-Content-Type-Options, Referrer-Policy, Permissions-Policy.
-
-Logs: No tokens/PII. Use correlation IDs. Strip query params from error reports.
-
-Source Maps: Upload to error tracker, never public.
-
-
+| Item       | Staging                 | Production                                                |
+|------------|-------------------------|-----------------------------------------------------------|
+| JS/CSS     | Minify + sourcemaps     | Minify, sourcemaps private only                           |
+| Assets     | TTL 5–15 min            | cache-control: public, max-age=31536000, immutable (hashed) |
+| HTML       | No-store                | No-store                                                 |
+| Fonts      | Custom allowed          | Prefer system; preload WOFF2 if custom used              |
+| Web Vitals | Perf ≥ 70               | LCP < 2.5s, CLS < 0.1, INP < 200ms                       |
 
 ---
 
-6) Performance & Caching
+## 7) Monitoring & Alerts
 
-Item	Staging	Production
-
-JS/CSS	Minify + sourcemaps	Minify, sourcemaps private only
-Assets	TTL 5–15 min	cache-control: public, max-age=31536000, immutable (hashed)
-HTML	No-store	No-store
-Fonts	Custom allowed	Prefer system; preload WOFF2 if custom used
-Web Vitals	Perf ≥ 70	LCP < 2.5s, CLS < 0.1, INP < 200ms
-
-
+| Category     | Staging     | Production                     |
+|--------------|-------------|--------------------------------|
+| Uptime       | Basic ping  | 1-min checks, multi-region     |
+| Error budget | N/A         | <1% error rate / 24h           |
+| Alerting     | Email/Slack | Pager/on-call + Slack alerts   |
+| Analytics    | 50–100%     | 5–10% aggregate only           |
 
 ---
 
-7) Monitoring & Alerts
+## 8) QA Gates (Pre-Promotion)
 
-Category	Staging	Production
-
-Uptime	Basic ping	1-min checks, multi-region
-Error budget	N/A	<1% error rate / 24h
-Alerting	Email/Slack	Pager/on-call + Slack alerts
-Analytics	50–100%	5–10% aggregate only
-
-
-
----
-
-8) QA Gates (Pre-Promotion)
-
-✅ Deep link refresh works on /learn, /lessons, /modules, /chat, /profile
-✅ 404 page & SPA rewrites configured
-✅ Lighthouse: Perf ≥ 80, A11y ≥ 90, BP ≥ 90, SEO ≥ 90
-✅ Cross-browser: Safari, Chrome, Firefox, Edge
-✅ Slow 3G UX acceptable; offline banner + retry OK
-✅ No secrets or PII in logs/network requests
-✅ CSP + CORS locked to correct domains
-✅ Cookies set with secure flags
-✅ Robots.txt + sitemap.xml correct
-✅ Env vars point to correct API
-✅ Feature flags set correctly for cohort
-
+- ✅ Deep link refresh works on /learn, /lessons, /modules, /chat, /profile  
+- ✅ 404 page & SPA rewrites configured  
+- ✅ Lighthouse: Perf ≥ 80, A11y ≥ 90, BP ≥ 90, SEO ≥ 90  
+- ✅ Cross-browser: Safari, Chrome, Firefox, Edge  
+- ✅ Slow 3G UX acceptable; offline banner + retry OK  
+- ✅ No secrets or PII in logs/network requests  
+- ✅ CSP + CORS locked to correct domains  
+- ✅ Cookies set with secure flags  
+- ✅ Robots.txt + sitemap.xml correct  
+- ✅ Env vars point to correct API  
+- ✅ Feature flags set correctly for cohort
 
 ---
 
-9) Quick “Diff” Checklist Before Going Live
+## 9) Quick “Diff” Checklist Before Going Live
 
-[ ] Domain swapped staging → production
-[ ] CORS restricted to prod only
-[ ] CSP restricted to prod origins
-[ ] Analytics sampling reduced
-[ ] Verbose logging disabled
-[ ] Long-term caching enabled
-[ ] Robots allow + sitemap enabled
-[ ] Source maps private only
-[ ] Feature flags OFF or small cohorts
-[ ] Uptime & alerting enabled
-
+- [ ] Domain swapped staging → production  
+- [ ] CORS restricted to prod only  
+- [ ] CSP restricted to prod origins  
+- [ ] Analytics sampling reduced  
+- [ ] Verbose logging disabled  
+- [ ] Long-term caching enabled  
+- [ ] Robots allow + sitemap enabled  
+- [ ] Source maps private only  
+- [ ] Feature flags OFF or small cohorts  
+- [ ] Uptime & alerting enabled
 
 ---
 
-10) One-Minute Env Sanity Check
+## 10) One-Minute Env Sanity Check
 
-Staging
+Staging:
+    EXPO_PUBLIC_BACKEND_URL=https://api-staging.linguamate.ai
+    EXPO_PUBLIC_TOOLKIT_URL=https://toolkit.rork.com
+    EXPOSURE=staging
+    FEATURE_CHAT_TRANSLATOR=1
+    FEATURE_AI_QUIZ_V2=1
 
-EXPO_PUBLIC_BACKEND_URL=https://api-staging.linguamate.ai
-EXPO_PUBLIC_TOOLKIT_URL=https://toolkit.rork.com
-EXPOSURE=staging
-FEATURE_CHAT_TRANSLATOR=1
-FEATURE_AI_QUIZ_V2=1
-
-Production
-
-EXPO_PUBLIC_BACKEND_URL=https://api.linguamate.ai
-EXPO_PUBLIC_TOOLKIT_URL=https://toolkit.rork.com
-EXPOSURE=production
-FEATURE_CHAT_TRANSLATOR=0
-FEATURE_AI_QUIZ_V2=0
-
+Production:
+    EXPO_PUBLIC_BACKEND_URL=https://api.linguamate.ai
+    EXPO_PUBLIC_TOOLKIT_URL=https://toolkit.rork.com
+    EXPOSURE=production
+    FEATURE_CHAT_TRANSLATOR=0
+    FEATURE_AI_QUIZ_V2=0
