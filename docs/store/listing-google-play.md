@@ -1,39 +1,107 @@
-# Google Play Listing (Draft)
+# 📱 Google Play Store Listing — LinguaMate AI
 
 ## App Information
-**Title:** LinguaMate AI — Language Tutor  
-**Short description:** Train pronunciation, translate smarter, and learn faster with AI.
+- **Title:** LinguaMate AI — Language Tutor  
+- **Short Description:** Train pronunciation, translate smarter, and learn faster with AI.  
+
+---
 
 ## Full Description
-Master any language with LinguaMate AI — your personal language tutor powered by artificial intelligence.
 
-### Features
-- **Real-time Speech-to-Text**: Practice pronunciation with instant AI feedback
-- **Smart Translations**: Get cultural and idiomatic insights, not just word-for-word translations
-- **Personalized Learning**: Adaptive difficulty that adjusts to your skill level
-- **Offline Mode**: Access cached lessons and phrasebook without internet
-- **Privacy First**: Full control over analytics and crash reporting
-- **Dark Mode**: Easy on the eyes, day or night
+**Master any language with LinguaMate AI — your personal AI-powered tutor for speaking, listening, and understanding like a native.**  
+
+LinguaMate combines **real-time speech recognition, smart AI translations, and adaptive lessons** to deliver a modern learning experience across Android, iOS, and Web. Designed for learners at any level, it blends cultural insights with structured practice to make language learning fun, efficient, and truly effective.  
+
+### 🌟 Features
+
+- **🗣 Real-time Speech-to-Text**  
+  Practise speaking and get **instant AI-powered feedback** on pronunciation, intonation, and fluency.  
+
+- **🌍 Smart AI Translations**  
+  Understand languages in context — with **idiomatic meaning, cultural nuance, and regional dialect insights**, not just literal translations.  
+
+- **🎯 Personalized Learning**  
+  Adaptive lessons that adjust to your skill level — from alphabets and numbers to grammar, dialogues, and quizzes.  
+
+- **📡 Offline Mode**  
+  Access cached lessons, phrasebooks, and progress history without needing internet. Perfect for travellers.  
+
+- **🔒 Privacy First**  
+  - Microphone is **only used when you practise speech**.  
+  - No personal data is ever sold to third parties.  
+  - Analytics and crash reporting can be disabled in **Settings → Privacy Controls**.  
+
+- **🌙 Dark Mode**  
+  A modern, accessible interface that looks great day or night.  
+
+---
 
 ### Perfect For
-- Language learners at any level
-- Travelers preparing for trips abroad
-- Students studying foreign languages
-- Anyone wanting to improve pronunciation
+- Language learners at any stage (beginner → advanced).  
+- Travellers preparing for trips abroad.  
+- Students studying foreign languages at school or university.  
+- Professionals who want to sharpen fluency for work or global communication.  
+- Anyone curious about new languages, culture, and pronunciation.  
 
-### Privacy & Security
-- Microphone used only for speech practice
-- No data sold to third parties
-- Full transparency and control over data collection
+---
+
+## Privacy & Security
+
+LinguaMate is built with **privacy-first principles**:  
+- Microphone used only when you tap to record.  
+- Practice clips remain on device unless you delete them.  
+- All data in transit encrypted (HTTPS/TLS).  
+- No data sold or shared with advertisers.  
+- Transparency and full control via in-app Privacy Controls.  
+
+For detailed mapping, see [docs/store/data-safety-google.md](./data-safety-google.md).  
+
+---
 
 ## Content Rating
-**Rating:** 3+ (Everyone)
+- **Rating:** 3+ (Everyone)  
+
+---
 
 ## Category
-Education
+- **Primary Category:** Education  
+
+---
 
 ## Keywords
-language learning, translator, speech to text, pronunciation, AI tutor, language practice, learn languages
+
+language learning, translator, speech to text, pronunciation, AI tutor, learn languages, language practice, vocabulary, grammar, education, bilingual
+
+---
+
+## Store Assets
+- **App Icon:** 512×512 PNG (<1MB)  
+- **Feature Graphic:** 1024×500 JPG/PNG  
+- **Screenshots:**  
+  - 1080×1920 (portrait) — Learn Hub, Lessons, AI Chat  
+  - 1242×2208 (portrait, high DPI) — Leaderboard, Profile, Progress tracking  
+- **Promo Video (optional):** YouTube link showing pronunciation training, AI chat, lessons, and leaderboard.  
+
+---
 
 ## Data Safety
-See `docs/store/data-safety-google.md` for detailed information.
+For detailed disclosure, see:  
+- [Google Play Data Safety Mapping](./data-safety-google.md)  
+
+Summary (for Play Console form):  
+- **Audio (microphone):** Collected for STT, discarded unless saved locally.  
+- **Diagnostics (optional):** Crash logs (90-day retention).  
+- **Analytics (optional):** Anonymous usage metrics (aggregated).  
+- **Not Collected:** No personal identifiers, no location, no contacts, no financial info.  
+- **Encryption:** All data encrypted in transit + at rest.  
+- **User Control:** Disable analytics/diagnostics; delete practice clips; request account data deletion via privacy@linguamate.ai.  
+
+---
+
+## Support
+- **Support Email:** support@linguamate.ai  
+- **Support URL:** [https://linguamate.ai/support](https://linguamate.ai/support)  
+- **Marketing URL:** [https://linguamate.ai](https://linguamate.ai)  
+- **Privacy Policy:** [https://linguamate.ai/privacy](https://linguamate.ai/privacy)
+
+
