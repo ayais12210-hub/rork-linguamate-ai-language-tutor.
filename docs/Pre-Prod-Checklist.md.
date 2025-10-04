@@ -1,0 +1,111 @@
+🚀 Pre-Production Checklist — Linguamate (Web)
+
+This is a condensed pre-release checklist.
+Use this before promoting from staging → production.
+
+
+---
+
+✅ Environment & Config
+
+[ ] Domain switched to linguamate.ai / app.linguamate.ai
+
+[ ] EXPO_PUBLIC_BACKEND_URL → https://api.linguamate.ai
+
+[ ] EXPO_PUBLIC_TOOLKIT_URL → https://toolkit.rork.com
+
+[ ] EXPOSURE=production
+
+[ ] Secrets in backend/CI only (no secrets in EXPO_PUBLIC_*)
+
+
+
+---
+
+🔒 Security
+
+[ ] CORS restricted to production domains only
+
+[ ] CSP locked to prod origins + toolkit host
+
+[ ] Cookies set: Secure; HttpOnly; SameSite=Strict/Lax
+
+[ ] Headers: HSTS, Referrer-Policy, Permissions-Policy, X-Content-Type-Options
+
+[ ] No tokens/PII in logs; correlation IDs active
+
+[ ] Source maps private (not exposed publicly)
+
+
+
+---
+
+⚡ Performance
+
+[ ] Assets cache long TTL (1y immutable + hashed filenames)
+
+[ ] Lighthouse: Perf ≥ 80, A11y ≥ 90, SEO ≥ 90, BP ≥ 90
+
+[ ] Core Web Vitals: LCP < 2.5s, CLS < 0.1, INP < 200ms
+
+[ ] Fonts: system preferred or WOFF2 preloaded
+
+[ ] SPA rewrites + 404 page confirmed
+
+
+
+---
+
+📊 Observability & QA
+
+[ ] Analytics sampling reduced to 5–10%
+
+[ ] Error reporting DSN set to production
+
+[ ] Alerts routed to on-call (Pager/Slack)
+
+[ ] Uptime monitoring active (1-min, multi-region)
+
+[ ] No verbose client logging
+
+[ ] Feature flags → OFF or restricted to small cohorts
+
+
+
+---
+
+🧪 Functional Testing
+
+[ ] Deep links: /learn, /lessons, /modules, /chat, /profile refresh properly
+
+[ ] Offline banner + retry flow working
+
+[ ] AI Quiz loads + handles errors gracefully
+
+[ ] STT microphone prompt appears only when recording
+
+[ ] Upgrade path from staging build → prod build keeps local data
+
+[ ] Cross-browser tested: Safari, Chrome, Firefox, Edge
+
+
+
+---
+
+📄 Store & Legal
+
+[ ] Privacy Policy + Terms URLs final
+
+[ ] Robots.txt → Allow; Sitemap enabled
+
+[ ] Data Safety & Privacy Nutrition forms updated
+
+[ ] App Store / Play Store assets uploaded & verified
+
+
+
+---
+
+⚡ Final Gate: If all boxes are ticked, production deploy is safe.
+
+
