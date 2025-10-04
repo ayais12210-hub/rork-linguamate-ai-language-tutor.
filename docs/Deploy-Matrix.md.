@@ -7,29 +7,29 @@ Use it before every promotion to production to verify configs.
 
 ## 1) High-Level Matrix
 
-| Area              | **Staging**                                         | **Production**                               |
-|-------------------|-----------------------------------------------------|----------------------------------------------|
-| Domain            | `staging.linguamate.ai`, `preview-<sha>.vercel.app` | `linguamate.ai`, `app.linguamate.ai`         |
-| Build command     | `expo export --platform web`                        | `expo export --platform web`                 |
-| Output            | `dist/`                                             | `dist/`                                      |
-| API base URL      | `https://api-staging.linguamate.ai`                 | `https://api.linguamate.ai`                  |
-| CORS              | Allow staging + localhost                           | Strict: allow prod domains only              |
-| CSP               | Permissive (staging API, dev tools)                 | Locked to prod origins + toolkit only        |
-| Cookies           | Optional `Secure; Lax; HttpOnly`                    | Required `Secure; HttpOnly; SameSite=Lax/Strict` |
-| Env vars          | Test endpoints, test keys                           | Prod endpoints, **no secrets client-side**   |
-| Logging           | Verbose, source maps public                         | Minimal, source maps uploaded not public     |
-| Analytics         | Higher sampling (50–100%)                           | Lower sampling (5–10%), no PII               |
-| Error reporting   | Full stack traces, test DSN                         | Scrubbed traces, prod DSN                    |
-| Feature flags     | Features on by default                              | Features off by default, gradual rollout     |
-| A/B tests         | Large buckets allowed                               | Small buckets only, kill switch enabled      |
-| Perf budgets      | Perf ≥ 70, A11y ≥ 90                                | Perf ≥ 80, A11y ≥ 90                         |
-| Assets caching    | Short TTL (5–15 min)                                | Long TTL (1y immutable + hashed)             |
-| Robots/sitemap    | `Disallow: /` (optional)                            | `Allow: /`, sitemap enabled                  |
-| 404/SPA rewrites  | `/* → /index.html (200)`                            | Same                                         |
-| PWA               | Optional                                            | Optional (manifest + maskable icons)         |
-| Access control    | Optional basic auth                                 | Public                                       |
-| Data safety text  | Staging privacy URL OK                              | Final privacy + terms URLs                   |
-| Uptime/alerts     | Warning thresholds                                  | Stricter thresholds + on-call routing        |
+| Area              | Staging                                          | Production                                 |
+|-------------------|--------------------------------------------------|--------------------------------------------|
+| Domain            | staging.linguamate.ai, preview-<sha>.vercel.app  | linguamate.ai, app.linguamate.ai           |
+| Build command     | expo export --platform web                       | expo export --platform web                 |
+| Output            | dist/                                            | dist/                                      |
+| API base URL      | https://api-staging.linguamate.ai                | https://api.linguamate.ai                  |
+| CORS              | Allow staging + localhost                        | Strict: allow prod domains only            |
+| CSP               | Permissive (staging API, dev tools)              | Locked to prod origins + toolkit only      |
+| Cookies           | Optional Secure; Lax; HttpOnly                   | Required Secure; HttpOnly; SameSite=Lax/Strict |
+| Env vars          | Test endpoints, test keys                        | Prod endpoints, no secrets client-side     |
+| Logging           | Verbose, source maps public                      | Minimal, source maps uploaded not public   |
+| Analytics         | Higher sampling (50–100%)                        | Lower sampling (5–10%), no PII             |
+| Error reporting   | Full stack traces, test DSN                      | Scrubbed traces, prod DSN                  |
+| Feature flags     | Features ON by default                           | Features OFF by default, gradual rollout   |
+| A/B tests         | Large buckets allowed                            | Small buckets, kill switch enabled         |
+| Perf budgets      | Perf ≥ 70, A11y ≥ 90                             | Perf ≥ 80, A11y ≥ 90                       |
+| Assets caching    | Short TTL (5–15 min)                             | Long TTL (1y immutable + hashed)           |
+| Robots/sitemap    | Disallow: / (optional)                           | Allow: /, sitemap enabled                  |
+| 404/SPA rewrites  | /* → /index.html (200)                           | Same                                       |
+| PWA               | Optional                                         | Optional (manifest + maskable icons)       |
+| Access control    | Optional basic auth                              | Public                                     |
+| Data safety text  | Staging privacy URL OK                           | Final privacy + terms URLs                 |
+| Uptime/alerts     | Warning thresholds                               | Stricter thresholds + on-call routing      |
 
 ---
 
@@ -38,23 +38,23 @@ Use it before every promotion to production to verify configs.
 > Only `EXPO_PUBLIC_*` are bundled into the client.  
 > Secrets belong in backend or CI secrets.
 
-| Variable                  | Staging                                | Production                             |
-|---------------------------|----------------------------------------|----------------------------------------|
-| `EXPO_PUBLIC_BACKEND_URL` | `https://api-staging.linguamate.ai`    | `https://api.linguamate.ai`            |
-| `EXPO_PUBLIC_TOOLKIT_URL` | `https://toolkit.rork.com` (staging ok)| `https://toolkit.rork.com`             |
-| `EXPOSURE`                | `staging`                              | `production`                           |
-| `FEATURE_*` toggles       | Enable experimental features           | Disabled by default                    |
+| Variable                  | Staging                             | Production                       |
+|---------------------------|-------------------------------------|----------------------------------|
+| EXPO_PUBLIC_BACKEND_URL   | https://api-staging.linguamate.ai   | https://api.linguamate.ai        |
+| EXPO_PUBLIC_TOOLKIT_URL   | https://toolkit.rork.com            | https://toolkit.rork.com         |
+| EXPOSURE                  | staging                             | production                       |
+| FEATURE_* toggles         | Enable experimental features        | Disabled by default              |
 
-**Backend/CI-only (not client):**  
-- `SENTRY_DSN`  
-- `LOGTAIL_TOKEN`  
-- `EAS_TOKEN`  
+Backend/CI-only (not client):
+- SENTRY_DSN  
+- LOGTAIL_TOKEN  
+- EAS_TOKEN  
 
 ---
 
 ## 3) Hosting Config Snippets
 
-### Vercel (`vercel.json`)
+### Vercel (vercel.json)
 ```json
 {
   "version": 2,
@@ -75,7 +75,7 @@ Use it before every promotion to production to verify configs.
   ]
 }
 
-CSP (set via UI or header):
+CSP (set via UI or headers):
 
 Content-Security-Policy: default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https://api.linguamate.ai https://toolkit.rork.com;
 
@@ -106,18 +106,18 @@ FEATURE_AI_QUIZ_V2	ON	OFF (A/B 5%)	Compare completion & XP
 FEATURE_OFFLINE_CACHE_V2	ON	OFF	Watch storage use & crash rate
 
 
-Rollout playbook:
+Rollout Playbook:
 
 1. Ship disabled behind flag.
 
 
-2. Enable to 5–10% of users.
+2. Enable for 5–10% of users.
 
 
 3. Monitor errors, INP/LCP, conversion.
 
 
-4. Ramp: 25% → 50% → 100% or roll back.
+4. Ramp to 25% → 50% → 100% or roll back.
 
 
 
@@ -128,38 +128,18 @@ Rollout playbook:
 
 CORS:
 
-Staging → allow staging.linguamate.ai + localhost.
+Staging → allow staging.linguamate.ai + localhost
 
-Production → allow only linguamate.ai + app.linguamate.ai.
-
-
-Cookies:
-
-Always Secure; HttpOnly; SameSite=Lax/Strict.
-
-No third-party cookies.
+Production → only linguamate.ai + app.linguamate.ai
 
 
-Headers:
+Cookies: Secure; HttpOnly; SameSite=Lax/Strict. No third-party cookies.
 
-HSTS, CSP, X-Content-Type-Options, Referrer-Policy, Permissions-Policy.
+Headers: HSTS, CSP, X-Content-Type-Options, Referrer-Policy, Permissions-Policy.
 
+Logs: No tokens/PII. Use correlation IDs. Strip query params from error reports.
 
-Logs:
-
-No tokens or PII.
-
-Use correlation IDs.
-
-Strip query params from error reports.
-
-
-Source maps:
-
-Upload to error tracker.
-
-Never public.
-
+Source Maps: Upload to error tracker, never public.
 
 
 
@@ -170,10 +150,10 @@ Never public.
 Item	Staging	Production
 
 JS/CSS	Minify + sourcemaps	Minify, sourcemaps private only
-Assets cache	TTL 5–15 min	cache-control: public, max-age=31536000, immutable (hashed)
-HTML cache	No-store	No-store
+Assets	TTL 5–15 min	cache-control: public, max-age=31536000, immutable (hashed)
+HTML	No-store	No-store
 Fonts	Custom allowed	Prefer system; preload WOFF2 if custom used
-Core Web Vitals	Perf ≥ 70	LCP < 2.5s, CLS < 0.1, INP < 200ms
+Web Vitals	Perf ≥ 70	LCP < 2.5s, CLS < 0.1, INP < 200ms
 
 
 
@@ -186,7 +166,7 @@ Category	Staging	Production
 Uptime	Basic ping	1-min checks, multi-region
 Error budget	N/A	<1% error rate / 24h
 Alerting	Email/Slack	Pager/on-call + Slack alerts
-Analytics sample	50–100%	5–10% aggregate only
+Analytics	50–100%	5–10% aggregate only
 
 
 
@@ -194,54 +174,33 @@ Analytics sample	50–100%	5–10% aggregate only
 
 8) QA Gates (Pre-Promotion)
 
-✅ Deep link refresh works on /learn, /lessons, /modules, /chat, /profile.
-
-✅ 404 page & SPA rewrites configured.
-
-✅ Lighthouse scores: Perf ≥ 80, A11y ≥ 90, BP ≥ 90, SEO ≥ 90.
-
-✅ Cross-browser verified: Safari, Chrome, Firefox, Edge.
-
-✅ Slow 3G UX acceptable; offline banner + retry working.
-
-✅ No secrets or PII in logs/network requests.
-
-✅ CSP + CORS locked to correct domains.
-
-✅ Cookies set with secure flags.
-
-✅ Robots.txt + sitemap.xml correct.
-
-✅ Env vars point to correct API.
-
-✅ Feature flags set correctly for cohort.
-
+✅ Deep link refresh works on /learn, /lessons, /modules, /chat, /profile
+✅ 404 page & SPA rewrites configured
+✅ Lighthouse: Perf ≥ 80, A11y ≥ 90, BP ≥ 90, SEO ≥ 90
+✅ Cross-browser: Safari, Chrome, Firefox, Edge
+✅ Slow 3G UX acceptable; offline banner + retry OK
+✅ No secrets or PII in logs/network requests
+✅ CSP + CORS locked to correct domains
+✅ Cookies set with secure flags
+✅ Robots.txt + sitemap.xml correct
+✅ Env vars point to correct API
+✅ Feature flags set correctly for cohort
 
 
 ---
 
 9) Quick “Diff” Checklist Before Going Live
 
-[ ] Domain swapped staging → production.
-
-[ ] CORS restricted to prod only.
-
-[ ] CSP restricted to prod origins.
-
-[ ] Analytics sampling reduced.
-
-[ ] Verbose logging disabled.
-
-[ ] Long-term caching enabled.
-
-[ ] Robots allow + sitemap enabled.
-
-[ ] Source maps private only.
-
-[ ] Feature flags OFF or small cohorts.
-
-[ ] Uptime & alerting enabled.
-
+[ ] Domain swapped staging → production
+[ ] CORS restricted to prod only
+[ ] CSP restricted to prod origins
+[ ] Analytics sampling reduced
+[ ] Verbose logging disabled
+[ ] Long-term caching enabled
+[ ] Robots allow + sitemap enabled
+[ ] Source maps private only
+[ ] Feature flags OFF or small cohorts
+[ ] Uptime & alerting enabled
 
 
 ---
