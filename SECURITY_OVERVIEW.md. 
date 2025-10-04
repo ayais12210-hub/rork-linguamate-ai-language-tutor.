@@ -1,0 +1,83 @@
+# 🔐 Security Overview — Linguamate AI
+
+This document provides a **centralized overview** of the security posture for Linguamate AI across **Android, iOS, and Web** platforms.  
+It serves as the entry point for all platform-specific security policies and practices.  
+
+All measures are aligned with:
+- **OWASP MASVS** (Mobile Application Security Verification Standard)  
+- **OWASP Top 10 (Web Applications)**  
+- **Google Play Data Safety Guidelines**  
+- **Apple App Store Privacy Guidelines**  
+- **GDPR / CCPA compliance**  
+
+---
+
+## 📱 Mobile Security (Android + iOS)
+
+### Shared Principles
+- Transport Security: HTTPS/TLS 1.2+, HSTS enforced, no mixed content.  
+- Secrets Management: never stored in client; injected via environment/config.  
+- Permissions: **least privilege** — only microphone is requested, and only when triggered.  
+- Logging: no PII or tokens in logs.  
+- Privacy: analytics and crash reporting are optional and opt-in.  
+- Data Deletion: users can request deletion in-app or via support email.  
+
+👉 See full docs:  
+- [Security Notes — Android](./SECURITY_ANDROID.md)  
+- [Security Notes — iOS](./SECURITY_IOS.md)  
+
+---
+
+## 🌐 Web Security
+
+### Core Principles
+- HTTPS/TLS enforced with **HSTS** and redirect rules.  
+- Strong **Content Security Policy (CSP)** restricts origins and prevents XSS.  
+- No secrets in client code; only `EXPO_PUBLIC_*` env vars exposed.  
+- Backend APIs hardened with rate limiting, input validation, and safe error handling.  
+- Authentication tokens stored in HttpOnly cookies (preferred).  
+- WCAG 2.1 AA accessibility standards checked in CI.  
+
+👉 See full doc:  
+- [Security Notes — Web](./SECURITY_WEB.md)  
+
+---
+
+## 📊 Observability & Monitoring
+- Correlation IDs for tracing requests end-to-end.  
+- Redaction of tokens and sensitive data in logs.  
+- Crash reporting (Sentry/Expo) optional, anonymized.  
+- Lighthouse + Playwright security checks automated in CI/CD.  
+
+---
+
+## ⚠️ Incident Response
+- 📧 **Contact:** `security@linguamate.ai`  
+- 🛠 **Steps:**  
+  1. **Identify**: Detect via monitoring alerts.  
+  2. **Contain**: Revoke compromised tokens, disable endpoints.  
+  3. **Notify**: Inform affected users (if legally required).  
+  4. **Remediate**: Patch, redeploy, rotate secrets.  
+- 🕒 SLA: Critical vulnerabilities → triaged in 4h, patched in ≤48h.  
+
+---
+
+## 📋 Compliance
+- GDPR & CCPA transparency: Privacy Policy accessible in-app and on website.  
+- Google Play Data Safety: microphone optional, no unnecessary permissions.  
+- Apple App Store Privacy Nutrition Labels: accurate, no hidden data use.  
+- Cookie consent banner (for Web, if analytics enabled).  
+- Regular penetration testing and dependency scanning (npm audit, Semgrep, Gitleaks).  
+
+---
+
+## 🔮 Future Enhancements
+- Android: Play Integrity API device attestation.  
+- iOS: Certificate pinning + App Attest for fraud prevention.  
+- Web: Subresource Integrity (SRI) + CSP reporting endpoints.  
+- All: scheduled penetration tests, red team exercises before major releases.  
+
+---
+
+✅ With this layered approach, Linguamate AI maintains a **defense-in-depth strategy** across platforms:  
+**network security, data minimization, least-privilege permissions, strict compliance, and continuous monitoring.**
