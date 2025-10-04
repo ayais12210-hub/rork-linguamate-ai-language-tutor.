@@ -1,9 +1,13 @@
 name: CodeQL
 
 on:
-  push:        { branches: [ main, develop ] }
-  pull_request:{ branches: [ main, develop ] }
-  schedule:    [ { cron: "0 6 * * 0" } ]  # Sundays 06:00 UTC
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+  schedule:
+    - cron: "0 6 * * 0"   # Sundays 06:00 UTC
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -25,4 +29,5 @@ jobs:
       - uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
+      - uses: github/codeql-action/autobuild@v3
       - uses: github/codeql-action/analyze@v3
