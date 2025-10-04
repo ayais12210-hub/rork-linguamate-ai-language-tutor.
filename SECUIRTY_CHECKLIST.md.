@@ -1,0 +1,122 @@
+# ✅ Security Checklist — Linguamate AI
+
+This checklist must be reviewed **before every release** (Android, iOS, Web).  
+It ensures compliance with OWASP MASVS, Google Play Data Safety, Apple App Store Privacy, and GDPR/CCPA.  
+
+---
+
+## 🌐 Network & Transport
+- [ ] All endpoints use HTTPS/TLS 1.2+ (no HTTP fallback).
+- [ ] HSTS header set: `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`.
+- [ ] No mixed content (scripts, images, fonts, APIs all load via HTTPS).
+- [ ] Certificate valid and not expiring within next 60 days.
+
+---
+
+## 🔑 Secrets & Configuration
+- [ ] No hardcoded secrets in client (repo scan with **Gitleaks** passes).
+- [ ] Only `EXPO_PUBLIC_*` variables exposed in client builds.
+- [ ] Sensitive secrets stored server-side or in CI/CD secret manager.
+- [ ] Env vars reviewed: staging vs production values correct.
+
+---
+
+## 📱 Permissions (Least Privilege)
+- [ ] Android: `RECORD_AUDIO` only, requested at runtime with rationale.
+- [ ] iOS: Microphone permission requested only when user taps "record".
+- [ ] No unnecessary permissions (location, SMS, contacts, storage).
+- [ ] Privacy rationale strings reviewed in `AndroidManifest.xml` and `Info.plist`.
+
+---
+
+## 🔐 Storage
+- [ ] Android/iOS: Tokens stored in **SecureStore** (Keychain/Keystore).
+- [ ] Web: Tokens stored in HttpOnly cookies (preferred), not localStorage.
+- [ ] Lessons/journal stored locally only (no PII).
+- [ ] Session expiry enforced; refresh tokens short-lived & revocable.
+
+---
+
+## 📊 Logging & Observability
+- [ ] Logs contain **no PII or tokens**.
+- [ ] Sensitive values redacted in backend logs.
+- [ ] Correlation IDs enabled for request tracing.
+- [ ] Client debug logs disabled in production builds.
+
+---
+
+## 🛡 Backend & API Hardening
+- [ ] Rate limiting and abuse detection active.
+- [ ] Input validation with Zod schemas on all endpoints.
+- [ ] Output encoding applied to prevent injection.
+- [ ] CORS locked to production domains only.
+- [ ] Structured error messages, no stack traces exposed.
+
+---
+
+## 🧩 Content Moderation (AI)
+- [ ] AI outputs filtered for inappropriate or harmful content.
+- [ ] Moderation logs store only metadata, not raw prompts.
+- [ ] Safe fallback messages defined for blocked content.
+
+---
+
+## 📦 Dependency & SDK Hygiene
+- [ ] `npm audit` reports no critical vulnerabilities.
+- [ ] Dependabot alerts cleared (dependencies updated).
+- [ ] Semgrep static analysis clean.
+- [ ] Unused/abandoned packages removed.
+
+---
+
+## 📋 Compliance
+- [ ] Privacy Policy accessible in app + on website.
+- [ ] Terms of Service accessible in app + on website.
+- [ ] Google Play Data Safety form matches actual data collection.
+- [ ] Apple Privacy Nutrition Label matches app data flows.
+- [ ] Cookie consent banner present on web (if analytics enabled).
+- [ ] GDPR/CCPA data export & deletion process functional.
+
+---
+
+## 📱 Platform-Specific Checks
+### Android
+- [ ] `android:usesCleartextTraffic="false"` in manifest.
+- [ ] Google Play App Signing enabled.
+- [ ] Microphone rationale string reviewed.
+- [ ] Play Pre-Launch Report reviewed & passed.
+
+### iOS
+- [ ] ATS (AppTransportSecurity) enforced in Info.plist.
+- [ ] NSMicrophoneUsageDescription string accurate.
+- [ ] StoreKit purchase flow sandbox tested (if enabled).
+- [ ] Privacy Nutrition Label updated in App Store Connect.
+
+### Web
+- [ ] CSP header configured and tested.
+- [ ] X-Frame-Options: `DENY`.
+- [ ] Referrer-Policy: `strict-origin-when-cross-origin`.
+- [ ] Permissions-Policy: disable camera/microphone/geolocation.
+- [ ] Lighthouse Security score ≥ 95.
+- [ ] Robots.txt and sitemap.xml reviewed for environment.
+
+---
+
+## ⚠️ Incident Response
+- [ ] Security contact email active: `security@linguamate.ai`.
+- [ ] On-call escalation path verified.
+- [ ] Incident response SLA: triage in ≤4h, patch in ≤48h.
+- [ ] Logs/alerts tested (Sentry/Logtail).
+
+---
+
+## 🔮 Future-Readiness (Optional, Recommended)
+- [ ] Certificate pinning tested in dev branch.
+- [ ] Android: Play Integrity API integration reviewed.
+- [ ] iOS: App Attest/DeviceCheck planned.
+- [ ] Web: Subresource Integrity (SRI) configured for CDN assets.
+- [ ] Pentest report reviewed and stored in `docs/security/pentest/`.
+
+---
+
+✅ When all items are ticked, Linguamate AI is **ready for secure release**.
