@@ -1,17 +1,29 @@
-# Data Privacy Mapping (iOS)
+# 🍏 Data Privacy Mapping (iOS)
 
-Map data types to purposes and whether they are linked to the user.
+| Data Type                     | Collected | Linked to User | Used for Tracking | Purpose             |
+|--------------------------------|-----------|----------------|-------------------|---------------------|
+| Contact Info: Email            | No (current) / Yes (if account added) | Yes (if collected) | No | Account creation & support |
+| Identifiers: User ID           | No (current) / Yes (if account added) | Yes | No | App functionality (progress, XP) |
+| Usage Data: Product Interaction | Yes       | No             | No                | Analytics (feature usage, lessons completed) |
+| Diagnostics: Crash Data        | Yes       | No             | No                | App performance & stability |
 
-| Data Type | Collected | Linked to User | Used for Tracking | Purpose |
-|---|---|---|---|---|
-| Contact Info: Email | yes/no | yes/no | yes/no | account support |
-| Identifiers: User ID | yes/no | yes/no | yes/no | app functionality |
-| Usage Data: Product Interaction | yes/no | yes/no | no | analytics |
-| Diagnostics: Crash Data | yes/no | no | no | app performance |
+---
 
-SDKs used: <LIST SDKs and data they collect>
+## 📦 SDKs Used
+- **Expo SDK / React Native** (core framework)  
+- **React Query / tRPC** (state + API)  
+- **Crash/analytics provider** (non-identifying diagnostics)  
+- **No advertising or marketing SDKs integrated**  
 
-ATT required: <Yes/No>. If Yes, show ATT prompt after meaningful context.
+---
 
-Links: Privacy Policy <URL>, Support <URL>
+## 📌 ATT (AppTrackingTransparency)
+- **Required:** No (app does not track users across apps or websites).  
+- If in the future ad-based personalisation is added:  
+  - **Yes** → Show ATT prompt *after meaningful context screen*.  
 
+---
+
+## 🔗 Links
+- **Privacy Policy:** https://linguamate.ai/privacy  
+- **Support:** https://linguamate.ai/support
