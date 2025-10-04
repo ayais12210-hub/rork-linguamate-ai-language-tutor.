@@ -1,11 +1,3 @@
-
-Here’s a comprehensive production-ready Security Notes (Web) doc for Linguamate AI — expanded far beyond your outline, structured for clarity, and aligned with OWASP, W3C, and Google Lighthouse best practices.
-
-Save this as: docs/security/SECURITY_WEB.md
-
-
----
-
 # 🔒 Security Notes — Web (Linguamate AI)
 
 This document outlines the security posture of the Linguamate AI **web application**.  
