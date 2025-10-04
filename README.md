@@ -393,5 +393,4 @@ Proprietary. © 2025 Rork. All rights reserved.
 
 ⚡ This doc now covers: **overview, navigation, features, architecture, AI/Media, privacy, environment, troubleshooting, CI/CD, security, design, accessibility, testing, release process, observability, contributing, licensing, and roadmap.**  
 
-Would you like me to also generate a **short “Executive Summary” version** (1-page, plain language, store-friendly) to sit alongside this technical README for investors or non-developer readers?
 
