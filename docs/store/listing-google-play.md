@@ -96,6 +96,103 @@ Summary (for Play Console form):
 - **Encryption:** All data encrypted in transit + at rest.  
 - **User Control:** Disable analytics/diagnostics; delete practice clips; request account data deletion via privacy@linguamate.ai.  
 
+
+---
+
+
+# 📸 Google Play Screenshot Captions — LinguaMate AI
+
+1. Speak & Get Instant Feedback
+→ (Show AI STT correcting pronunciation live).
+
+
+2. Smart Translations with Context
+→ (Show cultural/idiomatic translation example).
+
+
+3. Adaptive Lessons for All Levels
+→ (Show lessons/quiz progression).
+
+
+4. Track Progress & Earn Rewards
+→ (Show XP, achievements, leaderboard).
+
+
+5. Offline Learning Anywhere
+→ (Show lesson cache + offline banner).
+
+
+6. Dark Mode, Light Mode Ready
+→ (Show UI in both modes side by side).
+
+
+7. Built with Privacy First
+→ (Show Privacy Controls screen toggle).
+
+
+
+
+---
+
+## Optional Captions for Extended Screenshot Set
+
+8. Practice Conversations with AI
+→ (Show chat with inline translator).
+
+
+9. Learn Alphabets, Numbers & More
+→ (Show Learn Hub with grid of modules).
+
+
+10. Join the Global Leaderboard
+→ (Show leaderboard tab with filters).
+
+
+
+
+---
+
+## 📐 Screenshot Guidelines for Google Play
+
+Size: 1080×1920 or 1242×2208 (portrait).
+
+Minimum Required: At least 3; recommended 6–8 for full coverage.
+
+Style:
+
+Add captions as bold text overlays at top or bottom.
+
+Use brand colours (blue/white or dark gradient) for consistency.
+
+Keep text short, legible, and high contrast.
+
+
+Flow: Order screenshots so captions tell a story: Speak → Translate → Learn → Progress → Offline → Privacy.
+
+
+
+---
+
+✅ With these captions, your listing will hook scrollers in the first 3 screenshots, while the extended set builds trust (privacy, offline mode) and depth (leaderboard, modules).
+
+---
+
+### 📸 Google Play Screenshot Captions — LinguaMate AI
+
+1. Speak & Get Instant Feedback
+2. Smart Translations with Context
+3. Adaptive Lessons for All Levels
+4. Track Progress & Earn Rewards
+5. Offline Learning Anywhere
+6. Dark Mode, Light Mode Ready
+7. Built with Privacy First
+
+Optional (Extended Set)
+8. Practice Conversations with AI
+9. Learn Alphabets, Numbers & More
+10. Join the Global Leaderboard
+
+
 ---
 
 ## Support
