@@ -357,14 +357,6 @@ Prefer tRPC + React Query for server state management
 Follow Conventional Commits (feat:, fix:, chore: etc.)
 
 
-
----
-
-📜 License
-
-Proprietary. © 2025 Rork. All rights reserved.
-
-
 ---
 
 📌 Roadmap
@@ -384,16 +376,6 @@ Proprietary. © 2025 Rork. All rights reserved.
 [ ] Additional learning content types (dictation, timed tests)
 
 [ ] Gamification: badges, streak multipliers, seasonal events
-
-
-
----
-
-README.md is already super comprehensive, but right now it only covers the frontend side (Expo/React Native/Web).
-
-Since you also have a Hono + tRPC backend (backend/hono.ts, backend/trpc/app-router.ts), adding a “How to Run the Backend Server” section will make it contributor-friendly and complete.
-
-Here’s an improved section you can drop straight into your README.md ⬇️
 
 
 ---
@@ -648,4 +630,10 @@ Backups: If persistent storage (DB) is later added, automate backups.
 
 ⚡ This doc now covers: **overview, navigation, features, architecture, AI/Media, privacy, environment, troubleshooting, CI/CD, security, design, accessibility, testing, release process, observability, contributing, licensing, and roadmap.**  
 
+
+---
+
+📜 License
+
+Proprietary. © 2025 Rork. All rights reserved.
 
