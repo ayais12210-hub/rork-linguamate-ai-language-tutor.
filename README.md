@@ -491,6 +491,157 @@ The Expo app will auto-detect the EXPO_PUBLIC_BACKEND_URL and route API calls to
 
 ⚡ With this addition, your README.md will now guide new contributors from zero → backend running → full stack working locally.
 
+---
+
+
+# 🚀 Backend Deployment (Hono + tRPC)
+
+The backend can be deployed to multiple platforms. Choose the one that best fits your stack (Vercel, Render, or Docker).
+
+
+---
+
+## 🔹 1. Deploying to Vercel (Recommended for Serverless APIs)
+
+Steps:
+
+1. Push your code to GitHub.
+
+
+2. Connect the repo to Vercel.
+
+
+3. In Vercel → Settings → Environment Variables, add:
+
+PORT=4000
+NODE_ENV=production
+EXPO_PUBLIC_BACKEND_URL=https://api.linguamate.ai
+EXPO_PUBLIC_TOOLKIT_URL=https://toolkit.rork.com
+SENTRY_DSN=<your-dsn>
+LOGTAIL_TOKEN=<your-token>
+
+
+4. Add a vercel.json file at repo root:
+
+{
+  "version": 2,
+  "builds": [{ "src": "backend/hono.ts", "use": "@vercel/node" }],
+  "routes": [
+    { "src": "/(.*)", "dest": "/backend/hono.ts" }
+  ]
+}
+
+
+5. Deploy → your backend will be live at https://api-yourproject.vercel.app.
+
+
+
+
+---
+
+## 🔹 2. Deploying to Render (Full Node Server)
+
+Steps:
+
+1. Create a new Web Service on Render.
+
+
+2. Select repo + branch (main).
+
+
+3. Runtime: Node 18.
+
+
+4. Build command:
+
+npm install && npm run build
+
+
+5. Start command:
+
+node backend/hono.ts
+
+
+6. Add the same environment variables as above in Render → Settings → Environment.
+
+
+
+
+---
+
+## 🔹 3. Deploying with Docker (Self-Hosted)
+
+Create a Dockerfile at project root:
+
+# Use lightweight Node runtime
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install --production
+
+COPY . .
+
+ENV NODE_ENV=production
+ENV PORT=4000
+
+EXPOSE 4000
+
+CMD ["node", "backend/hono.ts"]
+
+Build & Run:
+
+docker build -t linguamate-backend .
+docker run -p 4000:4000 --env-file .env linguamate-backend
+
+
+---
+
+## 🔹 Staging vs Production
+
+Use different API base URLs:
+
+Staging: https://api-staging.linguamate.ai
+
+Production: https://api.linguamate.ai
+
+
+Make sure frontend .env points to the right backend:
+
+EXPO_PUBLIC_BACKEND_URL=https://api-staging.linguamate.ai   # staging
+EXPO_PUBLIC_BACKEND_URL=https://api.linguamate.ai           # production
+
+
+---
+
+## 🔒 Best Practices
+
+CORS: Restrict origins to your frontend domains only in production.
+
+Logs: Never log PII or tokens. Use correlation IDs.
+
+Monitoring: Add Sentry, Logtail, or equivalent error tracking.
+
+Scaling: Use serverless (Vercel) for low ops overhead, or Render/Docker for long-lived connections.
+
+Backups: If persistent storage (DB) is later added, automate backups.
+
+
+
+---
+
+## 🔥 With this, your README now covers:
+
+1. Running backend locally
+
+
+2. Deploying backend to Vercel, Render, or Docker
+
+
+3. Best practices for staging vs production
+
+
 
 
 ---
