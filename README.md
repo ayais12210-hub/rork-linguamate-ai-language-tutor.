@@ -398,11 +398,11 @@ Here’s an improved section you can drop straight into your README.md ⬇️
 
 ---
 
-# 🖥️ Running the Backend Server
+## 🖥️ Running the Backend Server
 
 The backend powers all API requests, AI lesson generation, chat moderation, and database interactions. It’s built with Hono (minimal web framework) + tRPC for type-safe APIs.
 
-# 🔧 Prerequisites
+## 🔧 Prerequisites
 
 Node.js ≥ 18 (or Bun ≥ 1.0 if you prefer Bun runtime)
 
@@ -411,7 +411,7 @@ Package manager: Bun (recommended) or npm/yarn/pnpm
 Environment file: .env with backend configs (see below)
 
 
-# ⚙️ Environment Variables
+## ⚙️ Environment Variables
 
 Create a .env file in the project root:
 
@@ -431,7 +431,7 @@ LOGTAIL_TOKEN=<your-logtail-token>
 
 
 
-# ▶️ Starting the Backend
+## ▶️ Starting the Backend
 
 Option 1 — Using Bun (recommended)
 
@@ -445,7 +445,7 @@ npm run backend:start
 
 (You can add a "backend:start": "tsx backend/hono.ts" script in package.json.)
 
-# 📡 API Routes
+## 📡 API Routes
 
 Once running, the backend exposes these endpoints:
 
@@ -458,7 +458,7 @@ POST /api/stt/transcribe → Speech-to-text proxy
 POST /api/trpc/... → tRPC router (Auth, Lessons, Learn, Chat, Leaderboard, Analytics)
 
 
-# 🔍 Logs & Debugging
+## 🔍 Logs & Debugging
 
 Requests are logged with correlation IDs for tracing.
 
@@ -467,7 +467,7 @@ In development, verbose logs are enabled.
 In production, sensitive data is redacted.
 
 
-🧪 Testing the Backend
+## 🧪 Testing the Backend
 
 curl http://localhost:4000/api/health
 
@@ -475,7 +475,7 @@ Expected output:
 
 { "status": "ok", "uptime": 123.45 }
 
-# 🌐 Running Backend + Frontend Together
+## 🌐 Running Backend + Frontend Together
 
 Start backend first (bun run backend/hono.ts).
 
