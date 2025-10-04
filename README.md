@@ -1,5 +1,3 @@
-
-
 # 🌐 Linguamate — AI Language Tutor
 
 Cross-Platform AI-Powered Language Learning App  
