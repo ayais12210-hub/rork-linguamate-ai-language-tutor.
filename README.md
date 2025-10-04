@@ -33,6 +33,12 @@ It provides structured lessons, conversational practice, and advanced learning m
 🌍 i18n Scaffold: English seed, ready for extensions
 
 
+## 📑 Compliance & Store Docs
+- Android: [`DATA_SAFETY_MAPPING.md`](./DATA_SAFETY_MAPPING.md), [`GOOGLE_PLAY_STORE_INFO.md`](./GOOGLE_PLAY_STORE_INFO.md)
+- iOS: [`APP_STORE_LISTING_INFO.md`](./APP_STORE_LISTING_INFO.md), [`APP_STORE_PREPARATION.md`](./APP_STORE_PREPARATION.md)
+- Web: [`DATA_PRIVACY_MAPPING_WEB.md`](./DATA_PRIVACY_MAPPING_WEB.md)
+- Security: [`SECURITY.md`](./SECURITY.md)
+
 
 ---
 
