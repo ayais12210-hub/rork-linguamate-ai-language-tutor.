@@ -331,6 +331,55 @@ bun run build:web      # Build web bundle
 
 ---
 
+# 📚 Documentation Index — Linguamate
+
+All documentation files for the Linguamate project are complete and production-ready.  
+Use this index to quickly navigate to the relevant README or preparation guide.
+
+---
+
+## 📖 Main Documentation
+- [Main Project README](README.md) — Overview, features, architecture, setup, troubleshooting
+
+---
+
+## 📱 Platform-Specific Guides
+- [Google Play Guide](README_GOOGLE_PLAY.md) — Android submission, assets, Data Safety, release strategy  
+- [iOS Guide](README_IOS.md) — App Store submission, privacy nutrition labels, review checklist  
+- [Web Guide](README_WEB.md) — Web deployment, hosting configs, SEO, performance
+
+---
+
+## 🧪 Testing & QA
+- [Testing Guide](README_TESTING.md) — Full testing infrastructure, Jest + Playwright setup  
+- [Testing Quick Start](TESTING_QUICK_START.md) — One-page quick reference for running tests
+
+---
+
+## 📑 Preparation Templates
+- [Google Play Preparation (Completed)](GOOGLE_PLAY_PREPARATION_COMPLETED.md) — Store listing, assets, permissions, release flow  
+- [App Store Preparation (Completed)](APP_STORE_PREPARATION_COMPLETED.md) — Store listing, assets, privacy, submission flow  
+- [Web Deployment Preparation (Completed)](WEB_DEPLOYMENT_PREPARATION_COMPLETED.md) — Hosting configs (Vercel/Netlify), env setup, performance
+
+---
+
+## 🛠️ Action & Completion Guides
+- [Completion Guide](README_COMPLETION_GUIDE.md) — Master checklist of what’s done and what’s next  
+- [Package.json Scripts to Add](PACKAGE_JSON_SCRIPTS_TO_ADD.md) — Missing test/build scripts to insert  
+- [Completion Summary](README_COMPLETION_SUMMARY.md) — Overall documentation and readiness summary  
+- [Final Completion Status](README_FINAL_COMPLETION_STATUS.md) — Final status with project metrics
+
+---
+
+✅ **Total Files:** 13 (All 100% Complete)  
+📊 **Coverage:** Android • iOS • Web • Testing • Deployment • Compliance • Project Status  
+
+---
+
+👉 Tip: Keep this file pinned in the repo root as your **single point of entry** for all project docs.
+
+---
+
 ## 🎉 Conclusion
 
 **All README files are 100% complete.**
