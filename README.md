@@ -389,6 +389,110 @@ Proprietary. © 2025 Rork. All rights reserved.
 
 ---
 
+README.md is already super comprehensive, but right now it only covers the frontend side (Expo/React Native/Web).
+
+Since you also have a Hono + tRPC backend (backend/hono.ts, backend/trpc/app-router.ts), adding a “How to Run the Backend Server” section will make it contributor-friendly and complete.
+
+Here’s an improved section you can drop straight into your README.md ⬇️
+
+
+---
+
+# 🖥️ Running the Backend Server
+
+The backend powers all API requests, AI lesson generation, chat moderation, and database interactions. It’s built with Hono (minimal web framework) + tRPC for type-safe APIs.
+
+# 🔧 Prerequisites
+
+Node.js ≥ 18 (or Bun ≥ 1.0 if you prefer Bun runtime)
+
+Package manager: Bun (recommended) or npm/yarn/pnpm
+
+Environment file: .env with backend configs (see below)
+
+
+# ⚙️ Environment Variables
+
+Create a .env file in the project root:
+
+# Backend API
+PORT=4000
+NODE_ENV=development
+
+# External services
+EXPO_PUBLIC_BACKEND_URL=http://localhost:4000
+EXPO_PUBLIC_TOOLKIT_URL=https://toolkit.rork.com
+
+# Optional monitoring
+SENTRY_DSN=<your-sentry-dsn>
+LOGTAIL_TOKEN=<your-logtail-token>
+
+> Only EXPO_PUBLIC_* vars are exposed to the client. Keep secrets server-side.
+
+
+
+# ▶️ Starting the Backend
+
+Option 1 — Using Bun (recommended)
+
+bun install
+bun run backend/hono.ts
+
+Option 2 — Using Node.js
+
+npm install
+npm run backend:start
+
+(You can add a "backend:start": "tsx backend/hono.ts" script in package.json.)
+
+# 📡 API Routes
+
+Once running, the backend exposes these endpoints:
+
+GET /api/health → Health check
+
+GET /api/info → Service metadata
+
+POST /api/stt/transcribe → Speech-to-text proxy
+
+POST /api/trpc/... → tRPC router (Auth, Lessons, Learn, Chat, Leaderboard, Analytics)
+
+
+# 🔍 Logs & Debugging
+
+Requests are logged with correlation IDs for tracing.
+
+In development, verbose logs are enabled.
+
+In production, sensitive data is redacted.
+
+
+🧪 Testing the Backend
+
+curl http://localhost:4000/api/health
+
+Expected output:
+
+{ "status": "ok", "uptime": 123.45 }
+
+# 🌐 Running Backend + Frontend Together
+
+Start backend first (bun run backend/hono.ts).
+
+Then start frontend:
+
+bunx rork start --tunnel
+
+The Expo app will auto-detect the EXPO_PUBLIC_BACKEND_URL and route API calls to it.
+
+
+
+---
+
+⚡ With this addition, your README.md will now guide new contributors from zero → backend running → full stack working locally.
+
+
+
 ---
 
 ⚡ This doc now covers: **overview, navigation, features, architecture, AI/Media, privacy, environment, troubleshooting, CI/CD, security, design, accessibility, testing, release process, observability, contributing, licensing, and roadmap.**  
