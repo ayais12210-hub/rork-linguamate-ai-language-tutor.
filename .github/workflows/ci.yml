@@ -90,7 +90,7 @@ jobs:
             ~/.cache
           key: ${{ runner.os }}-node-${{ hashFiles('**/bun.lock') }}
       - name: Run tests
-        run: bun run test -- --ci --runInBand --coverage
+        run: bun run test:ci
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         if: always()
@@ -98,6 +98,12 @@ jobs:
           files: ./coverage/coverage-final.json
           flags: unittests
           fail_ci_if_error: false
+      - name: Comment coverage on PR
+        if: github.event_name == 'pull_request'
+        uses: romeovs/lcov-reporter-action@v0.3.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          lcov-file: ./coverage/lcov.info
 
   e2e-web:
     name: E2E Tests (Web)
@@ -154,3 +160,21 @@ jobs:
           name: web-dist
           path: dist/
           retention-days: 7
+      - name: Create Sentry release
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+        run: |
+          if [ -n "$SENTRY_AUTH_TOKEN" ]; then
+            curl -sL https://sentry.io/get-cli/ | bash
+            export SENTRY_RELEASE="${GITHUB_SHA}"
+            sentry-cli releases new "$SENTRY_RELEASE"
+            sentry-cli releases set-commits "$SENTRY_RELEASE" --auto
+            sentry-cli releases files "$SENTRY_RELEASE" upload-sourcemaps ./dist --rewrite
+            sentry-cli releases finalize "$SENTRY_RELEASE"
+            echo "Sentry release created: $SENTRY_RELEASE"
+          else
+            echo "Skipping Sentry release (no auth token)"
+          fi

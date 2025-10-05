@@ -1,0 +1,90 @@
+# Dependabot configuration for automated dependency updates
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates
+
+version: 2
+updates:
+  # JavaScript/NPM dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "ayais12210-hub"
+    labels:
+      - "dependencies"
+      - "javascript"
+    commit-message:
+      prefix: "chore(deps):"
+      include: "scope"
+    # Version update strategy
+    versioning-strategy: increase-if-necessary
+    # Group related updates
+    groups:
+      # Group all Expo packages together
+      expo:
+        patterns:
+          - "expo*"
+          - "@expo/*"
+      # Group all React packages together
+      react:
+        patterns:
+          - "react"
+          - "react-*"
+          - "@react-*"
+      # Group all testing packages together
+      testing:
+        patterns:
+          - "@testing-library/*"
+          - "jest*"
+          - "@jest/*"
+          - "playwright"
+          - "@playwright/*"
+          - "msw"
+      # Group all TypeScript/ESLint packages together
+      tooling:
+        patterns:
+          - "typescript"
+          - "eslint*"
+          - "@typescript-eslint/*"
+          - "prettier"
+          - "@types/*"
+      # Group all tRPC packages together
+      trpc:
+        patterns:
+          - "@trpc/*"
+          - "trpc"
+      # Group Sentry packages
+      sentry:
+        patterns:
+          - "@sentry/*"
+          - "sentry-*"
+    # Allow both direct and indirect dependency updates
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    # Ignore major version updates for critical packages (require manual review)
+    ignore:
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-native"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(ci):"

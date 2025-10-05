@@ -6,7 +6,21 @@
     "start": "bunx rork start -p vep9anbk6huqelg0fppmq --tunnel",
     "start-web": "bunx rork start -p vep9anbk6huqelg0fppmq --web --tunnel",
     "start-web-dev": "DEBUG=expo* bunx rork start -p vep9anbk6huqelg0fppmq --web --tunnel",
-    "lint": "expo lint"
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx --max-warnings=0",
+    "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
+    "format:fix": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:ci": "jest --ci --coverage --maxWorkers=2",
+    "test:contracts": "jest __tests__/contracts --ci",
+    "test:regression": "jest __tests__/regression --ci",
+    "e2e": "playwright test",
+    "e2e:debug": "playwright test --debug",
+    "build:web": "expo export --platform web",
+    "precommit": "lint-staged",
+    "prepare": "husky install"
   },
   "dependencies": {
     "@axe-core/playwright": "^4.10.2",
