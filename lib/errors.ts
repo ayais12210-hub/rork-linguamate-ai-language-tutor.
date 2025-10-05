@@ -55,11 +55,27 @@ export const toAppError = (e: unknown): AppError => {
 
   // TRPC client error (best-effort shape check to avoid hard dependency)
   const maybeTrpc = e as TRPCClientErrorLike<AppRouter> | any;
-  if (maybeTrpc && typeof maybeTrpc === 'object' && 'data' in maybeTrpc && maybeTrpc.data && typeof maybeTrpc.data === 'object') {
+  if (
+    maybeTrpc &&
+    typeof maybeTrpc === 'object' &&
+    'data' in maybeTrpc &&
+    maybeTrpc.data &&
+    typeof maybeTrpc.data === 'object' &&
+    'code' in maybeTrpc.data
+  ) {
     const code: string | undefined = (maybeTrpc.data as any).code;
     const message: string = (maybeTrpc.data as any).message || (maybeTrpc as any).message || 'Request failed';
     const requestId: string | undefined = (maybeTrpc.data as any).requestId;
-    const kind: AppErrorKind = code === 'UNAUTHORIZED' ? 'Auth' : code === 'BAD_REQUEST' ? 'Validation' : 'Server';
+    const kind: AppErrorKind =
+      code === 'UNAUTHORIZED' || code === 'FORBIDDEN'
+        ? 'Auth'
+        : code === 'BAD_REQUEST' || code === 'PARSE_ERROR'
+        ? 'Validation'
+        : code === 'TIMEOUT'
+        ? 'Network'
+        : code === 'INTERNAL_SERVER_ERROR'
+        ? 'Server'
+        : 'Server';
     return new AppError({ kind, message, code, details: maybeTrpc.data, requestId, cause: e });
   }
 
