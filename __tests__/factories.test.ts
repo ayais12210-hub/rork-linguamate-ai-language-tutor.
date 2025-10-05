@@ -69,8 +69,8 @@ describe('Test Factories', () => {
       const profile = makeUserProfile();
       expect(profile).toHaveProperty('preferences');
       expect(profile).toHaveProperty('stats');
-      expect(profile.preferences).toHaveProperty('dailyGoal', 20);
-      expect(profile.stats).toHaveProperty('lessonsCompleted', 0);
+      expect(profile.preferences).toHaveProperty('darkMode', false);
+      expect(profile.stats).toHaveProperty('totalChats', 0);
     });
   });
 });

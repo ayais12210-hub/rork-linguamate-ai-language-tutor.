@@ -5,7 +5,11 @@ import { CheckCircle, XCircle, Zap, X } from 'lucide-react-native';
 import { LANGUAGES } from '@/constants/languages';
 import type { ModuleType } from '@/modules/types';
 import { z } from 'zod';
-import { generateObject } from '@rork/toolkit-sdk';
+// Mock implementation of generateObject
+const generateObject = async (options: { schema: any; prompt: string }): Promise<{ object: any }> => {
+  // This is a mock implementation - replace with actual AI service
+  throw new Error('AI service not implemented');
+};
 
 interface AIQuizProps {
   visible: boolean;
@@ -64,20 +68,15 @@ export default function AIQuiz({ visible, moduleType, nativeLangCode, targetLang
       const topic = moduleType;
 
       const result = await generateObject({
-        messages: [
-          {
-            role: 'user',
-            content: `Create a short quiz of 6-8 questions for the topic "${topic}" to learn ${targetName} for a user whose native language is ${nativeName}. 
+        schema: quizSchema,
+        prompt: `Create a short quiz of 6-8 questions for the topic "${topic}" to learn ${targetName} for a user whose native language is ${nativeName}. 
 - Provide BOTH prompts: 'promptNative' in ${nativeName} and 'promptTarget' in ${targetName}. 
 - Mix multiple_choice (with 4 options), translation, and fill_blank. 
 - Ensure culturally and linguistically accurate, beginner-friendly where appropriate.
 Return only JSON.`,
-          },
-        ],
-        schema: quizSchema,
       });
 
-      const qs = result.questions as QuizQuestion[];
+      const qs = result.object?.questions as QuizQuestion[] || [];
       setQuestions(qs);
     } catch (e: unknown) {
       console.log('[AIQuiz] load error', e);

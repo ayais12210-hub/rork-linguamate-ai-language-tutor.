@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     top: 0,
     zIndex: 50,
     backgroundColor: 'rgba(10, 10, 10, 0.8)',
-    backdropFilter: Platform.OS === 'web' ? 'blur(24px)' : undefined,
+    ...(Platform.OS === 'web' && { backdropFilter: 'blur(24px)' }),
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },

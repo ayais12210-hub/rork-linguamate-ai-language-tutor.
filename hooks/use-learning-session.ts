@@ -49,7 +49,7 @@ export const useLearningSession = () => {
     currentStreak: 0,
   });
   const [isLoading, setIsLoading] = useState(false);
-  const sessionTimer = useRef<NodeJS.Timeout | null>(null);
+  const sessionTimer = useRef<any>(null);
   const { user, updateStats } = useUser();
 
   useEffect(() => {

@@ -54,7 +54,12 @@ export default function SignupScreen() {
       }, 'low');
       
       // Update user context
-      updateUser(data.user);
+      updateUser({
+        ...data.user,
+        nativeLanguage: data.user.nativeLanguage || undefined,
+        targetLanguage: data.user.targetLanguage || undefined,
+        selectedLanguage: data.user.selectedLanguage || undefined,
+      });
       
       // Navigate to onboarding
       router.replace('/onboarding');
@@ -130,6 +135,8 @@ export default function SignupScreen() {
         name: sanitizedName,
         email: sanitizedEmail,
         password,
+        displayName: sanitizedName,
+        acceptedTerms: true,
       });
     } finally {
       setIsLoading(false);
