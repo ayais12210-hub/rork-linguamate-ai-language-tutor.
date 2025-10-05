@@ -50,8 +50,7 @@ async function proxyJson(c: Context, path: string, body?: unknown, init?: Reques
   c.header('X-RateLimit-Remaining', String(rl.remaining));
   c.header('X-RateLimit-Reset', String(Math.max(0, Math.ceil(rl.resetMs / 1000))));
   if (!rl.allowed) {
-    c.status(429 as any);
-    return c.json({ message: 'Rate limit exceeded' });
+    return c.status(429).json({ message: 'Rate limit exceeded' });
   }
 
   const correlationId = c.req.header('x-request-id') ?? (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
@@ -71,36 +70,39 @@ async function proxyJson(c: Context, path: string, body?: unknown, init?: Reques
         body: body !== undefined ? JSON.stringify(body) : undefined,
       });
       const text = await res.text();
-      const json = text ? JSON.parse(text) : {};
+      let json = {};
+      if (text) {
+        try {
+          json = JSON.parse(text);
+        } catch (parseError) {
+          console.error('[ToolkitProxy] Failed to parse JSON response:', parseError);
+          json = { message: 'Invalid JSON response from upstream service' };
+        }
+      }
       if (!res.ok) {
         if ((res.status === 429 || res.status >= 500) && attempt < retries) {
           await new Promise((r) => setTimeout(r, 500 * Math.pow(2, attempt)));
           attempt++;
           continue;
         }
-        c.status(res.status as any);
-        return c.json({ message: json?.message ?? 'Upstream error', status: res.status });
+        return c.status(res.status).json({ message: json?.message ?? 'Upstream error', status: res.status });
       }
-      c.status(res.status as any);
-      return c.json(json);
+      return c.status(res.status).json(json);
     } catch (e: any) {
       lastErr = e;
       if (attempt === retries) {
-        c.status(503 as any);
-        return c.json({ message: 'Service temporarily unavailable', error: e?.message });
+        return c.status(503).json({ message: 'Service temporarily unavailable', error: e?.message });
       }
       await new Promise((r) => setTimeout(r, 500 * Math.pow(2, attempt)));
       attempt++;
     }
   }
-  c.status(500 as any);
-  return c.json({ message: 'Unknown error', error: (lastErr as any)?.message });
+  return c.status(500).json({ message: 'Unknown error', error: (lastErr as any)?.message });
 }
 
 // Health & config visibility (no secrets)
 toolkitApp.get('/toolkit/health', (c) => {
-  c.status(200 as any);
-  return c.json({ ok: true, base: BASE, rate: { windowMs: WINDOW_MS, max: MAX_REQ } });
+  return c.status(200).json({ ok: true, base: BASE, rate: { windowMs: WINDOW_MS, max: MAX_REQ } });
 });
 
 // v1 namespaced routes
@@ -120,8 +122,7 @@ toolkitApp.post('/toolkit/text/llm', async (c) => {
 toolkitApp.post('/toolkit/v1/stt/transcribe', async (c) => {
   const contentType = c.req.header('content-type') ?? '';
   if (!contentType.includes('multipart/form-data')) {
-    c.status(400 as any);
-    return c.json({ message: 'Expected multipart/form-data' });
+    return c.status(400).json({ message: 'Expected multipart/form-data' });
   }
   const url = new URL('/stt/transcribe/', BASE).toString();
   try {
@@ -134,12 +135,18 @@ toolkitApp.post('/toolkit/v1/stt/transcribe', async (c) => {
       body: (c.req as any).raw?.body as unknown as BodyInit,
     });
     const text = await res.text();
-    const json = text ? JSON.parse(text) : {};
-    c.status(res.status as any);
-    return c.json(json);
+    let json = {};
+    if (text) {
+      try {
+        json = JSON.parse(text);
+      } catch (parseError) {
+        console.error('[ToolkitProxy] Failed to parse JSON response:', parseError);
+        json = { message: 'Invalid JSON response from upstream service' };
+      }
+    }
+    return c.status(res.status).json(json);
   } catch (e: any) {
-    c.status(503 as any);
-    return c.json({ message: 'Service temporarily unavailable', error: e?.message });
+    return c.status(503).json({ message: 'Service temporarily unavailable', error: e?.message });
   }
 });
 
@@ -147,8 +154,7 @@ toolkitApp.post('/toolkit/v1/stt/transcribe', async (c) => {
 toolkitApp.post('/toolkit/stt/transcribe', async (c) => {
   const contentType = c.req.header('content-type') ?? '';
   if (!contentType.includes('multipart/form-data')) {
-    c.status(400 as any);
-    return c.json({ message: 'Expected multipart/form-data' });
+    return c.status(400).json({ message: 'Expected multipart/form-data' });
   }
   const url = new URL('/stt/transcribe/', BASE).toString();
   try {
@@ -161,12 +167,18 @@ toolkitApp.post('/toolkit/stt/transcribe', async (c) => {
       body: (c.req as any).raw?.body as unknown as BodyInit,
     });
     const text = await res.text();
-    const json = text ? JSON.parse(text) : {};
-    c.status(res.status as any);
-    return c.json(json);
+    let json = {};
+    if (text) {
+      try {
+        json = JSON.parse(text);
+      } catch (parseError) {
+        console.error('[ToolkitProxy] Failed to parse JSON response:', parseError);
+        json = { message: 'Invalid JSON response from upstream service' };
+      }
+    }
+    return c.status(res.status).json(json);
   } catch (e: any) {
-    c.status(503 as any);
-    return c.json({ message: 'Service temporarily unavailable', error: e?.message });
+    return c.status(503).json({ message: 'Service temporarily unavailable', error: e?.message });
   }
 });
 
@@ -181,8 +193,7 @@ toolkitApp.post('/toolkit/v1/images/edit', async (c) => {
   const contentType = c.req.header('content-type') ?? '';
   const isMultipart = contentType.includes('multipart/form-data') || contentType.includes('application/json');
   if (!isMultipart) {
-    c.status(400 as any);
-    return c.json({ message: 'Expected multipart/form-data or JSON' });
+    return c.status(400).json({ message: 'Expected multipart/form-data or JSON' });
   }
   const url = new URL('/images/edit/', BASE).toString();
   try {
@@ -195,12 +206,18 @@ toolkitApp.post('/toolkit/v1/images/edit', async (c) => {
       body: (c.req as any).raw?.body as unknown as BodyInit,
     });
     const text = await res.text();
-    const json = text ? JSON.parse(text) : {};
-    c.status(res.status as any);
-    return c.json(json);
+    let json = {};
+    if (text) {
+      try {
+        json = JSON.parse(text);
+      } catch (parseError) {
+        console.error('[ToolkitProxy] Failed to parse JSON response:', parseError);
+        json = { message: 'Invalid JSON response from upstream service' };
+      }
+    }
+    return c.status(res.status).json(json);
   } catch (e: any) {
-    c.status(503 as any);
-    return c.json({ message: 'Service temporarily unavailable', error: e?.message });
+    return c.status(503).json({ message: 'Service temporarily unavailable', error: e?.message });
   }
 });
 

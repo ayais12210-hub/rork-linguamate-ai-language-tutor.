@@ -241,7 +241,8 @@ Constraints:
 - Use plain text, no markdown; ensure valid JSON only.
 - Keep strings short; romanization simple; omit romanization where not applicable.`;
 
-      const res = await fetch('https://toolkit.rork.com/text/llm/', {
+      const TOOLKIT_URL = process.env.EXPO_PUBLIC_TOOLKIT_URL || 'https://toolkit.rork.com';
+      const res = await fetch(`${TOOLKIT_URL}/text/llm/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: [{ role: 'user', content: prompt }] }),

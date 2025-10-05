@@ -56,8 +56,7 @@ export function validateMiddleware(schemas: ValidationSchemas) {
           'Input validation failed'
         );
 
-        c.status(error.statusCode as any);
-        return c.json({
+        return c.status(error.statusCode).json({
           error: error.validationError,
         });
       }

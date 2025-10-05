@@ -557,7 +557,8 @@ Return ONLY valid JSON with this structure:
   ]
 }`;
 
-      const response = await fetch('https://toolkit.rork.com/text/llm/', {
+      const TOOLKIT_URL = process.env.EXPO_PUBLIC_TOOLKIT_URL || 'https://toolkit.rork.com';
+      const response = await fetch(`${TOOLKIT_URL}/text/llm/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -37,6 +37,7 @@ import { LANGUAGES } from '@/constants/languages';
 import { Language } from '@/types/user';
 import { useUser } from '@/hooks/user-store';
 import UpgradeModal from '@/components/UpgradeModal';
+import { API_ENDPOINTS } from '@/lib/api';
 
 interface Translation {
   id: string;
@@ -182,7 +183,7 @@ export default function TranslatorScreen() {
     console.log('[Translator] Starting translation request');
 
     try {
-      const response = await fetch('https://toolkit.rork.com/text/llm/', {
+      const response = await fetch(API_ENDPOINTS.TEXT_LLM, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -290,7 +291,7 @@ Focus on being an encouraging language coach who helps learners understand not j
 
   const generateSuggestions = useCallback(async () => {
     try {
-      const response = await fetch('https://toolkit.rork.com/text/llm/', {
+      const response = await fetch(API_ENDPOINTS.TEXT_LLM, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

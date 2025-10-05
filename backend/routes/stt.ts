@@ -38,15 +38,13 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
 
   if (!rl.allowed) {
     console.log('[STT] Rate limit exceeded for IP:', ip);
-    c.status(429 as any);
-    return c.json({ message: 'Rate limit exceeded. Please try again later.' });
+    return c.status(429).json({ message: 'Rate limit exceeded. Please try again later.' });
   }
 
   const contentType = c.req.header('content-type') ?? '';
   if (!contentType.includes('multipart/form-data')) {
     console.log('[STT] Invalid content type:', contentType);
-    c.status(400 as any);
-    return c.json({ message: 'Expected multipart/form-data' });
+    return c.status(400).json({ message: 'Expected multipart/form-data' });
   }
 
   try {
@@ -56,8 +54,7 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
 
     if (!audioFile) {
       console.log('[STT] No audio file in request');
-      c.status(400 as any);
-      return c.json({ message: 'No audio file provided' });
+      return c.status(400).json({ message: 'No audio file provided' });
     }
 
     console.log('[STT] Audio file received, forwarding to Toolkit API...');
@@ -92,7 +89,7 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
 
     if (!response.ok) {
       console.error('[STT] Toolkit API error:', responseText);
-      c.status(response.status as any);
+      // Forward the upstream status code
       
       let errorMessage = 'Speech-to-text service error';
       try {
@@ -102,7 +99,7 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
         console.log('[STT] Could not parse error response as JSON');
       }
       
-      return c.json({ 
+      return c.status(response.status).json({ 
         message: errorMessage,
         status: response.status 
       });
@@ -114,17 +111,14 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
       console.log('[STT] Transcription successful:', result.text ? 'text received' : 'no text');
     } catch (parseError) {
       console.error('[STT] Failed to parse response JSON:', parseError);
-      c.status(500 as any);
-      return c.json({ message: 'Invalid response from speech-to-text service' });
+      return c.status(500).json({ message: 'Invalid response from speech-to-text service' });
     }
 
-    c.status(200 as any);
-    return c.json(result);
+    return c.status(200).json(result);
 
   } catch (error: any) {
     console.error('[STT] Error processing request:', error);
-    c.status(503 as any);
-    return c.json({ 
+    return c.status(503).json({ 
       message: 'Service temporarily unavailable', 
       error: error?.message || 'Unknown error'
     });
@@ -132,8 +126,7 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
 });
 
 sttApp.get('/stt/health', (c: Context) => {
-  c.status(200 as any);
-  return c.json({ 
+  return c.status(200).json({ 
     ok: true, 
     service: 'speech-to-text',
     base: BASE, 

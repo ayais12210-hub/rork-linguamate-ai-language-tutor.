@@ -2,11 +2,13 @@
 import { z } from 'zod';
 
 // API endpoints
+const TOOLKIT_BASE_URL = process.env.EXPO_PUBLIC_TOOLKIT_URL || 'https://toolkit.rork.com';
+
 export const API_ENDPOINTS = {
   // AI Services
-  TEXT_LLM: 'https://toolkit.rork.com/text/llm/',
-  IMAGE_GENERATE: 'https://toolkit.rork.com/images/generate/',
-  IMAGE_EDIT: 'https://toolkit.rork.com/images/edit/',
+  TEXT_LLM: `${TOOLKIT_BASE_URL}/text/llm/`,
+  IMAGE_GENERATE: `${TOOLKIT_BASE_URL}/images/generate/`,
+  IMAGE_EDIT: `${TOOLKIT_BASE_URL}/images/edit/`,
   // STT is proxied through our backend to ensure CORS, auth, and consistent JSON
   SPEECH_TO_TEXT_PROXY: '/api/stt/transcribe',
   

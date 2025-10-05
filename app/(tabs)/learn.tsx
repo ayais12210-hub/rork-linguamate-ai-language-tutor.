@@ -162,7 +162,8 @@ export default function LearnScreen() {
 - numbers: map each value to its target string: [{value, target}]
 - words: array of translated strings in same order
 - phrases: array of translated strings in same order`;
-        const res = await fetch('https://toolkit.rork.com/text/llm/', {
+        const TOOLKIT_URL = process.env.EXPO_PUBLIC_TOOLKIT_URL || 'https://toolkit.rork.com';
+        const res = await fetch(`${TOOLKIT_URL}/text/llm/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ messages: [
@@ -417,7 +418,8 @@ export default function LearnScreen() {
       setAiError(null);
       setAiLoading(true);
       setAiTips([]);
-      const res = await fetch('https://toolkit.rork.com/text/llm/', {
+      const TOOLKIT_URL = process.env.EXPO_PUBLIC_TOOLKIT_URL || 'https://toolkit.rork.com';
+      const res = await fetch(`${TOOLKIT_URL}/text/llm/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
