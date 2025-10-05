@@ -23,7 +23,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: Install Bun
         run: npm i -g bun@1
@@ -63,7 +62,7 @@ jobs:
 
       - name: Security Audit
         run: |
-          npm audit --json > reports/security/audit.json || true
+          bun audit --json > reports/security/audit.json || true
           cat reports/security/audit.json
 
       - name: Semgrep Security Scan
