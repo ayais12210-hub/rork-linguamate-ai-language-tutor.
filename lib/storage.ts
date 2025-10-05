@@ -43,7 +43,7 @@ class AsyncStorageAdapter implements StorageAdapter {
       await AsyncStorage.setItem(key, value);
     } catch (error) {
       console.error('AsyncStorage setItem error:', error);
-      throw error;
+      throw new Error(`Failed to set item '${key}': ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -52,7 +52,7 @@ class AsyncStorageAdapter implements StorageAdapter {
       await AsyncStorage.removeItem(key);
     } catch (error) {
       console.error('AsyncStorage removeItem error:', error);
-      throw error;
+      throw new Error(`Failed to remove item '${key}': ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -61,7 +61,7 @@ class AsyncStorageAdapter implements StorageAdapter {
       await AsyncStorage.clear();
     } catch (error) {
       console.error('AsyncStorage clear error:', error);
-      throw error;
+      throw new Error(`Failed to clear storage: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 }
@@ -82,7 +82,7 @@ class LocalStorageAdapter implements StorageAdapter {
       localStorage.setItem(key, value);
     } catch (error) {
       console.error('localStorage setItem error:', error);
-      throw error;
+      throw new Error(`Failed to set item '${key}': ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -91,7 +91,7 @@ class LocalStorageAdapter implements StorageAdapter {
       localStorage.removeItem(key);
     } catch (error) {
       console.error('localStorage removeItem error:', error);
-      throw error;
+      throw new Error(`Failed to remove item '${key}': ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -100,7 +100,7 @@ class LocalStorageAdapter implements StorageAdapter {
       localStorage.clear();
     } catch (error) {
       console.error('localStorage clear error:', error);
-      throw error;
+      throw new Error(`Failed to clear storage: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 }

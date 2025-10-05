@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import * as Speech from 'expo-speech';
+import ErrorBoundary from './ErrorBoundary';
 
 export interface PhonemeItem {
   id: string;
@@ -27,7 +28,7 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-const PhonicsTrainer: React.FC<Props> = ({ items, targetLangCode, onComplete, testIDPrefix = 'phonics-trainer' }) => {
+const PhonicsTrainerComponent: React.FC<Props> = ({ items, targetLangCode, onComplete, testIDPrefix = 'phonics-trainer' }) => {
   const [index, setIndex] = useState<number>(0);
   const [score, setScore] = useState<number>(0);
   const [answered, setAnswered] = useState<boolean>(false);
@@ -55,9 +56,19 @@ const PhonicsTrainer: React.FC<Props> = ({ items, targetLangCode, onComplete, te
   const speak = useCallback((text: string) => {
     const t = (text ?? '').toString().trim();
     if (!t || t.length > 100) return;
+    
+    // Stop any ongoing speech to prevent race conditions
+    Speech.stop();
+    
     try {
       console.log('[PhonicsTrainer] speak', t, targetLangCode);
-      Speech.speak(t, { language: targetLangCode, rate: 0.95, pitch: 1.0 });
+      Speech.speak(t, { 
+        language: targetLangCode, 
+        rate: 0.95, 
+        pitch: 1.0,
+        onDone: () => console.log('[PhonicsTrainer] speech completed'),
+        onError: (e) => console.error('[PhonicsTrainer] speech error', e)
+      });
     } catch (e) {
       console.error('Speech error', e);
     }
@@ -177,4 +188,26 @@ const styles = StyleSheet.create({
   empty: { padding: 12, alignItems: 'center', justifyContent: 'center' },
   emptyText: { fontSize: 12, color: '#6B7280' },
   center: { padding: 12, alignItems: 'center', justifyContent: 'center' },
+  errorText: { fontSize: 16, color: '#EF4444', textAlign: 'center', marginBottom: 16 },
+  retryButton: { backgroundColor: '#3B82F6', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },
+  retryText: { color: '#FFFFFF', fontWeight: '600' },
 });
+
+const PhonicsTrainer: React.FC<Props> = (props) => {
+  return (
+    <ErrorBoundary
+      fallback={({ error, retry }) => (
+        <View style={styles.container}>
+          <Text style={styles.errorText}>Speech functionality unavailable</Text>
+          <TouchableOpacity onPress={retry} style={styles.retryButton}>
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    >
+      <PhonicsTrainerComponent {...props} />
+    </ErrorBoundary>
+  );
+};
+
+export default PhonicsTrainer;
