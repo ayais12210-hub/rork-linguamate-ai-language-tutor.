@@ -82,11 +82,14 @@ export default function TextType({
     if (!isVisible) return;
 
     let timeout: ReturnType<typeof setTimeout> | undefined;
+    let isCleanedUp = false;
 
     const currentText = textArray[currentTextIndex] ?? '';
     const processedText = reverseMode ? currentText.split('').reverse().join('') : currentText;
 
     const run = () => {
+      if (isCleanedUp) return; // Prevent execution after cleanup
+      
       if (isDeleting) {
         if (displayedText.length === 0) {
           setIsDeleting(false);
@@ -94,21 +97,29 @@ export default function TextType({
           if (currentTextIndex === textArray.length - 1 && !loop) return;
           setCurrentTextIndex((prev) => (prev + 1) % textArray.length);
           setCurrentCharIndex(0);
-          timeout = setTimeout(() => {}, pauseDuration);
+          timeout = setTimeout(() => {
+            if (!isCleanedUp) run();
+          }, pauseDuration);
         } else {
           timeout = setTimeout(() => {
-            setDisplayedText((prev) => prev.slice(0, -1));
+            if (!isCleanedUp) {
+              setDisplayedText((prev) => prev.slice(0, -1));
+            }
           }, deletingSpeed);
         }
       } else {
         if (currentCharIndex < processedText.length) {
           const delay = variableSpeed ? getRandomSpeed() : typingSpeed;
           timeout = setTimeout(() => {
-            setDisplayedText((prev) => prev + processedText[currentCharIndex]);
-            setCurrentCharIndex((prev) => prev + 1);
+            if (!isCleanedUp) {
+              setDisplayedText((prev) => prev + processedText[currentCharIndex]);
+              setCurrentCharIndex((prev) => prev + 1);
+            }
           }, delay);
         } else if (textArray.length > 1) {
-          timeout = setTimeout(() => setIsDeleting(true), pauseDuration);
+          timeout = setTimeout(() => {
+            if (!isCleanedUp) setIsDeleting(true);
+          }, pauseDuration);
         }
       }
     };
@@ -120,7 +131,11 @@ export default function TextType({
     }
 
     return () => {
-      if (timeout) clearTimeout(timeout);
+      isCleanedUp = true;
+      if (timeout) {
+        clearTimeout(timeout);
+        timeout = undefined;
+      }
     };
   }, [isVisible, isDeleting, displayedText, currentCharIndex, textArray, currentTextIndex, loop, pauseDuration, deletingSpeed, typingSpeed, initialDelay, reverseMode, variableSpeed, getRandomSpeed, onSentenceComplete]);
 

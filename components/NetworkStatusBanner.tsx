@@ -22,6 +22,7 @@ export default function NetworkStatusBanner() {
         console.log('[NetworkStatusBanner] browser offline');
         onlineManager.setOnline(false);
       };
+      
       window.addEventListener('online', handleOnline);
       window.addEventListener('offline', handleOffline);
 
@@ -37,7 +38,9 @@ export default function NetworkStatusBanner() {
       };
     }
 
-    return unsubscribe;
+    return () => {
+      unsubscribe?.();
+    };
   }, []);
 
   const show = useMemo(() => {
