@@ -105,7 +105,11 @@ export default function LearnScreen() {
         const payload = await trpcClient.learn.getContent.query({ targetName: targetLang.name, nativeName: nativeLang.name });
         return payload as LearnPayload;
       } catch (err) {
-        console.error('[Learn] tRPC query failed, using fallback:', err);
+        if (__DEV__) {
+
+          console.error('[Learn] tRPC query failed, using fallback:', err);
+
+        }
         return buildFallbackContent(nativeLang.name, targetLang.name);
       }
     },
@@ -187,7 +191,11 @@ export default function LearnScreen() {
         };
         if (!cancelled) setData(fixed);
       } catch (e) {
-        console.log('[Learn] translate fallback failed', e);
+        if (__DEV__) {
+
+          console.log('[Learn] translate fallback failed', e);
+
+        }
       } finally {
         if (!cancelled) setFixingLang(false);
       }
@@ -201,14 +209,26 @@ export default function LearnScreen() {
     if (!label || label.length > 200) return;
     try {
       if (Platform.OS === 'web') {
-        console.log('[Learn] speak web:', label);
+        if (__DEV__) {
+
+          console.log('[Learn] speak web:', label);
+
+        }
         Speech.speak(label, { language: targetLang?.code, pitch: 1.0, rate: 0.95 });
       } else {
-        console.log('[Learn] speak native:', label);
+        if (__DEV__) {
+
+          console.log('[Learn] speak native:', label);
+
+        }
         Speech.speak(label, { language: targetLang?.code, pitch: 1.0, rate: 0.95 });
       }
     } catch (e) {
-      console.error('Speech error', e);
+      if (__DEV__) {
+
+        console.error('Speech error', e);
+
+      }
     }
   }, [targetLang?.code]);
 
@@ -433,7 +453,11 @@ export default function LearnScreen() {
       const lines = raw.split(/\n|\r/).map(l => l.replace(/^[-•\s]+/, '').trim()).filter(Boolean).slice(0, 8);
       setAiTips(lines);
     } catch (e) {
-      console.error('[Learn] AI tips error', e);
+      if (__DEV__) {
+
+        console.error('[Learn] AI tips error', e);
+
+      }
       setAiError('Could not generate AI tips. Try again.');
     } finally {
       setAiLoading(false);

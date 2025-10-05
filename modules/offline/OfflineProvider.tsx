@@ -3,11 +3,19 @@ import { initializeOfflineManager, cleanupOfflineManager } from './index';
 
 export function OfflineProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    console.log('[OfflineProvider] Mounting - initializing offline manager');
+    if (__DEV__) {
+
+      console.log('[OfflineProvider] Mounting - initializing offline manager');
+
+    }
     initializeOfflineManager();
 
     return () => {
-      console.log('[OfflineProvider] Unmounting - cleaning up offline manager');
+      if (__DEV__) {
+
+        console.log('[OfflineProvider] Unmounting - cleaning up offline manager');
+
+      }
       cleanupOfflineManager();
     };
   }, []);

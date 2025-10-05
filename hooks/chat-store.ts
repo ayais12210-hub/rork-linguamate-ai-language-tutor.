@@ -21,7 +21,11 @@ export const [ChatProvider, useChat] = createContextHook(() => {
         setMessages(parsedMessages);
       }
     } catch (error) {
-      console.error('Error loading chat history:', error);
+      if (__DEV__) {
+
+        console.error('Error loading chat history:', error);
+
+      }
     }
   }, []);
 
@@ -29,7 +33,11 @@ export const [ChatProvider, useChat] = createContextHook(() => {
     try {
       await AsyncStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
     } catch (error) {
-      console.error('Error saving chat history:', error);
+      if (__DEV__) {
+
+        console.error('Error saving chat history:', error);
+
+      }
     }
   }, [messages]);
 
@@ -72,7 +80,11 @@ export const [ChatProvider, useChat] = createContextHook(() => {
       clearTimeout(timeoutId);
 
       if (!res.ok) {
-        console.warn(`Suggestions API returned ${res.status}, using fallback`);
+        if (__DEV__) {
+
+          console.warn(`Suggestions API returned ${res.status}, using fallback`);
+
+        }
         setSuggestions(fallbackSuggestions);
         return;
       }
@@ -109,11 +121,23 @@ export const [ChatProvider, useChat] = createContextHook(() => {
       }
     } catch (e) {
       if (e instanceof Error && e.name === 'AbortError') {
-        console.warn('Suggestions request timed out, using fallback');
+        if (__DEV__) {
+
+          console.warn('Suggestions request timed out, using fallback');
+
+        }
       } else if (e instanceof TypeError && e.message.includes('fetch')) {
-        console.warn('Network error fetching suggestions, using fallback');
+        if (__DEV__) {
+
+          console.warn('Network error fetching suggestions, using fallback');
+
+        }
       } else {
-        console.warn('Error refreshing suggestions, using fallback:', e);
+        if (__DEV__) {
+
+          console.warn('Error refreshing suggestions, using fallback:', e);
+
+        }
       }
       setSuggestions(fallbackSuggestions);
     }
@@ -182,7 +206,11 @@ export const [ChatProvider, useChat] = createContextHook(() => {
         refreshSuggestions();
       }
     } catch (error) {
-      console.error('Error sending message:', error);
+      if (__DEV__) {
+
+        console.error('Error sending message:', error);
+
+      }
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         text: 'Sorry, I had trouble understanding. Please try again.',
@@ -203,7 +231,11 @@ export const [ChatProvider, useChat] = createContextHook(() => {
     try {
       await AsyncStorage.removeItem(CHAT_STORAGE_KEY);
     } catch (error) {
-      console.error('Error clearing chat history:', error);
+      if (__DEV__) {
+
+        console.error('Error clearing chat history:', error);
+
+      }
     }
   }, []);
 

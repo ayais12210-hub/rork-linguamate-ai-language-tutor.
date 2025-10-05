@@ -191,7 +191,7 @@ export const updateLessonProgressProcedure = protectedProcedure
     };
     
     // Update module progress
-    let moduleProgress = progress.modules.find((m: any) => m.moduleId === input.lessonId);
+    let moduleProgress = progress.modules.find((m: { moduleId: string }) => m.moduleId === input.lessonId);
     if (!moduleProgress) {
       moduleProgress = {
         moduleId: input.lessonId,
@@ -253,8 +253,8 @@ export const getRecommendedLessonsProcedure = protectedProcedure
     
     if (progress) {
       const completedModules = progress.modules
-        .filter((m: any) => m.progress === 100)
-        .map((m: any) => m.moduleId);
+        .filter((m: { progress: number }) => m.progress === 100)
+        .map((m: { moduleId: string }) => m.moduleId);
       
       availableLessons = availableLessons.filter(lesson => 
         !completedModules.includes(lesson.id)
@@ -385,7 +385,7 @@ export const submitLessonProcedure = protectedProcedure
       strongAreas: []
     };
 
-    let moduleProgress = progress.modules.find((m: any) => m.moduleId === input.lessonId);
+    let moduleProgress = progress.modules.find((m: { moduleId: string }) => m.moduleId === input.lessonId);
     if (!moduleProgress) {
       moduleProgress = {
         moduleId: input.lessonId,

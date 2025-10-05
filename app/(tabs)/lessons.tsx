@@ -596,7 +596,13 @@ Return ONLY valid JSON with this structure:
         completionText = jsonMatch[0];
       }
       
-      console.log('Cleaned completion text:', completionText);
+      if (__DEV__) {
+
+      
+        console.log('Cleaned completion text:', completionText);
+
+      
+      }
       
       const lessonData = JSON.parse(completionText);
       
@@ -620,7 +626,11 @@ Return ONLY valid JSON with this structure:
       setGeneratedLessons(prev => ({ ...prev, [template.id]: lesson }));
       return lesson;
     } catch (error) {
-      console.error('Error generating lesson:', error);
+      if (__DEV__) {
+
+        console.error('Error generating lesson:', error);
+
+      }
       throw error;
     } finally {
       setIsGeneratingLesson(false);
@@ -683,7 +693,11 @@ Return ONLY valid JSON with this structure:
   useEffect(() => {
     (async () => {
       try {
-        console.log('[Lessons] Loading persisted state');
+        if (__DEV__) {
+
+          console.log('[Lessons] Loading persisted state');
+
+        }
         const [completedRaw, generatedRaw] = await Promise.all([
           AsyncStorage.getItem(STORAGE_KEYS.completedLessons),
           AsyncStorage.getItem(STORAGE_KEYS.generatedLessons),
@@ -697,7 +711,11 @@ Return ONLY valid JSON with this structure:
           setGeneratedLessons(parsed ?? {});
         }
       } catch (e) {
-        console.log('[Lessons] Failed to load persisted state', e);
+        if (__DEV__) {
+
+          console.log('[Lessons] Failed to load persisted state', e);
+
+        }
       }
     })();
   }, []);
@@ -708,7 +726,11 @@ Return ONLY valid JSON with this structure:
         await AsyncStorage.setItem(STORAGE_KEYS.completedLessons, JSON.stringify(completedLessons));
         await AsyncStorage.setItem(STORAGE_KEYS.generatedLessons, JSON.stringify(generatedLessons));
       } catch (e) {
-        console.log('[Lessons] Failed to persist state', e);
+        if (__DEV__) {
+
+          console.log('[Lessons] Failed to persist state', e);
+
+        }
       }
     })();
   }, [completedLessons, generatedLessons]);
@@ -732,7 +754,11 @@ Return ONLY valid JSON with this structure:
       }
 
       const generatedLesson = await generateLessonContent(template);
-      console.log('[Lessons] Starting lesson', generatedLesson.id);
+      if (__DEV__) {
+
+        console.log('[Lessons] Starting lesson', generatedLesson.id);
+
+      }
       setSelectedLesson(generatedLesson);
       setCurrentExercise(0);
       setSelectedAnswer('');
@@ -743,7 +769,11 @@ Return ONLY valid JSON with this structure:
       setLessonStartedAt(Date.now());
     } catch (error) {
       Alert.alert('Error', 'Failed to load lesson. Please try again.');
-      console.error('Error starting lesson:', error);
+      if (__DEV__) {
+
+        console.error('Error starting lesson:', error);
+
+      }
     }
   };
   

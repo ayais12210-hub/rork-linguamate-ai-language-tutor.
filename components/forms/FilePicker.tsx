@@ -81,7 +81,11 @@ export function FilePicker({
 
       setIsLoading(false);
     } catch (err) {
-      console.error('File picker error:', err);
+      if (__DEV__) {
+
+        console.error('File picker error:', err);
+
+      }
       Alert.alert('Error', 'Failed to pick file');
       setIsLoading(false);
     }

@@ -72,7 +72,11 @@ export class WebAudioRecorder {
         }, options.maxDuration);
       }
     } catch (error) {
-      console.error('Failed to start recording:', error);
+      if (__DEV__) {
+
+        console.error('Failed to start recording:', error);
+
+      }
       throw error;
     }
   }
@@ -277,7 +281,11 @@ export const audioPermissions = {
       const result = await navigator.permissions.query({ name: 'microphone' as PermissionName });
       return result.state === 'granted';
     } catch (error) {
-      console.error('Error checking microphone permission:', error);
+      if (__DEV__) {
+
+        console.error('Error checking microphone permission:', error);
+
+      }
       return false;
     }
   },
@@ -293,7 +301,11 @@ export const audioPermissions = {
       stream.getTracks().forEach(track => track.stop());
       return true;
     } catch (error) {
-      console.error('Microphone permission denied:', error);
+      if (__DEV__) {
+
+        console.error('Microphone permission denied:', error);
+
+      }
       return false;
     }
   },

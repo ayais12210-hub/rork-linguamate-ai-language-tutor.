@@ -113,7 +113,11 @@ export default function SplashCursor({
             | null;
         }
         if (!glAny) {
-          console.warn('[SplashCursor] Unable to initialize WebGL');
+          if (__DEV__) {
+
+            console.warn('[SplashCursor] Unable to initialize WebGL');
+
+          }
           return { gl: null as unknown as WebGLRenderingContext, ext: null as unknown as any };
         }
 
@@ -1275,7 +1279,11 @@ export default function SplashCursor({
         window.removeEventListener('touchend', handleTouchEnd);
       };
     } catch (e) {
-      console.error('[SplashCursor] init error', e);
+      if (__DEV__) {
+
+        console.error('[SplashCursor] init error', e);
+
+      }
     }
   }, [
     SIM_RESOLUTION,

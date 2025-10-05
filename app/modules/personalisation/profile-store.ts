@@ -16,7 +16,11 @@ export const [PreferenceProvider, usePreferenceProfile] = createContextHook(() =
   useEffect(() => {
     (async () => {
       try {
-        console.log('[PrefStore] hydrate');
+        if (__DEV__) {
+
+          console.log('[PrefStore] hydrate');
+
+        }
         const raw = await AsyncStorage.getItem(STORAGE_KEY);
         const tag = await AsyncStorage.getItem(ETAG_KEY);
         if (raw) {
@@ -25,7 +29,11 @@ export const [PreferenceProvider, usePreferenceProfile] = createContextHook(() =
         }
         setEtag(tag);
       } catch (e: unknown) {
-        console.log('[PrefStore] hydrate error', e);
+        if (__DEV__) {
+
+          console.log('[PrefStore] hydrate error', e);
+
+        }
         setError('Failed to load preferences');
       } finally {
         setLoading(false);
@@ -40,7 +48,11 @@ export const [PreferenceProvider, usePreferenceProfile] = createContextHook(() =
       setProfile(profile);
       return profile;
     } catch (e: unknown) {
-      console.log('[PrefStore] map error', e);
+      if (__DEV__) {
+
+        console.log('[PrefStore] map error', e);
+
+      }
       setError('Could not apply preferences');
       throw e;
     }

@@ -159,7 +159,11 @@ export default function GrammarModule({ languageCode, onComplete, onBack }: Prop
         });
       });
     } catch (error) {
-      console.error('Error loading grammar:', error);
+      if (__DEV__) {
+
+        console.error('Error loading grammar:', error);
+
+      }
       Alert.alert('Error', 'Failed to load grammar data. Please try again.');
     } finally {
       setIsLoading(false);

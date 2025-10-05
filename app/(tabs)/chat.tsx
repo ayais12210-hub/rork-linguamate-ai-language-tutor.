@@ -47,7 +47,11 @@ function stripJSONCodeFences(raw: string): string {
     }
     return s;
   } catch (e) {
-    console.log('[Chat] stripJSONCodeFences error', e);
+    if (__DEV__) {
+
+      console.log('[Chat] stripJSONCodeFences error', e);
+
+    }
     return raw;
   }
 }
@@ -86,7 +90,11 @@ function normalizeAIResponse(raw: string): AITranslationResponseShape {
     const parsed = JSON.parse(cleaned) as AITranslationResponseShape;
     return parsed;
   } catch (e) {
-    console.log('[Chat] JSON parse failed, falling back to plain text', e);
+    if (__DEV__) {
+
+      console.log('[Chat] JSON parse failed, falling back to plain text', e);
+
+    }
     return { translation: raw } as AITranslationResponseShape;
   }
 }
@@ -195,7 +203,11 @@ Return ONLY JSON. Fields: translation, explanation, culturalContext, grammarInsi
       const normalized = normalizeAIResponse(String(data?.completion ?? ''));
       setDraftTranslation(normalized);
     } catch (e) {
-      console.log('Draft translate failed', e);
+      if (__DEV__) {
+
+        console.log('Draft translate failed', e);
+
+      }
       Alert.alert('Translate failed', 'Could not analyze your draft. Try again.');
     } finally {
       setIsTranslatingDraft(false);

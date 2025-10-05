@@ -25,7 +25,11 @@ const getEnvBaseUrl = () => {
   ];
   for (const url of candidates) {
     if (url && url.length > 0) {
-      console.log("[tRPC] Using env base URL:", url);
+      if (__DEV__) {
+
+        console.log("[tRPC] Using env base URL:", url);
+
+      }
       return url.replace(/\/$/, "");
     }
   }
@@ -45,7 +49,11 @@ const getBaseUrl = () => {
         basePath = match[0];
       }
     } catch (e) {
-      console.log("[tRPC] Path prefix detection failed", e);
+      if (__DEV__) {
+
+        console.log("[tRPC] Path prefix detection failed", e);
+
+      }
     }
     const full = `${origin}${basePath}`.replace(/\/$/, "");
     console.log("[tRPC] Web detected, using base:", full, "(origin:", origin, "path:", basePath, ")");
@@ -57,17 +65,31 @@ const getBaseUrl = () => {
     (Constants as any)?.manifest2?.extra?.expoClient?.hostUri;
   if (hostUri && typeof hostUri === "string") {
     const base = getNativeBaseFromHostUri(hostUri);
-    console.log("[tRPC] Using Expo hostUri for native:", base);
+    if (__DEV__) {
+
+      console.log("[tRPC] Using Expo hostUri for native:", base);
+
+    }
     return base.replace(/\/$/, "");
   }
 
-  console.log("[tRPC] Fallback base URL http://localhost:8081");
+  if (__DEV__) {
+
+
+    console.log("[tRPC] Fallback base URL http://localhost:8081");
+
+
+  }
   return "http://localhost:8081";
 };
 
 const base = getBaseUrl();
 const apiUrl = `${base}/api/trpc`;
-console.log("[tRPC] Final API URL:", apiUrl);
+if (__DEV__) {
+
+  console.log("[tRPC] Final API URL:", apiUrl);
+
+}
 
 export const trpcClient = trpc.createClient({
   links: [
@@ -87,11 +109,15 @@ export const trpcClient = trpc.createClient({
           });
           const ct = res.headers.get("content-type") ?? "";
           if (ct.includes("text/html")) {
-            console.error(
+            if (__DEV__) {
+
+              console.error(
               "[tRPC] HTML response received at",
               url,
               "— likely frontend index. Check backend base URL."
             );
+
+            }
             throw new Error(
               "Backend endpoint not found at " +
                 url +

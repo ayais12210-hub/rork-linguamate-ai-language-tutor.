@@ -81,7 +81,11 @@ export default function PlacementQuiz({ onComplete }: PlacementQuizProps) {
       updateUser({ proficiencyLevel: inferred, placementCompleted: true });
       onComplete();
     } catch (e) {
-      console.error('[PlacementQuiz] failed', e);
+      if (__DEV__) {
+
+        console.error('[PlacementQuiz] failed', e);
+
+      }
     } finally {
       setSubmitting(false);
     }

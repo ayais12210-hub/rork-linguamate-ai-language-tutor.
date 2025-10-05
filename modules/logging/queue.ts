@@ -31,7 +31,11 @@ let isFlushingRef = { current: false };
 
 export async function initQueue(): Promise<void> {
   if (Platform.OS === 'web') {
-    console.log('[Queue] SQLite not available on web, using in-memory queue');
+    if (__DEV__) {
+
+      console.log('[Queue] SQLite not available on web, using in-memory queue');
+
+    }
     return;
   }
 
@@ -51,17 +55,31 @@ export async function initQueue(): Promise<void> {
       CREATE INDEX IF NOT EXISTS idx_lvl ON ${TABLE_NAME}(lvl);
     `);
 
-    console.log('[Queue] Initialized successfully');
+    if (__DEV__) {
+
+
+      console.log('[Queue] Initialized successfully');
+
+
+    }
     
     startFlushWorker();
   } catch (error) {
-    console.error('[Queue] Failed to initialize:', error);
+    if (__DEV__) {
+
+      console.error('[Queue] Failed to initialize:', error);
+
+    }
   }
 }
 
 export async function enqueue(log: LogEnvelope): Promise<void> {
   if (!db) {
-    console.warn('[Queue] Database not initialized, dropping log');
+    if (__DEV__) {
+
+      console.warn('[Queue] Database not initialized, dropping log');
+
+    }
     return;
   }
 
@@ -69,7 +87,11 @@ export async function enqueue(log: LogEnvelope): Promise<void> {
     const size = await getQueueSize();
     
     if (size >= QUEUE_CONFIG.maxSize) {
-      console.warn('[Queue] Queue full, dropping oldest DEBUG/TRACE logs');
+      if (__DEV__) {
+
+        console.warn('[Queue] Queue full, dropping oldest DEBUG/TRACE logs');
+
+      }
       await db.runAsync(
         `DELETE FROM ${TABLE_NAME} WHERE id IN (
           SELECT id FROM ${TABLE_NAME} 
@@ -86,9 +108,19 @@ export async function enqueue(log: LogEnvelope): Promise<void> {
       [log.ts, log.lvl, JSON.stringify(log)]
     );
 
-    console.log(`[Queue] Enqueued log: ${log.evt}`);
+    if (__DEV__) {
+
+
+      console.log(`[Queue] Enqueued log: ${log.evt}`);
+
+
+    }
   } catch (error) {
-    console.error('[Queue] Failed to enqueue:', error);
+    if (__DEV__) {
+
+      console.error('[Queue] Failed to enqueue:', error);
+
+    }
   }
 }
 
@@ -109,7 +141,11 @@ export async function dequeue(limit: number = QUEUE_CONFIG.maxBatchSize): Promis
 
     return rows.map(row => JSON.parse(row.payload) as LogEnvelope);
   } catch (error) {
-    console.error('[Queue] Failed to dequeue:', error);
+    if (__DEV__) {
+
+      console.error('[Queue] Failed to dequeue:', error);
+
+    }
     return [];
   }
 }
@@ -128,9 +164,19 @@ export async function markSuccess(logs: LogEnvelope[]): Promise<void> {
       timestamps
     );
 
-    console.log(`[Queue] Marked ${logs.length} logs as sent`);
+    if (__DEV__) {
+
+
+      console.log(`[Queue] Marked ${logs.length} logs as sent`);
+
+
+    }
   } catch (error) {
-    console.error('[Queue] Failed to mark success:', error);
+    if (__DEV__) {
+
+      console.error('[Queue] Failed to mark success:', error);
+
+    }
   }
 }
 
@@ -153,7 +199,11 @@ export async function markFailure(logs: LogEnvelope[]): Promise<void> {
       const newAttempts = row.attempts + 1;
 
       if (newAttempts >= QUEUE_CONFIG.retryAttempts) {
-        console.warn(`[Queue] Max retries reached for log: ${log.evt}, dropping`);
+        if (__DEV__) {
+
+          console.warn(`[Queue] Max retries reached for log: ${log.evt}, dropping`);
+
+        }
         await db.runAsync(
           `DELETE FROM ${TABLE_NAME} WHERE ts = ?`,
           [log.ts]
@@ -169,11 +219,21 @@ export async function markFailure(logs: LogEnvelope[]): Promise<void> {
           [newAttempts, nextAttemptAt, log.ts]
         );
 
-        console.log(`[Queue] Retry scheduled for log: ${log.evt} in ${backoff}ms`);
+        if (__DEV__) {
+
+
+          console.log(`[Queue] Retry scheduled for log: ${log.evt} in ${backoff}ms`);
+
+
+        }
       }
     }
   } catch (error) {
-    console.error('[Queue] Failed to mark failure:', error);
+    if (__DEV__) {
+
+      console.error('[Queue] Failed to mark failure:', error);
+
+    }
   }
 }
 
@@ -200,7 +260,11 @@ export async function getQueueSize(): Promise<number> {
     );
     return result?.count || 0;
   } catch (error) {
-    console.error('[Queue] Failed to get queue size:', error);
+    if (__DEV__) {
+
+      console.error('[Queue] Failed to get queue size:', error);
+
+    }
     return 0;
   }
 }
@@ -242,7 +306,11 @@ export async function getQueueStats(): Promise<{
       newestTs: newest?.ts,
     };
   } catch (error) {
-    console.error('[Queue] Failed to get queue stats:', error);
+    if (__DEV__) {
+
+      console.error('[Queue] Failed to get queue stats:', error);
+
+    }
     return { total: 0, byLevel: {} };
   }
 }
@@ -259,10 +327,20 @@ export async function clearOldQueueItems(olderThan: number): Promise<number> {
       [cutoffDate]
     );
 
-    console.log(`[Queue] Cleared ${result.changes} old items`);
+    if (__DEV__) {
+
+
+      console.log(`[Queue] Cleared ${result.changes} old items`);
+
+
+    }
     return result.changes;
   } catch (error) {
-    console.error('[Queue] Failed to clear old items:', error);
+    if (__DEV__) {
+
+      console.error('[Queue] Failed to clear old items:', error);
+
+    }
     return 0;
   }
 }
@@ -274,9 +352,17 @@ export async function clearQueue(): Promise<void> {
 
   try {
     await db.runAsync(`DELETE FROM ${TABLE_NAME}`);
-    console.log('[Queue] Cleared all items');
+    if (__DEV__) {
+
+      console.log('[Queue] Cleared all items');
+
+    }
   } catch (error) {
-    console.error('[Queue] Failed to clear queue:', error);
+    if (__DEV__) {
+
+      console.error('[Queue] Failed to clear queue:', error);
+
+    }
   }
 }
 
@@ -287,29 +373,51 @@ function startFlushWorker(): void {
 
   flushTimer = setInterval(() => {
     flushQueue({ force: false }).catch(error => {
-      console.error('[Queue] Flush worker error:', error);
+      if (__DEV__) {
+
+        console.error('[Queue] Flush worker error:', error);
+
+      }
     });
   }, QUEUE_CONFIG.flushInterval);
 
-  console.log('[Queue] Flush worker started');
+  if (__DEV__) {
+
+
+    console.log('[Queue] Flush worker started');
+
+
+  }
 }
 
 export function stopFlushWorker(): void {
   if (flushTimer) {
     clearInterval(flushTimer);
     flushTimer = null;
-    console.log('[Queue] Flush worker stopped');
+    if (__DEV__) {
+
+      console.log('[Queue] Flush worker stopped');
+
+    }
   }
 }
 
 export async function flushQueue(options: { force?: boolean } = {}): Promise<void> {
   if (isFlushingRef.current) {
-    console.log('[Queue] Flush already in progress, skipping');
+    if (__DEV__) {
+
+      console.log('[Queue] Flush already in progress, skipping');
+
+    }
     return;
   }
 
   if (!db) {
-    console.warn('[Queue] Database not initialized, cannot flush');
+    if (__DEV__) {
+
+      console.warn('[Queue] Database not initialized, cannot flush');
+
+    }
     return;
   }
 
@@ -319,11 +427,21 @@ export async function flushQueue(options: { force?: boolean } = {}): Promise<voi
     const size = await getQueueSize();
     
     if (size === 0) {
-      console.log('[Queue] Queue empty, nothing to flush');
+      if (__DEV__) {
+
+        console.log('[Queue] Queue empty, nothing to flush');
+
+      }
       return;
     }
 
-    console.log(`[Queue] Flushing ${size} items...`);
+    if (__DEV__) {
+
+
+      console.log(`[Queue] Flushing ${size} items...`);
+
+
+    }
 
     const logs = await dequeue(QUEUE_CONFIG.maxBatchSize);
     
@@ -337,13 +455,25 @@ export async function flushQueue(options: { force?: boolean } = {}): Promise<voi
 
     if (success) {
       await markSuccess(logs);
-      console.log(`[Queue] Successfully flushed ${logs.length} logs`);
+      if (__DEV__) {
+
+        console.log(`[Queue] Successfully flushed ${logs.length} logs`);
+
+      }
     } else {
       await markFailure(logs);
-      console.warn(`[Queue] Failed to flush ${logs.length} logs, will retry`);
+      if (__DEV__) {
+
+        console.warn(`[Queue] Failed to flush ${logs.length} logs, will retry`);
+
+      }
     }
   } catch (error) {
-    console.error('[Queue] Flush error:', error);
+    if (__DEV__) {
+
+      console.error('[Queue] Flush error:', error);
+
+    }
   } finally {
     isFlushingRef.current = false;
   }
@@ -356,9 +486,17 @@ export async function closeQueue(): Promise<void> {
     try {
       await db.closeAsync();
       db = null;
-      console.log('[Queue] Closed successfully');
+      if (__DEV__) {
+
+        console.log('[Queue] Closed successfully');
+
+      }
     } catch (error) {
-      console.error('[Queue] Failed to close:', error);
+      if (__DEV__) {
+
+        console.error('[Queue] Failed to close:', error);
+
+      }
     }
   }
 }

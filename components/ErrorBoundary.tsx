@@ -66,7 +66,11 @@ export default class ErrorBoundary extends React.Component<Props, State> {
       }
       
     } catch (handlingError) {
-      console.error('[ErrorBoundary] Failed to handle error:', handlingError);
+      if (__DEV__) {
+
+        console.error('[ErrorBoundary] Failed to handle error:', handlingError);
+
+      }
     }
   }
 

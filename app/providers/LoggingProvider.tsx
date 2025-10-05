@@ -8,9 +8,17 @@ export function LoggingProvider({ children }: { children: ReactNode }) {
       try {
         await getConsent();
         await initLogger();
-        console.log('[LoggingProvider] Logging system initialized');
+        if (__DEV__) {
+
+          console.log('[LoggingProvider] Logging system initialized');
+
+        }
       } catch (error) {
-        console.error('[LoggingProvider] Failed to initialize logging:', error);
+        if (__DEV__) {
+
+          console.error('[LoggingProvider] Failed to initialize logging:', error);
+
+        }
       }
     };
 

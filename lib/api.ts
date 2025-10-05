@@ -131,7 +131,11 @@ export class ApiClient {
       }
       return data as T;
     } catch (error) {
-      console.error('API request failed:', error);
+      if (__DEV__) {
+
+        console.error('API request failed:', error);
+
+      }
       throw error;
     }
   }
@@ -147,7 +151,7 @@ export class ApiClient {
       return `${origin}${basePath}`.replace(/\/$/, '');
     }
     try {
-      // @ts-expect-error Expo Constants at runtime
+      // @ts-ignore - Expo Constants may not be available at build time
       const Constants = require('expo-constants').default;
       const hostUri = Constants?.expoConfig?.hostUri || Constants?.manifest2?.extra?.expoClient?.hostUri;
       if (typeof hostUri === 'string' && hostUri.length > 0) {
@@ -227,7 +231,11 @@ export class ApiClient {
       const translated = (response?.responseData?.translatedText as string | undefined) ?? text;
       return { translatedText: translated };
     } catch (error) {
-      console.error('Translation failed:', error);
+      if (__DEV__) {
+
+        console.error('Translation failed:', error);
+
+      }
       return { translatedText: text };
     }
   }
@@ -239,7 +247,11 @@ export class ApiClient {
     try {
       return await this.request<any>(url, { method: 'GET' });
     } catch (error) {
-      console.error('Dictionary lookup failed:', error);
+      if (__DEV__) {
+
+        console.error('Dictionary lookup failed:', error);
+
+      }
       return null;
     }
   }
@@ -337,7 +349,11 @@ export const apiHelpers = {
 
 // Error handling for API calls
 export const handleApiError = (error: unknown, context?: string): string => {
-  console.error(`API Error${context ? ` in ${context}` : ''}:`, error);
+  if (__DEV__) {
+
+    console.error(`API Error${context ? ` in ${context}` : ''}:`, error);
+
+  }
   
   if (error instanceof Error) {
     if (error.message.includes('network')) {

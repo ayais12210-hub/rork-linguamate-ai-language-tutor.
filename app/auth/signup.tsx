@@ -39,7 +39,11 @@ export default function SignupScreen() {
 
   const signupMutation = trpc.auth.signup.useMutation({
     onSuccess: async (data) => {
-      console.log('[Signup] Success:', data.user.email);
+      if (__DEV__) {
+
+        console.log('[Signup] Success:', data.user.email);
+
+      }
       
       // Store tokens securely
       await TokenManager.storeTokens(data.accessToken, data.refreshToken);
@@ -60,7 +64,11 @@ export default function SignupScreen() {
       router.replace('/onboarding');
     },
     onError: async (error) => {
-      console.error('[Signup] Error:', error);
+      if (__DEV__) {
+
+        console.error('[Signup] Error:', error);
+
+      }
       
       // Log failed attempt
       await SecurityAudit.logSecurityEvent('signup_failed', {

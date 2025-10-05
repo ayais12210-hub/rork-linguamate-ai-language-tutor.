@@ -13,7 +13,11 @@ export function usePreferencesSync() {
         if (!profile) return;
         await upsert.mutateAsync({ profile });
       } catch (e: unknown) {
-        console.log('[Sync] preferences upsert failed', e);
+        if (__DEV__) {
+
+          console.log('[Sync] preferences upsert failed', e);
+
+        }
       }
     })();
   }, [profile, upsert]);

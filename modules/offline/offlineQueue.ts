@@ -23,16 +23,28 @@ class OfflineQueue {
   private flushTimer: ReturnType<typeof setTimeout> | null = null;
 
   async initialize() {
-    console.log('[OfflineQueue] Initializing queue');
+    if (__DEV__) {
+
+      console.log('[OfflineQueue] Initializing queue');
+
+    }
     try {
       const stored = await storageHelpers.getObject<QueuedAction[]>(QUEUE_STORAGE_KEY);
       if (stored && Array.isArray(stored)) {
         this.queue = stored;
-        console.log('[OfflineQueue] Loaded', this.queue.length, 'queued actions');
+        if (__DEV__) {
+
+          console.log('[OfflineQueue] Loaded', this.queue.length, 'queued actions');
+
+        }
         offlineManager.setUnsyncedCount(this.queue.length);
       }
     } catch (error) {
-      console.error('[OfflineQueue] Failed to load queue:', error);
+      if (__DEV__) {
+
+        console.error('[OfflineQueue] Failed to load queue:', error);
+
+      }
     }
   }
 
@@ -47,7 +59,13 @@ class OfflineQueue {
       priority,
     };
 
-    console.log('[OfflineQueue] Enqueuing action:', { type, priority, id: action.id });
+    if (__DEV__) {
+
+
+      console.log('[OfflineQueue] Enqueuing action:', { type, priority, id: action.id });
+
+
+    }
 
     this.queue.push(action);
     this.queue.sort((a, b) => {
@@ -64,7 +82,11 @@ class OfflineQueue {
   }
 
   async dequeue(actionId: string) {
-    console.log('[OfflineQueue] Dequeuing action:', actionId);
+    if (__DEV__) {
+
+      console.log('[OfflineQueue] Dequeuing action:', actionId);
+
+    }
     this.queue = this.queue.filter(action => action.id !== actionId);
     await this.persist();
     offlineManager.decrementUnsyncedCount();
@@ -82,7 +104,11 @@ class OfflineQueue {
     try {
       await storageHelpers.setObject(QUEUE_STORAGE_KEY, this.queue);
     } catch (error) {
-      console.error('[OfflineQueue] Failed to persist queue:', error);
+      if (__DEV__) {
+
+        console.error('[OfflineQueue] Failed to persist queue:', error);
+
+      }
     }
   }
 
@@ -105,47 +131,87 @@ class OfflineQueue {
 
   async flush() {
     if (this.isProcessing) {
-      console.log('[OfflineQueue] Already processing, skipping flush');
+      if (__DEV__) {
+
+        console.log('[OfflineQueue] Already processing, skipping flush');
+
+      }
       return;
     }
 
     if (offlineManager.currentStatus.isOffline) {
-      console.log('[OfflineQueue] Offline, skipping flush');
+      if (__DEV__) {
+
+        console.log('[OfflineQueue] Offline, skipping flush');
+
+      }
       return;
     }
 
     if (this.queue.length === 0) {
-      console.log('[OfflineQueue] Queue empty, nothing to flush');
+      if (__DEV__) {
+
+        console.log('[OfflineQueue] Queue empty, nothing to flush');
+
+      }
       return;
     }
 
     this.isProcessing = true;
-    console.log('[OfflineQueue] Starting flush of', this.queue.length, 'actions');
+    if (__DEV__) {
+
+      console.log('[OfflineQueue] Starting flush of', this.queue.length, 'actions');
+
+    }
 
     const now = Date.now();
     const actionsToProcess = this.queue.filter(action => action.nextAttemptAt <= now);
 
-    console.log('[OfflineQueue] Processing', actionsToProcess.length, 'ready actions');
+    if (__DEV__) {
+
+
+      console.log('[OfflineQueue] Processing', actionsToProcess.length, 'ready actions');
+
+
+    }
 
     for (const action of actionsToProcess) {
       try {
-        console.log('[OfflineQueue] Processing action:', {
+        if (__DEV__) {
+
+          console.log('[OfflineQueue] Processing action:', {
           id: action.id,
           type: action.type,
           attempts: action.attempts,
         });
 
+        }
+
         await this.processAction(action);
         await this.dequeue(action.id);
         
-        console.log('[OfflineQueue] Action processed successfully:', action.id);
+        if (__DEV__) {
+
+        
+          console.log('[OfflineQueue] Action processed successfully:', action.id);
+
+        
+        }
       } catch (error) {
-        console.error('[OfflineQueue] Action failed:', action.id, error);
+        if (__DEV__) {
+
+          console.error('[OfflineQueue] Action failed:', action.id, error);
+
+        }
 
         action.attempts += 1;
 
         if (action.attempts >= MAX_ATTEMPTS) {
-          console.error('[OfflineQueue] Max attempts reached, removing action:', action.id);
+          if (__DEV__) {
+
+            console.error('[OfflineQueue] Max attempts reached, removing action:', action.id);
+
+          }
           await this.dequeue(action.id);
         } else {
           const backoffDelay = this.calculateBackoff(action.attempts);
@@ -154,7 +220,11 @@ class OfflineQueue {
             attempts: action.attempts,
             nextAttemptAt: action.nextAttemptAt,
           });
-          console.log('[OfflineQueue] Scheduled retry in', backoffDelay, 'ms');
+          if (__DEV__) {
+
+            console.log('[OfflineQueue] Scheduled retry in', backoffDelay, 'ms');
+
+          }
         }
       }
     }
@@ -166,28 +236,48 @@ class OfflineQueue {
         action.nextAttemptAt < earliest.nextAttemptAt ? action : earliest
       );
       const delayUntilNext = Math.max(0, nextAction.nextAttemptAt - Date.now());
-      console.log('[OfflineQueue] Scheduling next flush in', delayUntilNext, 'ms');
+      if (__DEV__) {
+
+        console.log('[OfflineQueue] Scheduling next flush in', delayUntilNext, 'ms');
+
+      }
       this.scheduleFlush();
     } else {
-      console.log('[OfflineQueue] Queue empty after flush');
+      if (__DEV__) {
+
+        console.log('[OfflineQueue] Queue empty after flush');
+
+      }
       offlineManager.setLastSync(new Date());
     }
   }
 
   private async processAction(action: QueuedAction): Promise<void> {
-    console.log('[OfflineQueue] Processing action type:', action.type);
+    if (__DEV__) {
+
+      console.log('[OfflineQueue] Processing action type:', action.type);
+
+    }
     
     switch (action.type) {
       case 'UPDATE_PROGRESS':
       case 'COMPLETE_LESSON':
       case 'UPDATE_VOCABULARY':
       case 'SAVE_CHAT_MESSAGE':
-        console.log('[OfflineQueue] Simulating sync for:', action.type);
+        if (__DEV__) {
+
+          console.log('[OfflineQueue] Simulating sync for:', action.type);
+
+        }
         await new Promise(resolve => setTimeout(resolve, 500));
         break;
       
       default:
-        console.warn('[OfflineQueue] Unknown action type:', action.type);
+        if (__DEV__) {
+
+          console.warn('[OfflineQueue] Unknown action type:', action.type);
+
+        }
     }
   }
 
@@ -200,7 +290,11 @@ class OfflineQueue {
   }
 
   async clear() {
-    console.log('[OfflineQueue] Clearing queue');
+    if (__DEV__) {
+
+      console.log('[OfflineQueue] Clearing queue');
+
+    }
     this.queue = [];
     await this.persist();
     offlineManager.setUnsyncedCount(0);

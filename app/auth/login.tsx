@@ -31,7 +31,11 @@ export default function LoginScreen() {
 
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: async (data) => {
-      console.log('[Login] Success:', data.user.email);
+      if (__DEV__) {
+
+        console.log('[Login] Success:', data.user.email);
+
+      }
       
       // Store tokens securely
       await TokenManager.storeTokens(data.accessToken, data.refreshToken);
@@ -52,7 +56,11 @@ export default function LoginScreen() {
       router.replace('/(tabs)/lessons');
     },
     onError: async (error) => {
-      console.error('[Login] Error:', error);
+      if (__DEV__) {
+
+        console.error('[Login] Error:', error);
+
+      }
       
       // Log failed attempt
       await SecurityAudit.logSecurityEvent('login_failed', {

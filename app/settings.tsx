@@ -197,7 +197,11 @@ export default function SettingsScreen() {
   };
 
   const handleReminderTimeChange = () => {
-    console.log('[Settings] Opening reminder time selector');
+    if (__DEV__) {
+
+      console.log('[Settings] Opening reminder time selector');
+
+    }
     triggerHaptic();
     const currentTime = currentSettings.reminderTime || 'Not set';
     Alert.alert(
@@ -216,7 +220,11 @@ export default function SettingsScreen() {
   };
 
   const setReminderTime = async (time: string) => {
-    console.log('[Settings] setReminderTime', time);
+    if (__DEV__) {
+
+      console.log('[Settings] setReminderTime', time);
+
+    }
     if (!time.trim() || time.length > 50) return;
     const sanitizedTime = time.trim();
     
@@ -236,7 +244,11 @@ export default function SettingsScreen() {
           reminderTime: sanitizedTime.replace('Daily at ', '').replace('daily at ', ''),
         } as any);
       } catch (e) {
-        console.log('[Settings] notifications.updateSettings error', e);
+        if (__DEV__) {
+
+          console.log('[Settings] notifications.updateSettings error', e);
+
+        }
       }
       setReminderTimeDisplay(sanitizedTime);
       
@@ -423,7 +435,11 @@ export default function SettingsScreen() {
   };
 
   const toggleDarkMode = (value: boolean) => {
-    console.log('[Settings] toggleDarkMode', value);
+    if (__DEV__) {
+
+      console.log('[Settings] toggleDarkMode', value);
+
+    }
     updateUser({
       settings: {
         ...currentSettings,
@@ -437,7 +453,11 @@ export default function SettingsScreen() {
   };
 
   const toggleSound = (value: boolean) => {
-    console.log('[Settings] toggleSound', value);
+    if (__DEV__) {
+
+      console.log('[Settings] toggleSound', value);
+
+    }
     updateUser({
       settings: {
         ...currentSettings,
@@ -449,7 +469,11 @@ export default function SettingsScreen() {
   };
 
   const toggleNotifications = (value: boolean) => {
-    console.log('[Settings] toggleNotifications', value);
+    if (__DEV__) {
+
+      console.log('[Settings] toggleNotifications', value);
+
+    }
     updateUser({
       settings: {
         ...currentSettings,
@@ -460,7 +484,11 @@ export default function SettingsScreen() {
       notifications.updateSettings({ enabled: value });
       if (!value) notifications.cancelAllNotifications();
     } catch (e) {
-      console.log('[Settings] notifications toggle error', e);
+      if (__DEV__) {
+
+        console.log('[Settings] notifications toggle error', e);
+
+      }
     }
     
     triggerHaptic();
@@ -472,7 +500,11 @@ export default function SettingsScreen() {
   };
 
   const toggleHaptics = (value: boolean) => {
-    console.log('[Settings] toggleHaptics', value);
+    if (__DEV__) {
+
+      console.log('[Settings] toggleHaptics', value);
+
+    }
     updateUser({
       settings: {
         ...currentSettings,
@@ -487,7 +519,11 @@ export default function SettingsScreen() {
   };
 
   const toggleAutoPlay = (value: boolean) => {
-    console.log('[Settings] toggleAutoPlay', value);
+    if (__DEV__) {
+
+      console.log('[Settings] toggleAutoPlay', value);
+
+    }
     updateUser({
       settings: {
         ...currentSettings,

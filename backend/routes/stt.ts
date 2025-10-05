@@ -26,7 +26,11 @@ function rateLimit(ip: string): { allowed: boolean; remaining: number; resetMs: 
 }
 
 sttApp.post('/stt/transcribe', async (c: Context) => {
-  console.log('[STT] Received transcription request');
+  if (__DEV__) {
+
+    console.log('[STT] Received transcription request');
+
+  }
 
   const ipHeader = c.req.header('x-forwarded-for') ?? c.req.header('cf-connecting-ip');
   const ip = (ipHeader ?? 'anon') as string;
@@ -37,30 +41,52 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
   c.header('X-RateLimit-Reset', String(Math.max(0, Math.ceil(rl.resetMs / 1000))));
 
   if (!rl.allowed) {
-    console.log('[STT] Rate limit exceeded for IP:', ip);
+    if (__DEV__) {
+
+      console.log('[STT] Rate limit exceeded for IP:', ip);
+
+    }
     c.status(429 as any);
     return c.json({ message: 'Rate limit exceeded. Please try again later.' });
   }
 
   const contentType = c.req.header('content-type') ?? '';
   if (!contentType.includes('multipart/form-data')) {
-    console.log('[STT] Invalid content type:', contentType);
+    if (__DEV__) {
+
+      console.log('[STT] Invalid content type:', contentType);
+
+    }
     c.status(400 as any);
     return c.json({ message: 'Expected multipart/form-data' });
   }
 
   try {
-    console.log('[STT] Parsing form data...');
+    if (__DEV__) {
+
+      console.log('[STT] Parsing form data...');
+
+    }
     const formData = await c.req.formData();
     const audioFile = formData.get('audio');
 
     if (!audioFile) {
-      console.log('[STT] No audio file in request');
+      if (__DEV__) {
+
+        console.log('[STT] No audio file in request');
+
+      }
       c.status(400 as any);
       return c.json({ message: 'No audio file provided' });
     }
 
-    console.log('[STT] Audio file received, forwarding to Toolkit API...');
+    if (__DEV__) {
+
+
+      console.log('[STT] Audio file received, forwarding to Toolkit API...');
+
+
+    }
     const url = new URL('/stt/transcribe/', BASE).toString();
     
     const proxyFormData = new FormData();
@@ -80,7 +106,13 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
       (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
     headers['x-request-id'] = correlationId;
 
-    console.log('[STT] Sending request to:', url);
+    if (__DEV__) {
+
+
+      console.log('[STT] Sending request to:', url);
+
+
+    }
     const response = await fetch(url, {
       method: 'POST',
       headers,
@@ -88,10 +120,18 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
     });
 
     const responseText = await response.text();
-    console.log('[STT] Toolkit API response status:', response.status);
+    if (__DEV__) {
+
+      console.log('[STT] Toolkit API response status:', response.status);
+
+    }
 
     if (!response.ok) {
-      console.error('[STT] Toolkit API error:', responseText);
+      if (__DEV__) {
+
+        console.error('[STT] Toolkit API error:', responseText);
+
+      }
       c.status(response.status as any);
       
       let errorMessage = 'Speech-to-text service error';
@@ -99,7 +139,11 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
         const errorJson = JSON.parse(responseText);
         errorMessage = errorJson.message || errorMessage;
       } catch {
-        console.log('[STT] Could not parse error response as JSON');
+        if (__DEV__) {
+
+          console.log('[STT] Could not parse error response as JSON');
+
+        }
       }
       
       return c.json({ 
@@ -111,9 +155,17 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
     let result;
     try {
       result = JSON.parse(responseText);
-      console.log('[STT] Transcription successful:', result.text ? 'text received' : 'no text');
+      if (__DEV__) {
+
+        console.log('[STT] Transcription successful:', result.text ? 'text received' : 'no text');
+
+      }
     } catch (parseError) {
-      console.error('[STT] Failed to parse response JSON:', parseError);
+      if (__DEV__) {
+
+        console.error('[STT] Failed to parse response JSON:', parseError);
+
+      }
       c.status(500 as any);
       return c.json({ message: 'Invalid response from speech-to-text service' });
     }
@@ -122,7 +174,11 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
     return c.json(result);
 
   } catch (error: any) {
-    console.error('[STT] Error processing request:', error);
+    if (__DEV__) {
+
+      console.error('[STT] Error processing request:', error);
+
+    }
     c.status(503 as any);
     return c.json({ 
       message: 'Service temporarily unavailable', 

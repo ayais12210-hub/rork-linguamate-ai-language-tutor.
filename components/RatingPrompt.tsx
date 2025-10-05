@@ -38,7 +38,11 @@ function useRatingLogic() {
             lastPromptAt: typeof parsed.lastPromptAt === 'number' ? parsed.lastPromptAt : null,
           });
         } catch (e) {
-          console.log('[RatingPrompt] parse error', e);
+          if (__DEV__) {
+
+            console.log('[RatingPrompt] parse error', e);
+
+          }
         }
       }
     }).catch((e) => console.log('[RatingPrompt] load error', e));

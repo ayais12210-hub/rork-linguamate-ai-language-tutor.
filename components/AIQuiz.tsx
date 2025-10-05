@@ -80,7 +80,11 @@ Return only JSON.`,
       const qs = result.questions as QuizQuestion[];
       setQuestions(qs);
     } catch (e: unknown) {
-      console.log('[AIQuiz] load error', e);
+      if (__DEV__) {
+
+        console.log('[AIQuiz] load error', e);
+
+      }
       setError('Failed to load quiz. Please try again.');
     } finally {
       setLoading(false);

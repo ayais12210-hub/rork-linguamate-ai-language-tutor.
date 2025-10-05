@@ -8,7 +8,11 @@ export async function scoreSemanticServer(
   goal: string,
   lang: string
 ): Promise<SemanticScoreResult> {
-  console.log('[Scorer] Semantic scoring:', { text, goal, lang });
+  if (__DEV__) {
+
+    console.log('[Scorer] Semantic scoring:', { text, goal, lang });
+
+  }
 
   const textLower = text.toLowerCase();
   const goalLower = goal.toLowerCase();

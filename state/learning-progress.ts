@@ -39,7 +39,11 @@ export const [LearningProgressProvider, useLearningProgress] = createContextHook
         }
       })
       .catch(err => {
-        console.log('load progress error', err);
+        if (__DEV__) {
+
+          console.log('load progress error', err);
+
+        }
       })
       .finally(() => setIsLoading(false));
   }, []);
@@ -47,7 +51,11 @@ export const [LearningProgressProvider, useLearningProgress] = createContextHook
   useEffect(() => {
     if (!isLoading) {
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(skills)).catch(err => {
-        console.log('save progress error', err);
+        if (__DEV__) {
+
+          console.log('save progress error', err);
+
+        }
       });
     }
   }, [skills, isLoading]);

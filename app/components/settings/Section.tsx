@@ -10,7 +10,11 @@ interface SectionProps {
 }
 
 function SectionBase({ title, children, footerText, style, testID }: SectionProps) {
-  console.log('[Settings/Section] render', title);
+  if (__DEV__) {
+
+    console.log('[Settings/Section] render', title);
+
+  }
   return (
     <View style={[styles.section, style]} testID={testID ?? 'settings-section'}>
       <Text style={styles.title} numberOfLines={1} accessibilityRole="header">

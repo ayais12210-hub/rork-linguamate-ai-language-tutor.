@@ -37,7 +37,11 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ onClose })
       const logs = await SecurityAudit.getAuditLogs();
       setAuditLogs(logs.slice(0, 20)); // Show last 20 logs
     } catch (error) {
-      console.error('Failed to load audit logs:', error);
+      if (__DEV__) {
+
+        console.error('Failed to load audit logs:', error);
+
+      }
     }
   };
 
@@ -90,7 +94,11 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ onClose })
   const handleExportLogs = async () => {
     try {
       const exportData = await SecurityAudit.exportAuditLogs();
-      console.log('Audit logs exported:', exportData);
+      if (__DEV__) {
+
+        console.log('Audit logs exported:', exportData);
+
+      }
       
       if (Platform.OS === 'web') {
         const blob = new Blob([exportData], { type: 'application/json' });
@@ -106,7 +114,11 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ onClose })
       
       await security.logSecurityEvent('audit_logs_exported');
     } catch (error) {
-      console.error('Failed to export audit logs:', error);
+      if (__DEV__) {
+
+        console.error('Failed to export audit logs:', error);
+
+      }
     }
   };
 

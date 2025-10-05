@@ -180,7 +180,11 @@ export default function ModulesScreen() {
   ];
 
   useEffect(() => {
-    console.log('[Modules] skills changed, recalculating progress');
+    if (__DEV__) {
+
+      console.log('[Modules] skills changed, recalculating progress');
+
+    }
     calculateProgress();
   }, [skills]);
 
@@ -198,7 +202,11 @@ export default function ModulesScreen() {
       const lp = s.lastPracticedAt ? new Date(s.lastPracticedAt) : null;
       return lp ? lp >= startOfWeek : false;
     });
-    console.log('[Modules] weeklyPracticedSkills', list.length);
+    if (__DEV__) {
+
+      console.log('[Modules] weeklyPracticedSkills', list.length);
+
+    }
     return list;
   }, [skills, startOfWeek]);
 

@@ -51,7 +51,7 @@ export interface LogEntry {
   level: LogLevel;
   category: string;
   message: string;
-  data?: any;
+  data?: Record<string, unknown>;
   stack?: string;
   userId?: string;
   sessionId?: string;
@@ -65,7 +65,7 @@ export interface PerformanceEntry {
   operation: string;
   duration: number;
   category: 'api' | 'ui' | 'storage' | 'computation' | 'navigation';
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   memoryUsage?: number;
 }
 
@@ -74,7 +74,7 @@ export interface UserAction {
   timestamp: number;
   action: string;
   screen: string;
-  data?: any;
+  data?: Record<string, unknown>;
   userId?: string;
   sessionId?: string;
 }
@@ -88,13 +88,21 @@ export class DebugLogger {
   // Set log level
   static setLogLevel(level: LogLevel): void {
     this.currentLogLevel = level;
-    console.log(`[DebugLogger] Log level set to: ${LogLevel[level]}`);
+    if (__DEV__) {
+
+      console.log(`[DebugLogger] Log level set to: ${LogLevel[level]}`);
+
+    }
   }
   
   // Set user ID for logging context
   static setUserId(userId: string): void {
     this.userId = userId;
-    console.log(`[DebugLogger] User ID set: ${userId}`);
+    if (__DEV__) {
+
+      console.log(`[DebugLogger] User ID set: ${userId}`);
+
+    }
   }
   
   // Generate session ID
@@ -135,17 +143,33 @@ export class DebugLogger {
       
       switch (level) {
         case LogLevel.ERROR:
-          console.error(prefix, message, data, error);
+          if (__DEV__) {
+
+            console.error(prefix, message, data, error);
+
+          }
           break;
         case LogLevel.WARN:
-          console.warn(prefix, message, data);
+          if (__DEV__) {
+
+            console.warn(prefix, message, data);
+
+          }
           break;
         case LogLevel.INFO:
-          console.info(prefix, message, data);
+          if (__DEV__) {
+
+            console.info(prefix, message, data);
+
+          }
           break;
         case LogLevel.DEBUG:
         case LogLevel.TRACE:
-          console.log(prefix, message, data);
+          if (__DEV__) {
+
+            console.log(prefix, message, data);
+
+          }
           break;
       }
     }
@@ -154,7 +178,11 @@ export class DebugLogger {
     try {
       await this.storeLogEntry(logEntry);
     } catch (storageError) {
-      console.error('[DebugLogger] Failed to store log entry:', storageError);
+      if (__DEV__) {
+
+        console.error('[DebugLogger] Failed to store log entry:', storageError);
+
+      }
     }
   }
   
@@ -165,7 +193,11 @@ export class DebugLogger {
       const updatedLogs = [logEntry, ...existingLogs].slice(0, DEBUG_CONFIG.MAX_LOG_ENTRIES);
       await AsyncStorage.setItem(DEBUG_CONFIG.DEBUG_LOGS_KEY, JSON.stringify(updatedLogs));
     } catch (error) {
-      console.error('[DebugLogger] Failed to store log entry:', error);
+      if (__DEV__) {
+
+        console.error('[DebugLogger] Failed to store log entry:', error);
+
+      }
     }
   }
   
@@ -175,7 +207,11 @@ export class DebugLogger {
       const logs = await AsyncStorage.getItem(DEBUG_CONFIG.DEBUG_LOGS_KEY);
       return logs ? JSON.parse(logs) : [];
     } catch (error) {
-      console.error('[DebugLogger] Failed to get stored logs:', error);
+      if (__DEV__) {
+
+        console.error('[DebugLogger] Failed to get stored logs:', error);
+
+      }
       return [];
     }
   }
@@ -205,9 +241,17 @@ export class DebugLogger {
   static async clearLogs(): Promise<void> {
     try {
       await AsyncStorage.removeItem(DEBUG_CONFIG.DEBUG_LOGS_KEY);
-      console.log('[DebugLogger] Logs cleared');
+      if (__DEV__) {
+
+        console.log('[DebugLogger] Logs cleared');
+
+      }
     } catch (error) {
-      console.error('[DebugLogger] Failed to clear logs:', error);
+      if (__DEV__) {
+
+        console.error('[DebugLogger] Failed to clear logs:', error);
+
+      }
     }
   }
   
@@ -217,7 +261,11 @@ export class DebugLogger {
       const logs = await this.getStoredLogs();
       return JSON.stringify(logs, null, 2);
     } catch (error) {
-      console.error('[DebugLogger] Failed to export logs:', error);
+      if (__DEV__) {
+
+        console.error('[DebugLogger] Failed to export logs:', error);
+
+      }
       return '[]';
     }
   }
@@ -307,7 +355,11 @@ export class PerformanceMonitor {
       const updatedEntries = [entry, ...existingEntries].slice(0, DEBUG_CONFIG.MAX_PERFORMANCE_ENTRIES);
       await AsyncStorage.setItem(DEBUG_CONFIG.PERFORMANCE_LOGS_KEY, JSON.stringify(updatedEntries));
     } catch (error) {
-      console.error('[PerformanceMonitor] Failed to store performance entry:', error);
+      if (__DEV__) {
+
+        console.error('[PerformanceMonitor] Failed to store performance entry:', error);
+
+      }
     }
   }
   
@@ -317,7 +369,11 @@ export class PerformanceMonitor {
       const entries = await AsyncStorage.getItem(DEBUG_CONFIG.PERFORMANCE_LOGS_KEY);
       return entries ? JSON.parse(entries) : [];
     } catch (error) {
-      console.error('[PerformanceMonitor] Failed to get performance entries:', error);
+      if (__DEV__) {
+
+        console.error('[PerformanceMonitor] Failed to get performance entries:', error);
+
+      }
       return [];
     }
   }
@@ -346,9 +402,17 @@ export class PerformanceMonitor {
   static async clearPerformanceData(): Promise<void> {
     try {
       await AsyncStorage.removeItem(DEBUG_CONFIG.PERFORMANCE_LOGS_KEY);
-      console.log('[PerformanceMonitor] Performance data cleared');
+      if (__DEV__) {
+
+        console.log('[PerformanceMonitor] Performance data cleared');
+
+      }
     } catch (error) {
-      console.error('[PerformanceMonitor] Failed to clear performance data:', error);
+      if (__DEV__) {
+
+        console.error('[PerformanceMonitor] Failed to clear performance data:', error);
+
+      }
     }
   }
 }
@@ -393,7 +457,11 @@ export class UserActionTracker {
         { action, screen, data }
       );
     } catch (error) {
-      console.error('[UserActionTracker] Failed to track action:', error);
+      if (__DEV__) {
+
+        console.error('[UserActionTracker] Failed to track action:', error);
+
+      }
     }
   }
   
@@ -403,7 +471,11 @@ export class UserActionTracker {
       const actions = await AsyncStorage.getItem(DEBUG_CONFIG.USER_ACTIONS_KEY);
       return actions ? JSON.parse(actions) : [];
     } catch (error) {
-      console.error('[UserActionTracker] Failed to get stored actions:', error);
+      if (__DEV__) {
+
+        console.error('[UserActionTracker] Failed to get stored actions:', error);
+
+      }
       return [];
     }
   }
@@ -412,9 +484,17 @@ export class UserActionTracker {
   static async clearActions(): Promise<void> {
     try {
       await AsyncStorage.removeItem(DEBUG_CONFIG.USER_ACTIONS_KEY);
-      console.log('[UserActionTracker] User actions cleared');
+      if (__DEV__) {
+
+        console.log('[UserActionTracker] User actions cleared');
+
+      }
     } catch (error) {
-      console.error('[UserActionTracker] Failed to clear user actions:', error);
+      if (__DEV__) {
+
+        console.error('[UserActionTracker] Failed to clear user actions:', error);
+
+      }
     }
   }
 }
@@ -459,7 +539,11 @@ export const DebugUtils = {
       PerformanceMonitor.clearPerformanceData(),
       UserActionTracker.clearActions(),
     ]);
-    console.log('[DebugUtils] All debug data cleared');
+    if (__DEV__) {
+
+      console.log('[DebugUtils] All debug data cleared');
+
+    }
   },
 
   // Network debugging utilities
@@ -472,7 +556,11 @@ export const DebugUtils = {
         timestamp: Date.now(),
       };
     } catch (error) {
-      console.error('[DebugUtils] Failed to get network info:', error);
+      if (__DEV__) {
+
+        console.error('[DebugUtils] Failed to get network info:', error);
+
+      }
       return null;
     }
   },
@@ -508,7 +596,11 @@ export const DebugUtils = {
             totalSize += value.length;
           }
         } catch (error) {
-          console.warn(`[DebugUtils] Failed to get size for key: ${key}`);
+          if (__DEV__) {
+
+            console.warn(`[DebugUtils] Failed to get size for key: ${key}`);
+
+          }
         }
       }
       
@@ -518,7 +610,11 @@ export const DebugUtils = {
         keys: [...keys],
       };
     } catch (error) {
-      console.error('[DebugUtils] Failed to get storage info:', error);
+      if (__DEV__) {
+
+        console.error('[DebugUtils] Failed to get storage info:', error);
+
+      }
       return {
         totalKeys: 0,
         totalSize: 0,
@@ -582,7 +678,11 @@ export const DebugUtils = {
         await AsyncStorage.removeItem('debug_session');
       }
     } catch (error) {
-      console.error('[DebugUtils] Failed to end debug session:', error);
+      if (__DEV__) {
+
+        console.error('[DebugUtils] Failed to end debug session:', error);
+
+      }
     }
   },
 
@@ -644,7 +744,11 @@ export const DebugUtils = {
       
       return JSON.stringify(report, null, 2);
     } catch (error) {
-      console.error('[DebugUtils] Failed to generate debug report:', error);
+      if (__DEV__) {
+
+        console.error('[DebugUtils] Failed to generate debug report:', error);
+
+      }
       return JSON.stringify({ error: 'Failed to generate report' }, null, 2);
     }
   },
@@ -680,7 +784,11 @@ export class AdvancedDebugger {
         try {
           await hook(data);
         } catch (error) {
-          console.error(`[AdvancedDebugger] Hook error for event ${event}:`, error);
+          if (__DEV__) {
+
+            console.error(`[AdvancedDebugger] Hook error for event ${event}:`, error);
+
+          }
         }
       }
     }
@@ -701,7 +809,11 @@ export class AdvancedDebugger {
       try {
         return await interceptor(data);
       } catch (error) {
-        console.error(`[AdvancedDebugger] Interceptor error for type ${type}:`, error);
+        if (__DEV__) {
+
+          console.error(`[AdvancedDebugger] Interceptor error for type ${type}:`, error);
+
+        }
       }
     }
     return data;

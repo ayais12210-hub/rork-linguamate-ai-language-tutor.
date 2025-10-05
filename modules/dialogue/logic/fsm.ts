@@ -112,7 +112,11 @@ export function useDialogueFSM(scene: Scene, params: DialogueParams) {
 
   const dispatch = useCallback(
     (event: DEvent) => {
-      console.log('[DialogueFSM] Event:', event.type, 'State:', state.kind);
+      if (__DEV__) {
+
+        console.log('[DialogueFSM] Event:', event.type, 'State:', state.kind);
+
+      }
 
       if (event.type === 'USER_INPUT') {
         const newTurn: Turn = {

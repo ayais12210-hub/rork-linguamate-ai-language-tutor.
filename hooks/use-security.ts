@@ -83,7 +83,11 @@ export const useSecurity = (): SecurityState & SecurityActions => {
 
   const initializeSecurity = useCallback(async () => {
     try {
-      console.log('[useSecurity] Initializing security...');
+      if (__DEV__) {
+
+        console.log('[useSecurity] Initializing security...');
+
+      }
       
       // Check session validity
       const sessionValid = await SessionManager.isSessionValid();
@@ -114,9 +118,19 @@ export const useSecurity = (): SecurityState & SecurityActions => {
         platform: Platform.OS,
       });
       
-      console.log('[useSecurity] Security initialized successfully');
+      if (__DEV__) {
+
+      
+        console.log('[useSecurity] Security initialized successfully');
+
+      
+      }
     } catch (error) {
-      console.error('[useSecurity] Failed to initialize security:', error);
+      if (__DEV__) {
+
+        console.error('[useSecurity] Failed to initialize security:', error);
+
+      }
       await SecurityAudit.logSecurityEvent(
         'security_initialization_failed',
         { error: error instanceof Error ? error.message : 'Unknown error' },
@@ -136,7 +150,11 @@ export const useSecurity = (): SecurityState & SecurityActions => {
 
   const authenticate = useCallback(async (credentials: { email: string; password: string }): Promise<boolean> => {
     try {
-      console.log('[useSecurity] Authenticating user...');
+      if (__DEV__) {
+
+        console.log('[useSecurity] Authenticating user...');
+
+      }
       
       // Sanitize inputs
       const sanitizedEmail = InputSanitizer.sanitizeEmail(credentials.email);
@@ -177,13 +195,23 @@ export const useSecurity = (): SecurityState & SecurityActions => {
         // Log successful authentication
         await SecurityAudit.logSecurityEvent('user_authenticated', { email: sanitizedEmail });
         
-        console.log('[useSecurity] Authentication successful');
+        if (__DEV__) {
+
+        
+          console.log('[useSecurity] Authentication successful');
+
+        
+        }
         return true;
       } else {
         throw new SecurityError(SecurityErrorType.AUTHENTICATION_FAILED, 'Invalid credentials');
       }
     } catch (error) {
-      console.error('[useSecurity] Authentication failed:', error);
+      if (__DEV__) {
+
+        console.error('[useSecurity] Authentication failed:', error);
+
+      }
       
       if (error instanceof SecurityError) {
         await SecurityAudit.logSecurityEvent(
@@ -208,7 +236,11 @@ export const useSecurity = (): SecurityState & SecurityActions => {
 
   const logout = useCallback(async (): Promise<void> => {
     try {
-      console.log('[useSecurity] Logging out user...');
+      if (__DEV__) {
+
+        console.log('[useSecurity] Logging out user...');
+
+      }
       
       // Clear session
       await SessionManager.clearSession();
@@ -227,9 +259,19 @@ export const useSecurity = (): SecurityState & SecurityActions => {
       // Log logout
       await SecurityAudit.logSecurityEvent('user_logged_out');
       
-      console.log('[useSecurity] Logout successful');
+      if (__DEV__) {
+
+      
+        console.log('[useSecurity] Logout successful');
+
+      
+      }
     } catch (error) {
-      console.error('[useSecurity] Logout failed:', error);
+      if (__DEV__) {
+
+        console.error('[useSecurity] Logout failed:', error);
+
+      }
       await SecurityAudit.logSecurityEvent(
         'logout_failed',
         { error: error instanceof Error ? error.message : 'Unknown error' },
@@ -250,7 +292,11 @@ export const useSecurity = (): SecurityState & SecurityActions => {
       
       return sessionValid;
     } catch (error) {
-      console.error('[useSecurity] Session refresh failed:', error);
+      if (__DEV__) {
+
+        console.error('[useSecurity] Session refresh failed:', error);
+
+      }
       return false;
     }
   }, []);
@@ -293,7 +339,11 @@ export const useSecurity = (): SecurityState & SecurityActions => {
       
       return isSecure;
     } catch (error) {
-      console.error('[useSecurity] Device security check failed:', error);
+      if (__DEV__) {
+
+        console.error('[useSecurity] Device security check failed:', error);
+
+      }
       return false;
     }
   }, []);
@@ -313,7 +363,11 @@ export const useSecurity = (): SecurityState & SecurityActions => {
       
       return success;
     } catch (error) {
-      console.error('[useSecurity] Biometric authentication failed:', error);
+      if (__DEV__) {
+
+        console.error('[useSecurity] Biometric authentication failed:', error);
+
+      }
       return false;
     }
   }, [securityState.biometricAvailable]);

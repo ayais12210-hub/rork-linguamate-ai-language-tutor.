@@ -29,11 +29,19 @@ export default function VowelsModule({ languageCode, onComplete, onBack }: Props
         rate: 0.85, 
         pitch: 1.0,
         onError: (error) => {
-          console.log('[VowelsModule] Speech error:', error);
+          if (__DEV__) {
+
+            console.log('[VowelsModule] Speech error:', error);
+
+          }
         }
       });
     } catch (e) {
-      console.log('[VowelsModule] Speech error:', e);
+      if (__DEV__) {
+
+        console.log('[VowelsModule] Speech error:', e);
+
+      }
     }
   }, [languageCode]);
 

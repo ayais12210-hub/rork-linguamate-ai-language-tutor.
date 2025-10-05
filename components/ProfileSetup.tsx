@@ -21,7 +21,11 @@ export default function ProfileSetup({ onComplete }: ProfileSetupProps) {
       updateUser({ name: name.trim(), dailyGoalMinutes: minutes, profileCompleted: true });
       onComplete();
     } catch (e) {
-      console.error('[ProfileSetup] failed', e);
+      if (__DEV__) {
+
+        console.error('[ProfileSetup] failed', e);
+
+      }
       Alert.alert('Something went wrong', 'Please try again.');
     }
   }, [dailyGoal, name, onComplete, updateUser]);

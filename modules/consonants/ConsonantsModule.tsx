@@ -29,11 +29,19 @@ export default function ConsonantsModule({ languageCode, onComplete, onBack }: P
         rate: 0.85, 
         pitch: 1.0,
         onError: (error) => {
-          console.log('[ConsonantsModule] Speech error:', error);
+          if (__DEV__) {
+
+            console.log('[ConsonantsModule] Speech error:', error);
+
+          }
         }
       });
     } catch (e) {
-      console.log('[ConsonantsModule] Speech error:', e);
+      if (__DEV__) {
+
+        console.log('[ConsonantsModule] Speech error:', e);
+
+      }
     }
   }, [languageCode]);
 

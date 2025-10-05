@@ -85,7 +85,11 @@ export const useSpeech = () => {
         stream.getTracks().forEach(track => track.stop());
         setAudioPermission(true);
       } catch (error) {
-        console.error('Error requesting audio permission:', error);
+        if (__DEV__) {
+
+          console.error('Error requesting audio permission:', error);
+
+        }
         setAudioPermission(false);
       }
     } else {
@@ -119,14 +123,22 @@ export const useSpeech = () => {
       setIsSpeaking(true);
       
       // Mock TTS for development - expo-speech not available in Expo Go
-      console.log(`Speaking: "${text}" in ${language || speechSettings.language}`);
+      if (__DEV__) {
+
+        console.log(`Speaking: "${text}" in ${language || speechSettings.language}`);
+
+      }
       
       // Simulate speaking duration
       setTimeout(() => {
         setIsSpeaking(false);
       }, 2000);
     } catch (error) {
-      console.error('Error speaking text:', error);
+      if (__DEV__) {
+
+        console.error('Error speaking text:', error);
+
+      }
       setIsSpeaking(false);
     }
   };
@@ -137,13 +149,21 @@ export const useSpeech = () => {
 
   const pauseSpeaking = async () => {
     if (Platform.OS !== 'web') {
-      console.log('Pausing speech');
+      if (__DEV__) {
+
+        console.log('Pausing speech');
+
+      }
     }
   };
 
   const resumeSpeaking = async () => {
     if (Platform.OS !== 'web') {
-      console.log('Resuming speech');
+      if (__DEV__) {
+
+        console.log('Resuming speech');
+
+      }
     }
   };
 
@@ -199,7 +219,11 @@ export const useSpeech = () => {
         }, 1000) as ReturnType<typeof setInterval>;
       }
     } catch (error) {
-      console.error('Failed to start recording:', error);
+      if (__DEV__) {
+
+        console.error('Failed to start recording:', error);
+
+      }
     }
   };
 
@@ -232,7 +256,11 @@ export const useSpeech = () => {
         try {
           await nativeRecording.current.stopAndUnloadAsync();
         } catch (e) {
-          console.error('stopAndUnloadAsync error', e);
+          if (__DEV__) {
+
+            console.error('stopAndUnloadAsync error', e);
+
+          }
         }
         await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
         const uri = nativeRecording.current.getURI() ?? undefined;
@@ -241,21 +269,33 @@ export const useSpeech = () => {
         return uri ?? undefined;
       }
     } catch (error) {
-      console.error('Failed to stop recording:', error);
+      if (__DEV__) {
+
+        console.error('Failed to stop recording:', error);
+
+      }
       return undefined;
     }
   };
 
   const pauseRecording = async () => {
     if (Platform.OS !== 'web') {
-      console.log('Pausing recording');
+      if (__DEV__) {
+
+        console.log('Pausing recording');
+
+      }
       setRecordingState(prev => ({ ...prev, isPaused: true }));
     }
   };
 
   const resumeRecording = async () => {
     if (Platform.OS !== 'web') {
-      console.log('Resuming recording');
+      if (__DEV__) {
+
+        console.log('Resuming recording');
+
+      }
       setRecordingState(prev => ({ ...prev, isPaused: false }));
     }
   };
@@ -288,19 +328,31 @@ export const useSpeech = () => {
         try {
           effectiveUri = await stopRecording();
         } catch (e) {
-          console.error('Failed to auto-stop recording before transcription', e);
+          if (__DEV__) {
+
+            console.error('Failed to auto-stop recording before transcription', e);
+
+          }
         }
       } else if (Platform.OS === 'web' && mediaRecorder.current && mediaRecorder.current.state !== 'inactive') {
         try {
           effectiveUri = await stopRecording();
         } catch (e) {
-          console.error('Failed to stop active MediaRecorder before transcription', e);
+          if (__DEV__) {
+
+            console.error('Failed to stop active MediaRecorder before transcription', e);
+
+          }
         }
       }
     }
 
     if (!effectiveUri) {
-      console.error('No audio URI available for transcription');
+      if (__DEV__) {
+
+        console.error('No audio URI available for transcription');
+
+      }
       return null;
     }
 
@@ -368,7 +420,11 @@ export const useSpeech = () => {
       setTranscriptionResult(transcriptionResult);
       return transcriptionResult;
     } catch (error) {
-      console.error('Error transcribing audio:', error);
+      if (__DEV__) {
+
+        console.error('Error transcribing audio:', error);
+
+      }
       return null;
     } finally {
       setIsTranscribing(false);
@@ -392,11 +448,19 @@ export const useSpeech = () => {
         nativeSound.current = sound;
         const status = (await sound.playAsync()) as AVPlaybackStatusSuccess;
         if (!status.isLoaded) {
-          console.log('Sound not loaded');
+          if (__DEV__) {
+
+            console.log('Sound not loaded');
+
+          }
         }
       }
     } catch (error) {
-      console.error('Error playing recording:', error);
+      if (__DEV__) {
+
+        console.error('Error playing recording:', error);
+
+      }
     }
   };
 

@@ -255,7 +255,11 @@ export const sleep = (ms: number): Promise<void> => {
 
 // Error handling utility
 export const handleError = (error: unknown, context?: string): string => {
-  console.error(`Error${context ? ` in ${context}` : ''}:`, error);
+  if (__DEV__) {
+
+    console.error(`Error${context ? ` in ${context}` : ''}:`, error);
+
+  }
   
   if (error instanceof Error) {
     return error.message;

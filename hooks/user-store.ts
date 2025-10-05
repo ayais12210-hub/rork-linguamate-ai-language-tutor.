@@ -52,7 +52,11 @@ export const [UserProvider, useUser] = createContextHook(() => {
         setUser(parsedUser);
       }
     } catch (error) {
-      console.error('Error loading user:', error);
+      if (__DEV__) {
+
+        console.error('Error loading user:', error);
+
+      }
     } finally {
       setIsLoading(false);
     }
@@ -63,7 +67,11 @@ export const [UserProvider, useUser] = createContextHook(() => {
       await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
       setUser(updatedUser);
     } catch (error) {
-      console.error('Error saving user:', error);
+      if (__DEV__) {
+
+        console.error('Error saving user:', error);
+
+      }
     }
   };
 
@@ -220,7 +228,11 @@ export const [UserProvider, useUser] = createContextHook(() => {
       await AsyncStorage.removeItem(USER_STORAGE_KEY);
       setUser(defaultUser);
     } catch (error) {
-      console.error('Error clearing user data:', error);
+      if (__DEV__) {
+
+        console.error('Error clearing user data:', error);
+
+      }
     }
   };
 

@@ -44,7 +44,11 @@ export async function getDeviceInfo(): Promise<DeviceInfo> {
 
     info.fingerprint = await getDeviceFingerprint();
   } catch (error) {
-    console.error('Failed to get device info:', error);
+    if (__DEV__) {
+
+      console.error('Failed to get device info:', error);
+
+    }
   }
 
   cachedDeviceInfo = info;
@@ -79,7 +83,11 @@ export async function getDeviceFingerprint(): Promise<string> {
     
     return cachedFingerprint;
   } catch (error) {
-    console.error('Failed to generate device fingerprint:', error);
+    if (__DEV__) {
+
+      console.error('Failed to generate device fingerprint:', error);
+
+    }
     return 'unknown';
   }
 }

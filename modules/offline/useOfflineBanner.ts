@@ -8,11 +8,19 @@ export function useOfflineBanner() {
 
   useEffect(() => {
     if (isOffline && !wasOffline) {
-      console.log('[OfflineBanner] Going offline - showing banner');
+      if (__DEV__) {
+
+        console.log('[OfflineBanner] Going offline - showing banner');
+
+      }
       setShowBanner(true);
       setWasOffline(true);
     } else if (!isOffline && wasOffline) {
-      console.log('[OfflineBanner] Back online - hiding banner after delay');
+      if (__DEV__) {
+
+        console.log('[OfflineBanner] Back online - hiding banner after delay');
+
+      }
       setTimeout(() => {
         setShowBanner(false);
         setWasOffline(false);

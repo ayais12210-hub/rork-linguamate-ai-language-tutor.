@@ -41,9 +41,17 @@ function RootLayoutNav() {
 function MonitoringInitializer() {
   const { user } = useUser();
   useEffect(() => {
-    console.log('[RootLayout] Initializing monitoring with user', user?.id);
+    if (__DEV__) {
+
+      console.log('[RootLayout] Initializing monitoring with user', user?.id);
+
+    }
     MonitoringUtils.initializeAll(user?.id).catch((e) => {
-      console.log('[RootLayout] Monitoring init error', e);
+      if (__DEV__) {
+
+        console.log('[RootLayout] Monitoring init error', e);
+
+      }
     });
     return () => {
       MonitoringUtils.cleanup();
@@ -54,9 +62,17 @@ function MonitoringInitializer() {
 
 function OfflineInitializer() {
   useEffect(() => {
-    console.log('[RootLayout] Initializing offline queue');
+    if (__DEV__) {
+
+      console.log('[RootLayout] Initializing offline queue');
+
+    }
     offlineQueue.initialize().catch((e) => {
-      console.log('[RootLayout] Offline queue init error', e);
+      if (__DEV__) {
+
+        console.log('[RootLayout] Offline queue init error', e);
+
+      }
     });
   }, []);
   return null;

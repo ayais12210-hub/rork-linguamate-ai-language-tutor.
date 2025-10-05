@@ -63,14 +63,24 @@ export function initializeOfflineManager() {
     return;
   }
 
-  console.log('[OfflineManager] Initializing network listener');
+  if (__DEV__) {
+
+
+    console.log('[OfflineManager] Initializing network listener');
+
+
+  }
 
   unsubscribeNetInfo = NetInfo.addEventListener(state => {
-    console.log('[OfflineManager] Network state changed:', {
+    if (__DEV__) {
+
+      console.log('[OfflineManager] Network state changed:', {
       isConnected: state.isConnected,
       type: state.type,
       isInternetReachable: state.isInternetReachable,
     });
+
+    }
 
     const isOffline = !state.isConnected || state.isInternetReachable === false;
     
@@ -93,7 +103,11 @@ export function initializeOfflineManager() {
 
 export function cleanupOfflineManager() {
   if (unsubscribeNetInfo) {
-    console.log('[OfflineManager] Cleaning up network listener');
+    if (__DEV__) {
+
+      console.log('[OfflineManager] Cleaning up network listener');
+
+    }
     unsubscribeNetInfo();
     unsubscribeNetInfo = null;
   }

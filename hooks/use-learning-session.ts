@@ -128,7 +128,11 @@ export const useLearningSession = () => {
         setSessions(parsedSessions);
       }
     } catch (error) {
-      console.error('Error loading sessions:', error);
+      if (__DEV__) {
+
+        console.error('Error loading sessions:', error);
+
+      }
     } finally {
       setIsLoading(false);
     }
@@ -139,7 +143,11 @@ export const useLearningSession = () => {
       await AsyncStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(updatedSessions));
       setSessions(updatedSessions);
     } catch (error) {
-      console.error('Error saving sessions:', error);
+      if (__DEV__) {
+
+        console.error('Error saving sessions:', error);
+
+      }
     }
   };
 
@@ -325,7 +333,11 @@ export const useLearningSession = () => {
       setSessions([]);
       setCurrentSession(null);
     } catch (error) {
-      console.error('Error clearing sessions:', error);
+      if (__DEV__) {
+
+        console.error('Error clearing sessions:', error);
+
+      }
     }
   };
 

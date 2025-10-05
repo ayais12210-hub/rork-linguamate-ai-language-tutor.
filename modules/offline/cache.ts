@@ -53,118 +53,212 @@ class OfflineCache {
   }
 
   async cacheLessons(lessons: CachedLesson[]): Promise<void> {
-    console.log('[OfflineCache] Caching', lessons.length, 'lessons');
+    if (__DEV__) {
+
+      console.log('[OfflineCache] Caching', lessons.length, 'lessons');
+
+    }
     try {
       const cached = this.createCachedItem(lessons);
       await storageHelpers.setObject(STORAGE_KEYS.OFFLINE_LESSONS, cached);
     } catch (error) {
-      console.error('[OfflineCache] Failed to cache lessons:', error);
+      if (__DEV__) {
+
+        console.error('[OfflineCache] Failed to cache lessons:', error);
+
+      }
       throw error;
     }
   }
 
   async getCachedLessons(): Promise<CachedLesson[] | null> {
-    console.log('[OfflineCache] Retrieving cached lessons');
+    if (__DEV__) {
+
+      console.log('[OfflineCache] Retrieving cached lessons');
+
+    }
     try {
       const cached = await storageHelpers.getObject<CachedItem<CachedLesson[]>>(
         STORAGE_KEYS.OFFLINE_LESSONS
       );
 
       if (!cached) {
-        console.log('[OfflineCache] No cached lessons found');
+        if (__DEV__) {
+
+          console.log('[OfflineCache] No cached lessons found');
+
+        }
         return null;
       }
 
       if (this.isExpired(cached)) {
-        console.log('[OfflineCache] Cached lessons expired');
+        if (__DEV__) {
+
+          console.log('[OfflineCache] Cached lessons expired');
+
+        }
         await storageHelpers.remove(STORAGE_KEYS.OFFLINE_LESSONS);
         return null;
       }
 
-      console.log('[OfflineCache] Retrieved', cached.data.length, 'cached lessons');
+      if (__DEV__) {
+
+
+        console.log('[OfflineCache] Retrieved', cached.data.length, 'cached lessons');
+
+
+      }
       return cached.data;
     } catch (error) {
-      console.error('[OfflineCache] Failed to get cached lessons:', error);
+      if (__DEV__) {
+
+        console.error('[OfflineCache] Failed to get cached lessons:', error);
+
+      }
       return null;
     }
   }
 
   async cacheProgress(progress: CachedProgress): Promise<void> {
-    console.log('[OfflineCache] Caching progress for user:', progress.userId);
+    if (__DEV__) {
+
+      console.log('[OfflineCache] Caching progress for user:', progress.userId);
+
+    }
     try {
       const cached = this.createCachedItem(progress, 30);
       await storageHelpers.setObject(STORAGE_KEYS.LEARNING_PROGRESS, cached);
     } catch (error) {
-      console.error('[OfflineCache] Failed to cache progress:', error);
+      if (__DEV__) {
+
+        console.error('[OfflineCache] Failed to cache progress:', error);
+
+      }
       throw error;
     }
   }
 
   async getCachedProgress(): Promise<CachedProgress | null> {
-    console.log('[OfflineCache] Retrieving cached progress');
+    if (__DEV__) {
+
+      console.log('[OfflineCache] Retrieving cached progress');
+
+    }
     try {
       const cached = await storageHelpers.getObject<CachedItem<CachedProgress>>(
         STORAGE_KEYS.LEARNING_PROGRESS
       );
 
       if (!cached) {
-        console.log('[OfflineCache] No cached progress found');
+        if (__DEV__) {
+
+          console.log('[OfflineCache] No cached progress found');
+
+        }
         return null;
       }
 
       if (this.isExpired(cached)) {
-        console.log('[OfflineCache] Cached progress expired');
+        if (__DEV__) {
+
+          console.log('[OfflineCache] Cached progress expired');
+
+        }
         await storageHelpers.remove(STORAGE_KEYS.LEARNING_PROGRESS);
         return null;
       }
 
-      console.log('[OfflineCache] Retrieved cached progress');
+      if (__DEV__) {
+
+
+        console.log('[OfflineCache] Retrieved cached progress');
+
+
+      }
       return cached.data;
     } catch (error) {
-      console.error('[OfflineCache] Failed to get cached progress:', error);
+      if (__DEV__) {
+
+        console.error('[OfflineCache] Failed to get cached progress:', error);
+
+      }
       return null;
     }
   }
 
   async cacheVocabulary(vocabulary: CachedVocabulary): Promise<void> {
-    console.log('[OfflineCache] Caching vocabulary for user:', vocabulary.userId);
+    if (__DEV__) {
+
+      console.log('[OfflineCache] Caching vocabulary for user:', vocabulary.userId);
+
+    }
     try {
       const cached = this.createCachedItem(vocabulary, 14);
       await storageHelpers.setObject(STORAGE_KEYS.VOCABULARY, cached);
     } catch (error) {
-      console.error('[OfflineCache] Failed to cache vocabulary:', error);
+      if (__DEV__) {
+
+        console.error('[OfflineCache] Failed to cache vocabulary:', error);
+
+      }
       throw error;
     }
   }
 
   async getCachedVocabulary(): Promise<CachedVocabulary | null> {
-    console.log('[OfflineCache] Retrieving cached vocabulary');
+    if (__DEV__) {
+
+      console.log('[OfflineCache] Retrieving cached vocabulary');
+
+    }
     try {
       const cached = await storageHelpers.getObject<CachedItem<CachedVocabulary>>(
         STORAGE_KEYS.VOCABULARY
       );
 
       if (!cached) {
-        console.log('[OfflineCache] No cached vocabulary found');
+        if (__DEV__) {
+
+          console.log('[OfflineCache] No cached vocabulary found');
+
+        }
         return null;
       }
 
       if (this.isExpired(cached)) {
-        console.log('[OfflineCache] Cached vocabulary expired');
+        if (__DEV__) {
+
+          console.log('[OfflineCache] Cached vocabulary expired');
+
+        }
         await storageHelpers.remove(STORAGE_KEYS.VOCABULARY);
         return null;
       }
 
-      console.log('[OfflineCache] Retrieved cached vocabulary with', cached.data.words.length, 'words');
+      if (__DEV__) {
+
+
+        console.log('[OfflineCache] Retrieved cached vocabulary with', cached.data.words.length, 'words');
+
+
+      }
       return cached.data;
     } catch (error) {
-      console.error('[OfflineCache] Failed to get cached vocabulary:', error);
+      if (__DEV__) {
+
+        console.error('[OfflineCache] Failed to get cached vocabulary:', error);
+
+      }
       return null;
     }
   }
 
   async clearExpiredCache(): Promise<void> {
-    console.log('[OfflineCache] Clearing expired cache items');
+    if (__DEV__) {
+
+      console.log('[OfflineCache] Clearing expired cache items');
+
+    }
     
     const keys = [
       STORAGE_KEYS.OFFLINE_LESSONS,
@@ -176,17 +270,29 @@ class OfflineCache {
       try {
         const cached = await storageHelpers.getObject<CachedItem<unknown>>(key);
         if (cached && this.isExpired(cached)) {
-          console.log('[OfflineCache] Removing expired cache:', key);
+          if (__DEV__) {
+
+            console.log('[OfflineCache] Removing expired cache:', key);
+
+          }
           await storageHelpers.remove(key);
         }
       } catch (error) {
-        console.error('[OfflineCache] Error checking cache expiry for', key, error);
+        if (__DEV__) {
+
+          console.error('[OfflineCache] Error checking cache expiry for', key, error);
+
+        }
       }
     }
   }
 
   async clearAllCache(): Promise<void> {
-    console.log('[OfflineCache] Clearing all cache');
+    if (__DEV__) {
+
+      console.log('[OfflineCache] Clearing all cache');
+
+    }
     
     const keys = [
       STORAGE_KEYS.OFFLINE_LESSONS,
@@ -198,7 +304,11 @@ class OfflineCache {
       try {
         await storageHelpers.remove(key);
       } catch (error) {
-        console.error('[OfflineCache] Error clearing cache for', key, error);
+        if (__DEV__) {
+
+          console.error('[OfflineCache] Error clearing cache for', key, error);
+
+        }
       }
     }
   }

@@ -190,7 +190,11 @@ export default function DialogueModule({ languageCode, onComplete, onBack }: Pro
         });
       });
     } catch (error) {
-      console.error('Error loading dialogues:', error);
+      if (__DEV__) {
+
+        console.error('Error loading dialogues:', error);
+
+      }
       Alert.alert('Error', 'Failed to load dialogue data. Please try again.');
     } finally {
       setIsLoading(false);
@@ -199,10 +203,18 @@ export default function DialogueModule({ languageCode, onComplete, onBack }: Pro
   
   const playAudio = async (line: DialogueLine) => {
     if (Platform.OS === 'web') {
-      console.log(`Playing: ${line.text}`);
+      if (__DEV__) {
+
+        console.log(`Playing: ${line.text}`);
+
+      }
     } else {
       // In production, play actual audio
-      console.log(`Playing audio for: ${line.text}`);
+      if (__DEV__) {
+
+        console.log(`Playing audio for: ${line.text}`);
+
+      }
     }
     
     setIsPlaying(true);

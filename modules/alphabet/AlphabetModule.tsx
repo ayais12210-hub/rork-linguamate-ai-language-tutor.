@@ -72,11 +72,19 @@ export default function AlphabetModule({ languageCode, onComplete, onBack }: Pro
         rate: 0.85, 
         pitch: 1.0,
         onError: (error) => {
-          console.log('[AlphabetModule] Speech error:', error);
+          if (__DEV__) {
+
+            console.log('[AlphabetModule] Speech error:', error);
+
+          }
         }
       });
     } catch (e) {
-      console.log('[AlphabetModule] Speech error:', e);
+      if (__DEV__) {
+
+        console.log('[AlphabetModule] Speech error:', e);
+
+      }
     }
   }, [selectedLanguage?.code]);
 
@@ -148,7 +156,11 @@ export default function AlphabetModule({ languageCode, onComplete, onBack }: Pro
         });
       });
     } catch (error) {
-      console.error('Error loading alphabet:', error);
+      if (__DEV__) {
+
+        console.error('Error loading alphabet:', error);
+
+      }
       Alert.alert('Error', 'Failed to load alphabet data. Please try again.');
     } finally {
       setIsLoading(false);

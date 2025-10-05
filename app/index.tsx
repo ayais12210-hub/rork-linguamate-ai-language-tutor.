@@ -20,7 +20,11 @@ export default function IndexScreen() {
         setShowLanguageSetup(true);
       }
     } catch (error) {
-      console.error('Error checking onboarding status:', error);
+      if (__DEV__) {
+
+        console.error('Error checking onboarding status:', error);
+
+      }
       setShowOnboarding(true);
     } finally {
       setIsLoading(false);

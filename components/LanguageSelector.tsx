@@ -36,13 +36,21 @@ export default function LanguageSelector({ onLanguageSelect }: LanguageSelectorP
   const handleLanguagePress = (languageCode: string) => {
     const code = (languageCode ?? '').trim();
     if (!code) return;
-    console.log('[LanguageSelector] language selected:', code);
+    if (__DEV__) {
+
+      console.log('[LanguageSelector] language selected:', code);
+
+    }
     setSelectedLanguage(code);
   };
 
   const handleContinue = () => {
     if (selectedLanguage) {
-      console.log('[LanguageSelector] continue with', { selectedLanguage, selectedProficiency });
+      if (__DEV__) {
+
+        console.log('[LanguageSelector] continue with', { selectedLanguage, selectedProficiency });
+
+      }
       onLanguageSelect(selectedLanguage, selectedProficiency);
     }
   };

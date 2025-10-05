@@ -88,7 +88,13 @@ export default function DebugPanel({ visible, onClose }: Props) {
       setErrors(storedErrors);
       setPerformanceEntries(performanceData);
     } catch (error) {
-      console.error('[DebugPanel] Failed to load debug data:', error);
+      if (__DEV__) {
+        if (__DEV__) {
+
+          console.error('[DebugPanel] Failed to load debug data:', error);
+
+        }
+      }
     } finally {
       setIsLoading(false);
     }
@@ -127,7 +133,13 @@ export default function DebugPanel({ visible, onClose }: Props) {
         'Debug report has been generated. In a production app, this would be saved or shared.',
         [{ text: 'OK' }]
       );
-      console.log('[DebugPanel] Debug Report:', report);
+      if (__DEV__) {
+        if (__DEV__) {
+
+          console.log('[DebugPanel] Debug Report:', report);
+
+        }
+      }
     } catch (error) {
       Alert.alert('Error', 'Failed to generate debug report');
     }

@@ -92,7 +92,13 @@ function stripJSONCodeFences(raw: string): string {
     }
     return s;
   } catch (e) {
-    console.log('[Translator] stripJSONCodeFences error', e);
+    if (__DEV__) {
+      if (__DEV__) {
+
+        console.log('[Translator] stripJSONCodeFences error', e);
+
+      }
+    }
     return raw;
   }
 }
@@ -131,7 +137,13 @@ function normalizeAIResponse(raw: string): AITranslationResponseShape {
     const parsed = JSON.parse(cleaned) as AITranslationResponseShape;
     return parsed;
   } catch (e) {
-    console.log('[Translator] JSON parse failed, falling back to plain text', e);
+    if (__DEV__) {
+      if (__DEV__) {
+
+        console.log('[Translator] JSON parse failed, falling back to plain text', e);
+
+      }
+    }
     return { translation: raw } as AITranslationResponseShape;
   }
 }
@@ -179,7 +191,13 @@ export default function TranslatorScreen() {
     }
 
     setIsTranslating(true);
-    console.log('[Translator] Starting translation request');
+    if (__DEV__) {
+      if (__DEV__) {
+
+        console.log('[Translator] Starting translation request');
+
+      }
+    }
 
     try {
       const response = await fetch('https://toolkit.rork.com/text/llm/', {
@@ -281,7 +299,13 @@ Focus on being an encouraging language coach who helps learners understand not j
         useNativeDriver: true,
       }).start();
     } catch (error) {
-      console.error('Translation error:', error);
+      if (__DEV__) {
+        if (__DEV__) {
+
+          console.error('Translation error:', error);
+
+        }
+      }
       Alert.alert('Error', 'Failed to translate. Please try again.');
     } finally {
       setIsTranslating(false);
@@ -308,7 +332,13 @@ Focus on being an encouraging language coach who helps learners understand not j
       });
       
       if (!response.ok) {
-        console.error('[Translator] Suggestions API error:', response.status);
+        if (__DEV__) {
+          if (__DEV__) {
+
+            console.error('[Translator] Suggestions API error:', response.status);
+
+          }
+        }
         setSuggestions([]);
         return;
       }
@@ -321,12 +351,24 @@ Focus on being an encouraging language coach who helps learners understand not j
         parsed = JSON.parse(cleaned);
         if (!Array.isArray(parsed)) parsed = [];
       } catch (e) {
-        console.log('[Translator] Failed to parse suggestions', e);
+        if (__DEV__) {
+          if (__DEV__) {
+
+            console.log('[Translator] Failed to parse suggestions', e);
+
+          }
+        }
         parsed = [];
       }
       setSuggestions(parsed.slice(0, 6));
     } catch (error) {
-      console.error('[Translator] Failed to generate suggestions:', error);
+      if (__DEV__) {
+        if (__DEV__) {
+
+          console.error('[Translator] Failed to generate suggestions:', error);
+
+        }
+      }
       setSuggestions([]);
     }
   }, [fromLang.name, toLang.name, user.proficiencyLevel]);
@@ -408,7 +450,11 @@ Focus on being an encouraging language coach who helps learners understand not j
       await Clipboard.setStringAsync(text);
       Alert.alert('Copied!', 'Text copied to clipboard');
     } catch (error) {
-      console.error('[Translator] Copy error:', error);
+      if (__DEV__) {
+
+        console.error('[Translator] Copy error:', error);
+
+      }
       Alert.alert('Error', 'Failed to copy text');
     }
   };
@@ -424,7 +470,11 @@ Focus on being an encouraging language coach who helps learners understand not j
         });
       }
     } catch (error) {
-      console.error('[Translator] Paste error:', error);
+      if (__DEV__) {
+
+        console.error('[Translator] Paste error:', error);
+
+      }
       Alert.alert('Error', 'Failed to paste text');
     }
   };
@@ -450,7 +500,11 @@ Focus on being an encouraging language coach who helps learners understand not j
     if (isRecording) {
       try {
         if (recordingRef.current) {
-          console.log('[Translator] Stopping recording...');
+          if (__DEV__) {
+
+            console.log('[Translator] Stopping recording...');
+
+          }
           await recordingRef.current.stopAndUnloadAsync();
           const uri = recordingRef.current.getURI();
           setIsRecording(false);
@@ -461,7 +515,11 @@ Focus on being an encouraging language coach who helps learners understand not j
           }
 
           if (uri) {
-            console.log('[Translator] Processing audio from:', uri);
+            if (__DEV__) {
+
+              console.log('[Translator] Processing audio from:', uri);
+
+            }
             const formData = new FormData();
             const uriParts = uri.split('.');
             const fileType = uriParts[uriParts.length - 1];
@@ -478,21 +536,41 @@ Focus on being an encouraging language coach who helps learners understand not j
               } as any);
             }
 
-            console.log('[Translator] Sending audio to backend STT API...');
+            if (__DEV__) {
+
+
+              console.log('[Translator] Sending audio to backend STT API...');
+
+
+            }
             const apiBaseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8081';
             const sttUrl = `${apiBaseUrl}/api/stt/transcribe`;
-            console.log('[Translator] STT URL:', sttUrl);
+            if (__DEV__) {
+
+              console.log('[Translator] STT URL:', sttUrl);
+
+            }
             const sttResponse = await fetch(sttUrl, {
               method: 'POST',
               body: formData,
             });
             
-            console.log('[Translator] STT response status:', sttResponse.status);
+            if (__DEV__) {
+
+            
+              console.log('[Translator] STT response status:', sttResponse.status);
+
+            
+            }
             console.log('[Translator] STT response content-type:', sttResponse.headers.get('content-type'));
 
             if (!sttResponse.ok) {
               const errorText = await sttResponse.text();
-              console.error('[Translator] STT API error response:', errorText);
+              if (__DEV__) {
+
+                console.error('[Translator] STT API error response:', errorText);
+
+              }
               throw new Error(`STT API returned ${sttResponse.status}`);
             }
 
@@ -502,9 +580,17 @@ Focus on being an encouraging language coach who helps learners understand not j
             let data;
             try {
               data = JSON.parse(responseText);
-              console.log('[Translator] STT parsed response:', data);
+              if (__DEV__) {
+
+                console.log('[Translator] STT parsed response:', data);
+
+              }
             } catch (parseError) {
-              console.error('[Translator] Failed to parse STT response as JSON:', parseError);
+              if (__DEV__) {
+
+                console.error('[Translator] Failed to parse STT response as JSON:', parseError);
+
+              }
               console.error('[Translator] Response was:', responseText.substring(0, 500));
               throw new Error('Invalid JSON response from STT service');
             }
@@ -521,7 +607,13 @@ Focus on being an encouraging language coach who helps learners understand not j
                 return `${currentText} ${transcribedText}`;
               });
               
-              console.log('[Translator] Text inserted successfully');
+              if (__DEV__) {
+
+              
+                console.log('[Translator] Text inserted successfully');
+
+              
+              }
               
               if (sourceInputRef.current) {
                 setTimeout(() => {
@@ -534,21 +626,35 @@ Focus on being an encouraging language coach who helps learners understand not j
           }
         }
       } catch (error) {
-        console.error('[Translator] STT error:', error);
+        if (__DEV__) {
+
+          console.error('[Translator] STT error:', error);
+
+        }
         setIsRecording(false);
         recordingRef.current = null;
         Alert.alert('Error', 'Failed to transcribe audio. Please try again.');
       }
     } else {
       try {
-        console.log('[Translator] Requesting microphone permission...');
+        if (__DEV__) {
+
+          console.log('[Translator] Requesting microphone permission...');
+
+        }
         const { status } = await Audio.requestPermissionsAsync();
         if (status !== 'granted') {
           Alert.alert('Permission Required', 'Please grant microphone permission to use speech-to-text.');
           return;
         }
 
-        console.log('[Translator] Setting up audio mode...');
+        if (__DEV__) {
+
+
+          console.log('[Translator] Setting up audio mode...');
+
+
+        }
         if (Platform.OS !== 'web') {
           await Audio.setAudioModeAsync({
             allowsRecordingIOS: true,
@@ -556,7 +662,13 @@ Focus on being an encouraging language coach who helps learners understand not j
           });
         }
 
-        console.log('[Translator] Starting recording...');
+        if (__DEV__) {
+
+
+          console.log('[Translator] Starting recording...');
+
+
+        }
         const recording = new Audio.Recording();
         await recording.prepareToRecordAsync({
           android: {
@@ -587,9 +699,17 @@ Focus on being an encouraging language coach who helps learners understand not j
         await recording.startAsync();
         recordingRef.current = recording;
         setIsRecording(true);
-        console.log('[Translator] Recording started successfully');
+        if (__DEV__) {
+
+          console.log('[Translator] Recording started successfully');
+
+        }
       } catch (error) {
-        console.error('[Translator] Recording start error:', error);
+        if (__DEV__) {
+
+          console.error('[Translator] Recording start error:', error);
+
+        }
         setIsRecording(false);
         Alert.alert('Error', 'Failed to start recording. Please check your microphone.');
       }
@@ -625,24 +745,40 @@ Focus on being an encouraging language coach who helps learners understand not j
         pitch: 1.0,
         rate: speechRate,
         onDone: () => {
-          console.log('[Translator] TTS completed');
+          if (__DEV__) {
+
+            console.log('[Translator] TTS completed');
+
+          }
           setIsSpeaking(false);
           setSpeakingTextId(null);
         },
         onStopped: () => {
-          console.log('[Translator] TTS stopped');
+          if (__DEV__) {
+
+            console.log('[Translator] TTS stopped');
+
+          }
           setIsSpeaking(false);
           setSpeakingTextId(null);
         },
         onError: (error) => {
-          console.error('[Translator] TTS error:', error);
+          if (__DEV__) {
+
+            console.error('[Translator] TTS error:', error);
+
+          }
           setIsSpeaking(false);
           setSpeakingTextId(null);
           Alert.alert('Error', 'Failed to play audio. Please try again.');
         },
       });
     } catch (error) {
-      console.error('[Translator] Speech error:', error);
+      if (__DEV__) {
+
+        console.error('[Translator] Speech error:', error);
+
+      }
       setIsSpeaking(false);
       setSpeakingTextId(null);
       Alert.alert('Error', 'Failed to play audio. Please try again.');
@@ -1136,12 +1272,30 @@ Focus on being an encouraging language coach who helps learners understand not j
                       key={`${index}-${alt}`}
                       style={styles.alternativeItem}
                       onPress={() => {
-                        console.log('[Translator] Alternative selected -> source input');
+                        if (__DEV__) {
+
+                          console.log('[Translator] Alternative selected -> source input');
+
+                        }
                         setSourceText(alt);
-                        try { sourceInputRef.current?.focus?.(); } catch (e) { console.log('focus err', e); }
+                        try { 
+                          sourceInputRef.current?.focus?.(); 
+                        } catch (e) { 
+                          if (__DEV__) {
+                            if (__DEV__) {
+
+                              console.warn('[Translator] Failed to focus input:', e);
+
+                            }
+                          }
+                        }
                       }}
                       onLongPress={() => {
-                        console.log('[Translator] Alternative long-pressed -> translated preview');
+                        if (__DEV__) {
+
+                          console.log('[Translator] Alternative long-pressed -> translated preview');
+
+                        }
                         setTranslatedText(alt);
                       }}
                       testID={`alt-${index}`}

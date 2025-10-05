@@ -100,9 +100,19 @@ export class TokenManager {
         SecureStorage.setItem(this.TOKEN_EXPIRY_KEY, expiryTime.toString()),
       ]);
       
-      console.log('[TokenManager] Tokens stored securely');
+      if (__DEV__) {
+
+      
+        console.log('[TokenManager] Tokens stored securely');
+
+      
+      }
     } catch (error) {
-      console.error('[TokenManager] Failed to store tokens:', error);
+      if (__DEV__) {
+
+        console.error('[TokenManager] Failed to store tokens:', error);
+
+      }
       throw new SecurityError(
         SecurityErrorType.ENCRYPTION_FAILED,
         'Failed to store authentication tokens'
@@ -123,14 +133,22 @@ export class TokenManager {
       
       const expiry = parseInt(expiryStr, 10);
       if (Date.now() > expiry) {
-        console.log('[TokenManager] Access token expired');
+        if (__DEV__) {
+
+          console.log('[TokenManager] Access token expired');
+
+        }
         await this.clearTokens();
         return null;
       }
       
       return token;
     } catch (error) {
-      console.error('[TokenManager] Failed to get access token:', error);
+      if (__DEV__) {
+
+        console.error('[TokenManager] Failed to get access token:', error);
+
+      }
       return null;
     }
   }
@@ -139,7 +157,11 @@ export class TokenManager {
     try {
       return await SecureStorage.getItem(this.REFRESH_TOKEN_KEY);
     } catch (error) {
-      console.error('[TokenManager] Failed to get refresh token:', error);
+      if (__DEV__) {
+
+        console.error('[TokenManager] Failed to get refresh token:', error);
+
+      }
       return null;
     }
   }
@@ -152,9 +174,19 @@ export class TokenManager {
         SecureStorage.removeItem(this.TOKEN_EXPIRY_KEY),
       ]);
       
-      console.log('[TokenManager] Tokens cleared');
+      if (__DEV__) {
+
+      
+        console.log('[TokenManager] Tokens cleared');
+
+      
+      }
     } catch (error) {
-      console.error('[TokenManager] Failed to clear tokens:', error);
+      if (__DEV__) {
+
+        console.error('[TokenManager] Failed to clear tokens:', error);
+
+      }
     }
   }
   
@@ -173,7 +205,11 @@ export class SecureStorage {
       const encryptedValue = await this.encrypt(value);
       await storage.setItem(`${this.STORAGE_PREFIX}${key}`, encryptedValue);
     } catch (error) {
-      console.error('[SecureStorage] Failed to set item:', error);
+      if (__DEV__) {
+
+        console.error('[SecureStorage] Failed to set item:', error);
+
+      }
       throw new SecurityError(
         SecurityErrorType.ENCRYPTION_FAILED,
         'Failed to store secure data'
@@ -190,7 +226,11 @@ export class SecureStorage {
       
       return await this.decrypt(encryptedValue);
     } catch (error) {
-      console.error('[SecureStorage] Failed to get item:', error);
+      if (__DEV__) {
+
+        console.error('[SecureStorage] Failed to get item:', error);
+
+      }
       return null;
     }
   }
@@ -199,7 +239,11 @@ export class SecureStorage {
     try {
       await storage.removeItem(`${this.STORAGE_PREFIX}${key}`);
     } catch (error) {
-      console.error('[SecureStorage] Failed to remove item:', error);
+      if (__DEV__) {
+
+        console.error('[SecureStorage] Failed to remove item:', error);
+
+      }
     }
   }
   
@@ -208,7 +252,11 @@ export class SecureStorage {
       // Clear all secure storage items
       await storage.clear();
     } catch (error) {
-      console.error('[SecureStorage] Failed to clear secure storage:', error);
+      if (__DEV__) {
+
+        console.error('[SecureStorage] Failed to clear secure storage:', error);
+
+      }
     }
   }
   
@@ -265,7 +313,11 @@ export class RateLimiter {
     const recentRequests = userRequests.filter(timestamp => timestamp > windowStart);
     
     if (recentRequests.length >= maxRequests) {
-      console.warn(`[RateLimiter] Rate limit exceeded for ${identifier}`);
+      if (__DEV__) {
+
+        console.warn(`[RateLimiter] Rate limit exceeded for ${identifier}`);
+
+      }
       return false;
     }
     
@@ -359,9 +411,19 @@ export class SessionManager {
       await this.updateLastActivity();
       this.startSessionTimeout();
       
-      console.log('[SessionManager] Session created for user:', userId);
+      if (__DEV__) {
+
+      
+        console.log('[SessionManager] Session created for user:', userId);
+
+      
+      }
     } catch (error) {
-      console.error('[SessionManager] Failed to create session:', error);
+      if (__DEV__) {
+
+        console.error('[SessionManager] Failed to create session:', error);
+
+      }
       throw new SecurityError(
         SecurityErrorType.AUTHENTICATION_FAILED,
         'Failed to create user session'
@@ -381,7 +443,11 @@ export class SessionManager {
       
       // Check if session has expired
       if (now - session.lastActivity > SECURITY_CONFIG.SESSION_TIMEOUT) {
-        console.log('[SessionManager] Session expired');
+        if (__DEV__) {
+
+          console.log('[SessionManager] Session expired');
+
+        }
         await this.clearSession();
         return null;
       }
@@ -391,7 +457,11 @@ export class SessionManager {
       
       return session;
     } catch (error) {
-      console.error('[SessionManager] Failed to get session:', error);
+      if (__DEV__) {
+
+        console.error('[SessionManager] Failed to get session:', error);
+
+      }
       return null;
     }
   }
@@ -401,7 +471,11 @@ export class SessionManager {
       await storage.setItem(this.LAST_ACTIVITY_KEY, Date.now().toString());
       this.resetSessionTimeout();
     } catch (error) {
-      console.error('[SessionManager] Failed to update last activity:', error);
+      if (__DEV__) {
+
+        console.error('[SessionManager] Failed to update last activity:', error);
+
+      }
     }
   }
   
@@ -413,9 +487,17 @@ export class SessionManager {
       ]);
       
       this.clearSessionTimeout();
-      console.log('[SessionManager] Session cleared');
+      if (__DEV__) {
+
+        console.log('[SessionManager] Session cleared');
+
+      }
     } catch (error) {
-      console.error('[SessionManager] Failed to clear session:', error);
+      if (__DEV__) {
+
+        console.error('[SessionManager] Failed to clear session:', error);
+
+      }
     }
   }
   
@@ -427,7 +509,11 @@ export class SessionManager {
   private static startSessionTimeout(): void {
     this.clearSessionTimeout();
     this.sessionTimeout = setTimeout(() => {
-      console.log('[SessionManager] Session timed out');
+      if (__DEV__) {
+
+        console.log('[SessionManager] Session timed out');
+
+      }
       this.clearSession();
     }, SECURITY_CONFIG.SESSION_TIMEOUT) as any;
   }
@@ -480,7 +566,11 @@ export class SecurityAudit {
         // await this.sendToRemoteLogging(logEntry);
       }
     } catch (error) {
-      console.error('[SecurityAudit] Failed to log security event:', error);
+      if (__DEV__) {
+
+        console.error('[SecurityAudit] Failed to log security event:', error);
+
+      }
     }
   }
   
@@ -489,7 +579,11 @@ export class SecurityAudit {
       const logs = await storage.getItem(this.AUDIT_LOG_KEY);
       return logs ? JSON.parse(logs) : [];
     } catch (error) {
-      console.error('[SecurityAudit] Failed to get audit logs:', error);
+      if (__DEV__) {
+
+        console.error('[SecurityAudit] Failed to get audit logs:', error);
+
+      }
       return [];
     }
   }
@@ -497,9 +591,17 @@ export class SecurityAudit {
   static async clearAuditLogs(): Promise<void> {
     try {
       await storage.removeItem(this.AUDIT_LOG_KEY);
-      console.log('[SecurityAudit] Audit logs cleared');
+      if (__DEV__) {
+
+        console.log('[SecurityAudit] Audit logs cleared');
+
+      }
     } catch (error) {
-      console.error('[SecurityAudit] Failed to clear audit logs:', error);
+      if (__DEV__) {
+
+        console.error('[SecurityAudit] Failed to clear audit logs:', error);
+
+      }
     }
   }
   
@@ -508,7 +610,11 @@ export class SecurityAudit {
       const logs = await this.getAuditLogs();
       return JSON.stringify(logs, null, 2);
     } catch (error) {
-      console.error('[SecurityAudit] Failed to export audit logs:', error);
+      if (__DEV__) {
+
+        console.error('[SecurityAudit] Failed to export audit logs:', error);
+
+      }
       return '[]';
     }
   }
@@ -522,7 +628,11 @@ export class BiometricAuth {
       // For now, return false since it's not available on web
       return Platform.OS !== 'web';
     } catch (error) {
-      console.error('[BiometricAuth] Failed to check availability:', error);
+      if (__DEV__) {
+
+        console.error('[BiometricAuth] Failed to check availability:', error);
+
+      }
       return false;
     }
   }
@@ -541,7 +651,11 @@ export class BiometricAuth {
       await SecurityAudit.logSecurityEvent('biometric_auth_attempt');
       return true;
     } catch (error) {
-      console.error('[BiometricAuth] Authentication failed:', error);
+      if (__DEV__) {
+
+        console.error('[BiometricAuth] Authentication failed:', error);
+
+      }
       await SecurityAudit.logSecurityEvent(
         'biometric_auth_failed',
         { error: error instanceof Error ? error.message : 'Unknown error' },
@@ -585,7 +699,11 @@ export class AdvancedSecurity {
       
       return fingerprint;
     } catch (error) {
-      console.error('[AdvancedSecurity] Failed to generate device fingerprint:', error);
+      if (__DEV__) {
+
+        console.error('[AdvancedSecurity] Failed to generate device fingerprint:', error);
+
+      }
       return 'unknown';
     }
   }
@@ -594,7 +712,11 @@ export class AdvancedSecurity {
     try {
       return await storage.getItem('device_fingerprint');
     } catch (error) {
-      console.error('[AdvancedSecurity] Failed to get device fingerprint:', error);
+      if (__DEV__) {
+
+        console.error('[AdvancedSecurity] Failed to get device fingerprint:', error);
+
+      }
       return null;
     }
   }
@@ -620,7 +742,11 @@ export class AdvancedSecurity {
       // Check for suspicious activity
       await this.checkSuspiciousActivity(email, recentAttempts);
     } catch (error) {
-      console.error('[AdvancedSecurity] Failed to track login attempt:', error);
+      if (__DEV__) {
+
+        console.error('[AdvancedSecurity] Failed to track login attempt:', error);
+
+      }
     }
   }
   
@@ -629,7 +755,11 @@ export class AdvancedSecurity {
       const data = await storage.getItem(`${this.LOGIN_ATTEMPTS_KEY}_${email}`);
       return data ? JSON.parse(data) : [];
     } catch (error) {
-      console.error('[AdvancedSecurity] Failed to get login attempts:', error);
+      if (__DEV__) {
+
+        console.error('[AdvancedSecurity] Failed to get login attempts:', error);
+
+      }
       return [];
     }
   }
@@ -678,7 +808,11 @@ export class AdvancedSecurity {
         );
       }
     } catch (error) {
-      console.error('[AdvancedSecurity] Failed to check suspicious activity:', error);
+      if (__DEV__) {
+
+        console.error('[AdvancedSecurity] Failed to check suspicious activity:', error);
+
+      }
     }
   }
   
@@ -750,7 +884,11 @@ export class AdvancedSecurity {
       
       return !history.includes(newPasswordHash);
     } catch (error) {
-      console.error('[AdvancedSecurity] Failed to check password history:', error);
+      if (__DEV__) {
+
+        console.error('[AdvancedSecurity] Failed to check password history:', error);
+
+      }
       return true; // Allow if check fails
     }
   }
@@ -768,7 +906,11 @@ export class AdvancedSecurity {
       
       await storage.setItem(`${this.PASSWORD_HISTORY_KEY}_${userId}`, JSON.stringify(recentHistory));
     } catch (error) {
-      console.error('[AdvancedSecurity] Failed to add to password history:', error);
+      if (__DEV__) {
+
+        console.error('[AdvancedSecurity] Failed to add to password history:', error);
+
+      }
     }
   }
   
@@ -843,7 +985,11 @@ export class AdvancedSecurity {
       
       return false;
     } catch (error) {
-      console.error('[AdvancedSecurity] Failed to detect anomalies:', error);
+      if (__DEV__) {
+
+        console.error('[AdvancedSecurity] Failed to detect anomalies:', error);
+
+      }
       return false;
     }
   }
@@ -857,7 +1003,11 @@ export class AdvancedSecurity {
       
       return activeSessions.length < SECURITY_CONFIG.MAX_CONCURRENT_SESSIONS;
     } catch (error) {
-      console.error('[AdvancedSecurity] Failed to check concurrent sessions:', error);
+      if (__DEV__) {
+
+        console.error('[AdvancedSecurity] Failed to check concurrent sessions:', error);
+
+      }
       return true; // Allow if check fails
     }
   }
@@ -880,7 +1030,11 @@ export class AdvancedSecurity {
       
       await storage.setItem(`user_sessions_${userId}`, JSON.stringify(activeSessions));
     } catch (error) {
-      console.error('[AdvancedSecurity] Failed to add session:', error);
+      if (__DEV__) {
+
+        console.error('[AdvancedSecurity] Failed to add session:', error);
+
+      }
     }
   }
   
@@ -942,7 +1096,11 @@ export class AdvancedSecurity {
         riskScore,
       };
     } catch (error) {
-      console.error('[AdvancedSecurity] Failed to detect threats:', error);
+      if (__DEV__) {
+
+        console.error('[AdvancedSecurity] Failed to detect threats:', error);
+
+      }
       return { isThreat: false, riskScore: 0 };
     }
   }
@@ -988,7 +1146,11 @@ export const SecurityUtils = {
       const passwordHash = await this.hashPassword(password);
       return passwordHash === hash;
     } catch (error) {
-      console.error('[SecurityUtils] Failed to verify password:', error);
+      if (__DEV__) {
+
+        console.error('[SecurityUtils] Failed to verify password:', error);
+
+      }
       return false;
     }
   },
@@ -1152,7 +1314,11 @@ export class SecurityMiddleware {
         riskScore,
       };
     } catch (error) {
-      console.error('[SecurityMiddleware] Request validation failed:', error);
+      if (__DEV__) {
+
+        console.error('[SecurityMiddleware] Request validation failed:', error);
+
+      }
       return {
         isValid: false,
         errors: ['Security validation failed'],

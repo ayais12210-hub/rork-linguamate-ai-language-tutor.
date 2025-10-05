@@ -166,7 +166,11 @@ export default function NumbersModule({ languageCode, onComplete, onBack }: Prop
         generateGame(parsed.numbers);
       }
     } catch (error) {
-      console.error('Error loading numbers:', error);
+      if (__DEV__) {
+
+        console.error('Error loading numbers:', error);
+
+      }
     } finally {
       setIsLoading(false);
     }
@@ -358,11 +362,19 @@ export default function NumbersModule({ languageCode, onComplete, onBack }: Prop
         rate: 0.85, 
         pitch: 1.0,
         onError: (error) => {
-          console.log('[NumbersModule] Speech error:', error);
+          if (__DEV__) {
+
+            console.log('[NumbersModule] Speech error:', error);
+
+          }
         }
       });
     } catch (e) {
-      console.log('[NumbersModule] Audio play error:', e);
+      if (__DEV__) {
+
+        console.log('[NumbersModule] Audio play error:', e);
+
+      }
     }
   };
 

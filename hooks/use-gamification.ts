@@ -266,7 +266,11 @@ export const useGamification = () => {
         generateMockLeaderboard();
       }
     } catch (error) {
-      console.error('Error loading gamification data:', error);
+      if (__DEV__) {
+
+        console.error('Error loading gamification data:', error);
+
+      }
     } finally {
       setIsLoading(false);
     }
@@ -277,7 +281,11 @@ export const useGamification = () => {
       await AsyncStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(updated));
       setAchievements(updated);
     } catch (error) {
-      console.error('Error saving achievements:', error);
+      if (__DEV__) {
+
+        console.error('Error saving achievements:', error);
+
+      }
     }
   };
 
@@ -286,7 +294,11 @@ export const useGamification = () => {
       await AsyncStorage.setItem(CHALLENGES_KEY, JSON.stringify(updated));
       setChallenges(updated);
     } catch (error) {
-      console.error('Error saving challenges:', error);
+      if (__DEV__) {
+
+        console.error('Error saving challenges:', error);
+
+      }
     }
   };
 

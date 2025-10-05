@@ -72,13 +72,21 @@ export const useNotifications = () => {
   const setupNotifications = async () => {
     if (Platform.OS === 'web') return;
     // Notifications not available in Expo Go - would need custom dev client
-    console.log('Notifications require a custom development client');
+    if (__DEV__) {
+
+      console.log('Notifications require a custom development client');
+
+    }
   };
 
   const registerForPushNotifications = async (): Promise<string> => {
     if (Platform.OS === 'web') return 'web';
     // Notifications not available in Expo Go - would need custom dev client
-    console.log('Push notifications require a custom development client');
+    if (__DEV__) {
+
+      console.log('Push notifications require a custom development client');
+
+    }
     setPermissionStatus('unavailable');
     return 'unavailable';
   };
@@ -95,7 +103,11 @@ export const useNotifications = () => {
         setScheduledNotifications(JSON.parse(storedNotifications));
       }
     } catch (error) {
-      console.error('Error loading notification settings:', error);
+      if (__DEV__) {
+
+        console.error('Error loading notification settings:', error);
+
+      }
     } finally {
       setIsLoading(false);
     }
@@ -106,7 +118,11 @@ export const useNotifications = () => {
       await AsyncStorage.setItem(NOTIFICATION_SETTINGS_KEY, JSON.stringify(newSettings));
       setSettings(newSettings);
     } catch (error) {
-      console.error('Error saving notification settings:', error);
+      if (__DEV__) {
+
+        console.error('Error saving notification settings:', error);
+
+      }
     }
   };
 
@@ -118,7 +134,11 @@ export const useNotifications = () => {
   const scheduleNotifications = async () => {
     if (Platform.OS === 'web' || !settings.enabled) return;
     // Notifications not available in Expo Go - would need custom dev client
-    console.log('Scheduled notifications require a custom development client');
+    if (__DEV__) {
+
+      console.log('Scheduled notifications require a custom development client');
+
+    }
     
     // Mock scheduled notifications for development
     const notifications: ScheduledNotification[] = [];
@@ -156,7 +176,11 @@ export const useNotifications = () => {
     if (type === 'lesson' && !settings.lessonReminders) return;
 
     // Notifications not available in Expo Go - would need custom dev client
-    console.log(`Mock notification: ${title} - ${body}`);
+    if (__DEV__) {
+
+      console.log(`Mock notification: ${title} - ${body}`);
+
+    }
   };
 
   const scheduleCustomNotification = async (
@@ -211,19 +235,35 @@ export const useNotifications = () => {
     switch (type) {
       case 'achievement':
         // Navigate to achievements screen
-        console.log('Navigate to achievements');
+        if (__DEV__) {
+
+          console.log('Navigate to achievements');
+
+        }
         break;
       case 'lesson':
         // Navigate to lessons screen
-        console.log('Navigate to lessons');
+        if (__DEV__) {
+
+          console.log('Navigate to lessons');
+
+        }
         break;
       case 'streak':
         // Navigate to home or stats
-        console.log('Navigate to stats');
+        if (__DEV__) {
+
+          console.log('Navigate to stats');
+
+        }
         break;
       default:
         // Navigate to home
-        console.log('Navigate to home');
+        if (__DEV__) {
+
+          console.log('Navigate to home');
+
+        }
     }
   };
 

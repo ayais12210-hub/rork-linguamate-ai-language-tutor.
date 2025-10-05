@@ -113,10 +113,18 @@ export class AnalyticsManager {
       });
 
       this.isInitialized = true;
-      console.log('[AnalyticsManager] Initialized');
+      if (__DEV__) {
+
+        console.log('[AnalyticsManager] Initialized');
+
+      }
 
     } catch (error) {
-      console.error('[AnalyticsManager] Failed to initialize:', error);
+      if (__DEV__) {
+
+        console.error('[AnalyticsManager] Failed to initialize:', error);
+
+      }
     }
   }
 
@@ -162,7 +170,11 @@ export class AnalyticsManager {
       await DebugLogger.debug('Analytics', 'User properties updated', this.userProperties);
 
     } catch (error) {
-      console.error('[AnalyticsManager] Failed to update user properties:', error);
+      if (__DEV__) {
+
+        console.error('[AnalyticsManager] Failed to update user properties:', error);
+
+      }
     }
   }
 
@@ -174,7 +186,11 @@ export class AnalyticsManager {
         this.userProperties = JSON.parse(stored);
       }
     } catch (error) {
-      console.error('[AnalyticsManager] Failed to load user properties:', error);
+      if (__DEV__) {
+
+        console.error('[AnalyticsManager] Failed to load user properties:', error);
+
+      }
     }
   }
 
@@ -215,7 +231,11 @@ export class AnalyticsManager {
       }
 
     } catch (error) {
-      console.error('[AnalyticsManager] Failed to track event:', error);
+      if (__DEV__) {
+
+        console.error('[AnalyticsManager] Failed to track event:', error);
+
+      }
     }
   }
 
@@ -254,10 +274,20 @@ export class AnalyticsManager {
       // Send to remote analytics service
       await this.sendToRemoteService(eventsToFlush);
 
-      console.log(`[AnalyticsManager] Flushed ${eventsToFlush.length} events`);
+      if (__DEV__) {
+
+
+        console.log(`[AnalyticsManager] Flushed ${eventsToFlush.length} events`);
+
+
+      }
 
     } catch (error) {
-      console.error('[AnalyticsManager] Failed to flush events:', error);
+      if (__DEV__) {
+
+        console.error('[AnalyticsManager] Failed to flush events:', error);
+
+      }
       // Re-add events to queue on failure
       this.eventQueue.unshift(...this.eventQueue);
     }
@@ -270,7 +300,11 @@ export class AnalyticsManager {
       const updatedEvents = [...events, ...existingEvents].slice(0, 5000); // Keep last 5000 events
       await AsyncStorage.setItem('analytics_events', JSON.stringify(updatedEvents));
     } catch (error) {
-      console.error('[AnalyticsManager] Failed to store events:', error);
+      if (__DEV__) {
+
+        console.error('[AnalyticsManager] Failed to store events:', error);
+
+      }
     }
   }
 
@@ -280,7 +314,11 @@ export class AnalyticsManager {
       const events = await AsyncStorage.getItem('analytics_events');
       return events ? JSON.parse(events) : [];
     } catch (error) {
-      console.error('[AnalyticsManager] Failed to get stored events:', error);
+      if (__DEV__) {
+
+        console.error('[AnalyticsManager] Failed to get stored events:', error);
+
+      }
       return [];
     }
   }
@@ -290,11 +328,19 @@ export class AnalyticsManager {
     try {
       // In a real app, you would send this to your analytics service
       // For now, just log it
-      console.log('[AnalyticsManager] Sending to remote service:', events.length, 'events');
+      if (__DEV__) {
+
+        console.log('[AnalyticsManager] Sending to remote service:', events.length, 'events');
+
+      }
       
       // Example: await analyticsService.sendEvents(events);
     } catch (error) {
-      console.error('[AnalyticsManager] Failed to send to remote service:', error);
+      if (__DEV__) {
+
+        console.error('[AnalyticsManager] Failed to send to remote service:', error);
+
+      }
     }
   }
 
@@ -379,7 +425,11 @@ export class AnalyticsManager {
         userProperties: this.userProperties,
       };
     } catch (error) {
-      console.error('[AnalyticsManager] Failed to get analytics summary:', error);
+      if (__DEV__) {
+
+        console.error('[AnalyticsManager] Failed to get analytics summary:', error);
+
+      }
       return {
         totalEvents: 0,
         eventsByType: {},
@@ -398,9 +448,17 @@ export class AnalyticsManager {
       }
       this.eventQueue = [];
       this.userProperties = null;
-      console.log('[AnalyticsManager] Analytics data cleared');
+      if (__DEV__) {
+
+        console.log('[AnalyticsManager] Analytics data cleared');
+
+      }
     } catch (error) {
-      console.error('[AnalyticsManager] Failed to clear analytics data:', error);
+      if (__DEV__) {
+
+        console.error('[AnalyticsManager] Failed to clear analytics data:', error);
+
+      }
     }
   }
 
@@ -573,10 +631,18 @@ export class ABTestManager {
       await this.fetchExperiments();
 
       this.isInitialized = true;
-      console.log('[ABTestManager] Initialized');
+      if (__DEV__) {
+
+        console.log('[ABTestManager] Initialized');
+
+      }
 
     } catch (error) {
-      console.error('[ABTestManager] Failed to initialize:', error);
+      if (__DEV__) {
+
+        console.error('[ABTestManager] Failed to initialize:', error);
+
+      }
     }
   }
 
@@ -589,7 +655,11 @@ export class ABTestManager {
         this.experiments = new Map(Object.entries(experiments));
       }
     } catch (error) {
-      console.error('[ABTestManager] Failed to load experiments:', error);
+      if (__DEV__) {
+
+        console.error('[ABTestManager] Failed to load experiments:', error);
+
+      }
     }
   }
 
@@ -615,7 +685,11 @@ export class ABTestManager {
       );
 
     } catch (error) {
-      console.error('[ABTestManager] Failed to fetch experiments:', error);
+      if (__DEV__) {
+
+        console.error('[ABTestManager] Failed to fetch experiments:', error);
+
+      }
     }
   }
 
@@ -653,7 +727,13 @@ export const MonitoringUtils = {
       ABTestManager.initialize(),
     ]);
     
-    console.log('[MonitoringUtils] All monitoring systems initialized');
+    if (__DEV__) {
+
+    
+      console.log('[MonitoringUtils] All monitoring systems initialized');
+
+    
+    }
   },
 
   // Get comprehensive monitoring data
@@ -682,13 +762,23 @@ export const MonitoringUtils = {
       Promise.resolve(PerformanceMonitor.resetMetrics()),
     ]);
     
-    console.log('[MonitoringUtils] All monitoring data cleared');
+    if (__DEV__) {
+
+    
+      console.log('[MonitoringUtils] All monitoring data cleared');
+
+    
+    }
   },
 
   // Cleanup all monitoring systems
   cleanup(): void {
     AnalyticsManager.cleanup();
-    console.log('[MonitoringUtils] All monitoring systems cleaned up');
+    if (__DEV__) {
+
+      console.log('[MonitoringUtils] All monitoring systems cleaned up');
+
+    }
   },
 };
 

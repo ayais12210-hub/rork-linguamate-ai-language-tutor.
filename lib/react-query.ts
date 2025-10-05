@@ -26,11 +26,19 @@ export function OnlineStatusSync() {
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
     const onOnline = () => {
-      console.log('[OnlineStatusSync] Browser online');
+      if (__DEV__) {
+
+        console.log('[OnlineStatusSync] Browser online');
+
+      }
       onlineManager.setOnline(true);
     };
     const onOffline = () => {
-      console.log('[OnlineStatusSync] Browser offline');
+      if (__DEV__) {
+
+        console.log('[OnlineStatusSync] Browser offline');
+
+      }
       onlineManager.setOnline(false);
     };
 

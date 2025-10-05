@@ -30,21 +30,43 @@ export async function sendBatch(logs: LogEnvelope[]): Promise<boolean> {
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      console.error(`[HTTP Transport] Server returned ${response.status}: ${response.statusText}`);
+      if (__DEV__) {
+
+        console.error(`[HTTP Transport] Server returned ${response.status}: ${response.statusText}`);
+
+      }
       return false;
     }
 
-    console.log(`[HTTP Transport] Successfully sent ${logs.length} logs`);
+    if (__DEV__) {
+
+
+      console.log(`[HTTP Transport] Successfully sent ${logs.length} logs`);
+
+
+    }
     return true;
   } catch (error) {
     if (error instanceof Error) {
       if (error.name === 'AbortError') {
-        console.error('[HTTP Transport] Request timeout');
+        if (__DEV__) {
+
+          console.error('[HTTP Transport] Request timeout');
+
+        }
       } else {
-        console.error('[HTTP Transport] Network error:', error.message);
+        if (__DEV__) {
+
+          console.error('[HTTP Transport] Network error:', error.message);
+
+        }
       }
     } else {
-      console.error('[HTTP Transport] Unknown error:', error);
+      if (__DEV__) {
+
+        console.error('[HTTP Transport] Unknown error:', error);
+
+      }
     }
     return false;
   }

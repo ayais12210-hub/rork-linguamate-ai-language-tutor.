@@ -38,7 +38,11 @@ export const dialogueRouter = createTRPCRouter({
       }
 
       const session = createSession(input.sceneId, input.difficulty);
-      console.log('[Dialogue] Session started:', session.id);
+      if (__DEV__) {
+
+        console.log('[Dialogue] Session started:', session.id);
+
+      }
       return session;
     }),
 
@@ -92,7 +96,13 @@ export const dialogueRouter = createTRPCRouter({
         scores: [...session.scores, score],
       });
 
-      console.log('[Dialogue] Turn submitted:', turn.id);
+      if (__DEV__) {
+
+
+        console.log('[Dialogue] Turn submitted:', turn.id);
+
+
+      }
 
       return {
         score,
@@ -112,7 +122,13 @@ export const dialogueRouter = createTRPCRouter({
         endedAt: Date.now(),
       });
 
-      console.log('[Dialogue] Session ended:', input.sessionId);
+      if (__DEV__) {
+
+
+        console.log('[Dialogue] Session ended:', input.sessionId);
+
+
+      }
       return updated;
     }),
 

@@ -26,7 +26,11 @@ export const Analytics = {
   enabled: process.env.ANALYTICS_ENABLED === '1',
   track: (event: string, props?: Record<string, any>) => {
     if (!Analytics.enabled) return;
-    console.log('[analytics]', event, props);
+    if (__DEV__) {
+
+      console.log('[analytics]', event, props);
+
+    }
   },
 };
 

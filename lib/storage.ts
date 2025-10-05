@@ -33,7 +33,11 @@ class AsyncStorageAdapter implements StorageAdapter {
     try {
       return await AsyncStorage.getItem(key);
     } catch (error) {
-      console.error('AsyncStorage getItem error:', error);
+      if (__DEV__) {
+
+        console.error('AsyncStorage getItem error:', error);
+
+      }
       return null;
     }
   }
@@ -42,7 +46,11 @@ class AsyncStorageAdapter implements StorageAdapter {
     try {
       await AsyncStorage.setItem(key, value);
     } catch (error) {
-      console.error('AsyncStorage setItem error:', error);
+      if (__DEV__) {
+
+        console.error('AsyncStorage setItem error:', error);
+
+      }
       throw error;
     }
   }
@@ -51,7 +59,11 @@ class AsyncStorageAdapter implements StorageAdapter {
     try {
       await AsyncStorage.removeItem(key);
     } catch (error) {
-      console.error('AsyncStorage removeItem error:', error);
+      if (__DEV__) {
+
+        console.error('AsyncStorage removeItem error:', error);
+
+      }
       throw error;
     }
   }
@@ -60,7 +72,11 @@ class AsyncStorageAdapter implements StorageAdapter {
     try {
       await AsyncStorage.clear();
     } catch (error) {
-      console.error('AsyncStorage clear error:', error);
+      if (__DEV__) {
+
+        console.error('AsyncStorage clear error:', error);
+
+      }
       throw error;
     }
   }
@@ -72,7 +88,11 @@ class LocalStorageAdapter implements StorageAdapter {
     try {
       return localStorage.getItem(key);
     } catch (error) {
-      console.error('localStorage getItem error:', error);
+      if (__DEV__) {
+
+        console.error('localStorage getItem error:', error);
+
+      }
       return null;
     }
   }
@@ -81,7 +101,11 @@ class LocalStorageAdapter implements StorageAdapter {
     try {
       localStorage.setItem(key, value);
     } catch (error) {
-      console.error('localStorage setItem error:', error);
+      if (__DEV__) {
+
+        console.error('localStorage setItem error:', error);
+
+      }
       throw error;
     }
   }
@@ -90,7 +114,11 @@ class LocalStorageAdapter implements StorageAdapter {
     try {
       localStorage.removeItem(key);
     } catch (error) {
-      console.error('localStorage removeItem error:', error);
+      if (__DEV__) {
+
+        console.error('localStorage removeItem error:', error);
+
+      }
       throw error;
     }
   }
@@ -99,7 +127,11 @@ class LocalStorageAdapter implements StorageAdapter {
     try {
       localStorage.clear();
     } catch (error) {
-      console.error('localStorage clear error:', error);
+      if (__DEV__) {
+
+        console.error('localStorage clear error:', error);
+
+      }
       throw error;
     }
   }
@@ -163,7 +195,11 @@ export const storageHelpers = {
     try {
       await storage.clear();
     } catch (error) {
-      console.error('Error clearing storage:', error);
+      if (__DEV__) {
+
+        console.error('Error clearing storage:', error);
+
+      }
       throw error;
     }
   },

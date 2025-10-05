@@ -99,7 +99,11 @@ export const useVocabulary = () => {
         setVocabulary(parsed);
       }
     } catch (error) {
-      console.error('Error loading vocabulary:', error);
+      if (__DEV__) {
+
+        console.error('Error loading vocabulary:', error);
+
+      }
     } finally {
       setIsLoading(false);
     }
@@ -112,7 +116,11 @@ export const useVocabulary = () => {
         setReviewSessions(JSON.parse(stored));
       }
     } catch (error) {
-      console.error('Error loading review sessions:', error);
+      if (__DEV__) {
+
+        console.error('Error loading review sessions:', error);
+
+      }
     }
   };
 
@@ -121,7 +129,11 @@ export const useVocabulary = () => {
       await AsyncStorage.setItem(VOCABULARY_STORAGE_KEY, JSON.stringify(words));
       setVocabulary(words);
     } catch (error) {
-      console.error('Error saving vocabulary:', error);
+      if (__DEV__) {
+
+        console.error('Error saving vocabulary:', error);
+
+      }
     }
   };
 
@@ -130,7 +142,11 @@ export const useVocabulary = () => {
       await AsyncStorage.setItem(REVIEW_SESSIONS_KEY, JSON.stringify(sessions));
       setReviewSessions(sessions);
     } catch (error) {
-      console.error('Error saving review sessions:', error);
+      if (__DEV__) {
+
+        console.error('Error saving review sessions:', error);
+
+      }
     }
   };
 
@@ -400,7 +416,11 @@ export const useVocabulary = () => {
       }
       throw new Error('Invalid vocabulary data format');
     } catch (error) {
-      console.error('Error importing vocabulary:', error);
+      if (__DEV__) {
+
+        console.error('Error importing vocabulary:', error);
+
+      }
       return false;
     }
   };

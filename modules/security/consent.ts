@@ -28,7 +28,11 @@ export async function getConsent(): Promise<ConsentSettings> {
       return cachedConsent!;
     }
   } catch (error) {
-    console.error('[Consent] Failed to load consent:', error);
+    if (__DEV__) {
+
+      console.error('[Consent] Failed to load consent:', error);
+
+    }
   }
 
   cachedConsent = DEFAULT_CONSENT;
@@ -43,9 +47,19 @@ export async function updateConsent(settings: Partial<ConsentSettings>): Promise
     await AsyncStorage.setItem(CONSENT_KEY, JSON.stringify(updated));
     cachedConsent = updated;
     
-    console.log('[Consent] Updated consent settings:', updated);
+    if (__DEV__) {
+
+    
+      console.log('[Consent] Updated consent settings:', updated);
+
+    
+    }
   } catch (error) {
-    console.error('[Consent] Failed to update consent:', error);
+    if (__DEV__) {
+
+      console.error('[Consent] Failed to update consent:', error);
+
+    }
   }
 }
 
@@ -53,9 +67,17 @@ export async function resetConsent(): Promise<void> {
   try {
     await AsyncStorage.removeItem(CONSENT_KEY);
     cachedConsent = DEFAULT_CONSENT;
-    console.log('[Consent] Reset to default consent');
+    if (__DEV__) {
+
+      console.log('[Consent] Reset to default consent');
+
+    }
   } catch (error) {
-    console.error('[Consent] Failed to reset consent:', error);
+    if (__DEV__) {
+
+      console.error('[Consent] Failed to reset consent:', error);
+
+    }
   }
 }
 

@@ -49,8 +49,8 @@ export interface ErrorContext {
   timestamp: number;
   platform: string;
   appVersion: string;
-  deviceInfo?: any;
-  additionalData?: any;
+  deviceInfo?: Record<string, unknown>;
+  additionalData?: Record<string, unknown>;
 }
 
 // Custom error class
@@ -258,7 +258,11 @@ export class ErrorHandler {
       await AsyncStorage.setItem('app_errors', JSON.stringify(updatedErrors));
 
     } catch (storageError) {
-      console.error('[ErrorHandler] Failed to log error:', storageError);
+      if (__DEV__) {
+
+        console.error('[ErrorHandler] Failed to log error:', storageError);
+
+      }
     }
   }
 
@@ -268,7 +272,11 @@ export class ErrorHandler {
       const errors = await AsyncStorage.getItem('app_errors');
       return errors ? JSON.parse(errors) : [];
     } catch (error) {
-      console.error('[ErrorHandler] Failed to get stored errors:', error);
+      if (__DEV__) {
+
+        console.error('[ErrorHandler] Failed to get stored errors:', error);
+
+      }
       return [];
     }
   }
@@ -297,7 +305,11 @@ export class ErrorHandler {
         }
       }
     } catch (processingError) {
-      console.error('[ErrorHandler] Error processing queue:', processingError);
+      if (__DEV__) {
+
+        console.error('[ErrorHandler] Error processing queue:', processingError);
+
+      }
     } finally {
       this.isProcessing = false;
     }
@@ -316,7 +328,11 @@ export class ErrorHandler {
       await this.performCleanup(error);
 
     } catch (processingError) {
-      console.error('[ErrorHandler] Failed to process error:', processingError);
+      if (__DEV__) {
+
+        console.error('[ErrorHandler] Failed to process error:', processingError);
+
+      }
     }
   }
 
@@ -325,11 +341,19 @@ export class ErrorHandler {
     try {
       // In a real app, you would send this to your analytics service
       // For now, just log it
-      console.log('[ErrorHandler] Sending to analytics:', error.errorId);
+      if (__DEV__) {
+
+        console.log('[ErrorHandler] Sending to analytics:', error.errorId);
+
+      }
       
       // Example: await analyticsService.trackError(error.toJSON());
     } catch (error) {
-      console.error('[ErrorHandler] Failed to send to analytics:', error);
+      if (__DEV__) {
+
+        console.error('[ErrorHandler] Failed to send to analytics:', error);
+
+      }
     }
   }
 
@@ -340,7 +364,11 @@ export class ErrorHandler {
       const sameTypeErrors = recentErrors.filter(e => e.type === error.type);
 
       if (sameTypeErrors.length > 5) {
-        console.warn(`[ErrorHandler] High frequency of ${error.type} errors detected`);
+        if (__DEV__) {
+
+          console.warn(`[ErrorHandler] High frequency of ${error.type} errors detected`);
+
+        }
         
         // Log pattern detection
         await DebugLogger.warn(
@@ -350,7 +378,11 @@ export class ErrorHandler {
         );
       }
     } catch (error) {
-      console.error('[ErrorHandler] Failed to analyze error patterns:', error);
+      if (__DEV__) {
+
+        console.error('[ErrorHandler] Failed to analyze error patterns:', error);
+
+      }
     }
   }
 
@@ -379,7 +411,11 @@ export class ErrorHandler {
           break;
       }
     } catch (cleanupError) {
-      console.error('[ErrorHandler] Failed to perform cleanup:', cleanupError);
+      if (__DEV__) {
+
+        console.error('[ErrorHandler] Failed to perform cleanup:', cleanupError);
+
+      }
     }
   }
 
@@ -391,7 +427,11 @@ export class ErrorHandler {
       
       // Example: ToastService.showError(error.getUserMessage());
     } catch (error) {
-      console.error('[ErrorHandler] Failed to show error to user:', error);
+      if (__DEV__) {
+
+        console.error('[ErrorHandler] Failed to show error to user:', error);
+
+      }
     }
   }
 
@@ -400,7 +440,11 @@ export class ErrorHandler {
     const attemptCount = this.retryAttempts.get(error.errorId) || 0;
     
     if (attemptCount >= this.maxRetryAttempts) {
-      console.log(`[ErrorHandler] Max retry attempts reached for error: ${error.errorId}`);
+      if (__DEV__) {
+
+        console.log(`[ErrorHandler] Max retry attempts reached for error: ${error.errorId}`);
+
+      }
       return;
     }
 
@@ -418,27 +462,47 @@ export class ErrorHandler {
           await this.retryApiOperation(error);
           break;
         default:
-          console.log(`[ErrorHandler] No recovery strategy for error type: ${error.type}`);
+          if (__DEV__) {
+
+            console.log(`[ErrorHandler] No recovery strategy for error type: ${error.type}`);
+
+          }
       }
     } catch (recoveryError) {
-      console.error('[ErrorHandler] Recovery attempt failed:', recoveryError);
+      if (__DEV__) {
+
+        console.error('[ErrorHandler] Recovery attempt failed:', recoveryError);
+
+      }
     }
   }
 
   // Recovery strategies
   private static async retryNetworkOperation(error: AppError): Promise<void> {
     // Implement network retry logic
-    console.log('[ErrorHandler] Retrying network operation...');
+    if (__DEV__) {
+
+      console.log('[ErrorHandler] Retrying network operation...');
+
+    }
   }
 
   private static async retryStorageOperation(error: AppError): Promise<void> {
     // Implement storage retry logic
-    console.log('[ErrorHandler] Retrying storage operation...');
+    if (__DEV__) {
+
+      console.log('[ErrorHandler] Retrying storage operation...');
+
+    }
   }
 
   private static async retryApiOperation(error: AppError): Promise<void> {
     // Implement API retry logic
-    console.log('[ErrorHandler] Retrying API operation...');
+    if (__DEV__) {
+
+      console.log('[ErrorHandler] Retrying API operation...');
+
+    }
   }
 
   // Cleanup methods
@@ -447,9 +511,17 @@ export class ErrorHandler {
       // Clear specific cache keys that might be corrupted
       const cacheKeys = ['user_cache', 'lesson_cache', 'chat_cache'];
       await Promise.all(cacheKeys.map(key => AsyncStorage.removeItem(key)));
-      console.log('[ErrorHandler] Corrupted cache cleared');
+      if (__DEV__) {
+
+        console.log('[ErrorHandler] Corrupted cache cleared');
+
+      }
     } catch (error) {
-      console.error('[ErrorHandler] Failed to clear corrupted cache:', error);
+      if (__DEV__) {
+
+        console.error('[ErrorHandler] Failed to clear corrupted cache:', error);
+
+      }
     }
   }
 
@@ -458,9 +530,17 @@ export class ErrorHandler {
       // Clear authentication tokens
       const authKeys = ['access_token', 'refresh_token', 'user_session'];
       await Promise.all(authKeys.map(key => AsyncStorage.removeItem(key)));
-      console.log('[ErrorHandler] Auth tokens cleared');
+      if (__DEV__) {
+
+        console.log('[ErrorHandler] Auth tokens cleared');
+
+      }
     } catch (error) {
-      console.error('[ErrorHandler] Failed to clear auth tokens:', error);
+      if (__DEV__) {
+
+        console.error('[ErrorHandler] Failed to clear auth tokens:', error);
+
+      }
     }
   }
 
@@ -472,9 +552,17 @@ export class ErrorHandler {
       const keysToRemove = allKeys.filter(key => !keysToKeep.includes(key));
       
       await AsyncStorage.multiRemove(keysToRemove);
-      console.log('[ErrorHandler] Critical cleanup performed');
+      if (__DEV__) {
+
+        console.log('[ErrorHandler] Critical cleanup performed');
+
+      }
     } catch (error) {
-      console.error('[ErrorHandler] Failed to perform critical cleanup:', error);
+      if (__DEV__) {
+
+        console.error('[ErrorHandler] Failed to perform critical cleanup:', error);
+
+      }
     }
   }
 
@@ -484,9 +572,17 @@ export class ErrorHandler {
       await AsyncStorage.removeItem('app_errors');
       this.errorQueue = [];
       this.retryAttempts.clear();
-      console.log('[ErrorHandler] Error data cleared');
+      if (__DEV__) {
+
+        console.log('[ErrorHandler] Error data cleared');
+
+      }
     } catch (error) {
-      console.error('[ErrorHandler] Failed to clear error data:', error);
+      if (__DEV__) {
+
+        console.error('[ErrorHandler] Failed to clear error data:', error);
+
+      }
     }
   }
 
@@ -518,7 +614,11 @@ export class ErrorHandler {
         recentErrors: recentErrors.length,
       };
     } catch (error) {
-      console.error('[ErrorHandler] Failed to get error statistics:', error);
+      if (__DEV__) {
+
+        console.error('[ErrorHandler] Failed to get error statistics:', error);
+
+      }
       return {
         totalErrors: 0,
         errorsByType: {},
@@ -531,7 +631,7 @@ export class ErrorHandler {
 
 // Error boundary helper
 export class ErrorBoundaryHelper {
-  static createErrorInfo(error: Error, errorInfo: any): AppError {
+  static createErrorInfo(error: Error, errorInfo: Record<string, unknown>): AppError {
     return new AppError(
       ErrorType.RENDER_ERROR,
       error.message,
@@ -549,7 +649,7 @@ export class ErrorBoundaryHelper {
     );
   }
 
-  static async handleBoundaryError(error: Error, errorInfo: any): Promise<void> {
+  static async handleBoundaryError(error: Error, errorInfo: Record<string, unknown>): Promise<void> {
     const appError = this.createErrorInfo(error, errorInfo);
     await ErrorHandler.handleError(appError, {}, { showToUser: true });
   }
@@ -823,7 +923,11 @@ export const ErrorUtils = {
         errorTrends,
       };
     } catch (error) {
-      console.error('[ErrorUtils] Failed to get error summary:', error);
+      if (__DEV__) {
+
+        console.error('[ErrorUtils] Failed to get error summary:', error);
+
+      }
       return {
         totalErrors: 0,
         criticalErrors: 0,

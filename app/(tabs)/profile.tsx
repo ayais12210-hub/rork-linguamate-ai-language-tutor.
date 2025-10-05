@@ -135,13 +135,21 @@ export default function ProfileScreen() {
   useEffect(() => {
     const loadJournal = async () => {
       try {
-        console.log('[Profile] Loading journal from storage');
+        if (__DEV__) {
+
+          console.log('[Profile] Loading journal from storage');
+
+        }
         const data = await storageHelpers.getObject<JournalEntry[]>(STORAGE_KEYS.JOURNAL);
         if (data) {
           setJournal(data);
         }
       } catch (e) {
-        console.error('[Profile] Failed to load journal', e);
+        if (__DEV__) {
+
+          console.error('[Profile] Failed to load journal', e);
+
+        }
       }
     };
     loadJournal();
@@ -165,9 +173,17 @@ export default function ProfileScreen() {
       setJournal(updated);
       setJournalDraft('');
       await storageHelpers.setObject(STORAGE_KEYS.JOURNAL, updated);
-      console.log('[Profile] Journal saved. total:', updated.length);
+      if (__DEV__) {
+
+        console.log('[Profile] Journal saved. total:', updated.length);
+
+      }
     } catch (e) {
-      console.error('[Profile] Failed to save journal', e);
+      if (__DEV__) {
+
+        console.error('[Profile] Failed to save journal', e);
+
+      }
       Alert.alert('Save failed', 'Could not save your journal. Please try again.');
     } finally {
       setJournalSaving(false);
@@ -180,7 +196,11 @@ export default function ProfileScreen() {
       setJournal(updated);
       await storageHelpers.setObject(STORAGE_KEYS.JOURNAL, updated);
     } catch (e) {
-      console.error('[Profile] Failed to delete journal entry', e);
+      if (__DEV__) {
+
+        console.error('[Profile] Failed to delete journal entry', e);
+
+      }
       Alert.alert('Delete failed', 'Could not delete the entry.');
     }
   }, [journal]);

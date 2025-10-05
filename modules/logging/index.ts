@@ -19,9 +19,17 @@ export async function initLogger(): Promise<void> {
     deviceInfoCache = await getDeviceInfo();
     await initQueue();
     isInitialized = true;
-    console.log('[Logger] Initialized successfully');
+    if (__DEV__) {
+
+      console.log('[Logger] Initialized successfully');
+
+    }
   } catch (error) {
-    console.error('[Logger] Failed to initialize:', error);
+    if (__DEV__) {
+
+      console.error('[Logger] Failed to initialize:', error);
+
+    }
   }
 }
 
@@ -77,7 +85,11 @@ export async function log(
       await enqueue(envelope);
     }
   } catch (error) {
-    console.error('[Logger] Failed to log:', error);
+    if (__DEV__) {
+
+      console.error('[Logger] Failed to log:', error);
+
+    }
   }
 }
 

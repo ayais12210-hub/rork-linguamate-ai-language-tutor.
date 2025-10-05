@@ -56,10 +56,18 @@ const PhonicsTrainer: React.FC<Props> = ({ items, targetLangCode, onComplete, te
     const t = (text ?? '').toString().trim();
     if (!t || t.length > 100) return;
     try {
-      console.log('[PhonicsTrainer] speak', t, targetLangCode);
+      if (__DEV__) {
+
+        console.log('[PhonicsTrainer] speak', t, targetLangCode);
+
+      }
       Speech.speak(t, { language: targetLangCode, rate: 0.95, pitch: 1.0 });
     } catch (e) {
-      console.error('Speech error', e);
+      if (__DEV__) {
+
+        console.error('Speech error', e);
+
+      }
     }
   }, [targetLangCode]);
 

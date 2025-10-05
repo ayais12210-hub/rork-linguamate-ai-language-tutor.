@@ -23,7 +23,11 @@ function SelectRowBase<T extends string>({ label, subtitle, value, options, onCh
         </Text>
       }
       onPress={() => {
-        console.log('[Settings/Select] pressed', label);
+        if (__DEV__) {
+
+          console.log('[Settings/Select] pressed', label);
+
+        }
         const idx = options.findIndex((o) => o.value === value);
         const next = options[(idx + 1) % options.length];
         onChange(next.value);

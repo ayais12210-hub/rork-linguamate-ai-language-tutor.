@@ -39,8 +39,14 @@ const config: Config = {
     './state/**': { branches: 75, functions: 85, lines: 85, statements: 85 }
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|expo|@expo|@unimodules|@react-navigation|@tanstack)/)'
-  ]
+    'node_modules/(?!(react-native|@react-native|expo|@expo|@unimodules|@react-navigation|@tanstack|@testing-library)/)'
+  ],
+  extensionsToTreatAsEsm: ['.ts', '.tsx'],
+  globals: {
+    'ts-jest': {
+      useESM: true
+    }
+  }
 };
 
 export default config;

@@ -56,7 +56,7 @@ export const loginProcedure = publicProcedure
     const sanitizedPassword = password.trim();
     
     // Rate limiting check
-    const clientIp = (ctx.req as any)?.ip || (ctx.req?.headers as any)?.['x-forwarded-for'] || 'unknown';
+    const clientIp = (ctx.req as { ip?: string })?.ip || (ctx.req?.headers as Record<string, string>)?.['x-forwarded-for'] || 'unknown';
     if (!RateLimiter.isAllowed(sanitizedEmail, SECURITY_CONFIG.MAX_LOGIN_ATTEMPTS)) {
       await SecurityAudit.logSecurityEvent(
         'login_rate_limit_exceeded',
@@ -212,7 +212,7 @@ export const signupProcedure = publicProcedure
     
     // Create user with enhanced security
     const userId = SecurityUtils.generateSecureId(32);
-    const clientIp = (ctx.req as any)?.ip || (ctx.req?.headers as any)?.['x-forwarded-for'] || 'unknown';
+    const clientIp = (ctx.req as { ip?: string })?.ip || (ctx.req?.headers as Record<string, string>)?.['x-forwarded-for'] || 'unknown';
     
     const user = {
       id: userId,
@@ -431,7 +431,11 @@ export const requestPasswordResetProcedure = publicProcedure
     // In production, send reset email with code
     // For demo, just return success
     const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log(`[Auth] Password reset code for ${email}: ${resetCode}`);
+    if (__DEV__) {
+
+      console.log(`[Auth] Password reset code for ${email}: ${resetCode}`);
+
+    }
     
     return { success: true };
   });

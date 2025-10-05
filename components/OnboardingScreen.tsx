@@ -85,7 +85,11 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
   }, [currentPage]);
 
   const skipOnboarding = useCallback(() => {
-    console.log('[Onboarding] Skipping onboarding');
+    if (__DEV__) {
+
+      console.log('[Onboarding] Skipping onboarding');
+
+    }
     completeOnboarding({});
     onComplete();
   }, [completeOnboarding, onComplete]);
@@ -107,7 +111,11 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
     if (questionStep < totalQuestions - 1) {
       setQuestionStep(questionStep + 1);
     } else {
-      console.log('[Onboarding] Questionnaire finished', onboardingData);
+      if (__DEV__) {
+
+        console.log('[Onboarding] Questionnaire finished', onboardingData);
+
+      }
       completeOnboarding({
         learningGoals: onboardingData.learningGoals,
         interests: onboardingData.interests,

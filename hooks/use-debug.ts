@@ -73,7 +73,11 @@ export function useDebug(options: UseDebugOptions = {}): DebugHookReturn {
     
     // Initialize analytics if needed
     AnalyticsManager.initialize().catch(error => {
-      console.warn('[useDebug] Failed to initialize analytics:', error);
+      if (__DEV__) {
+
+        console.warn('[useDebug] Failed to initialize analytics:', error);
+
+      }
     });
   }, [enableAutoLogging, logLevel]);
 
@@ -349,7 +353,11 @@ export const DevDebugUtils = {
     return () => {
       if (__DEV__) {
         debugPanelVisible = !debugPanelVisible;
-        console.log(`[DevDebugUtils] Debug panel ${debugPanelVisible ? 'shown' : 'hidden'}`);
+        if (__DEV__) {
+
+          console.log(`[DevDebugUtils] Debug panel ${debugPanelVisible ? 'shown' : 'hidden'}`);
+
+        }
         // In a real implementation, this would trigger the debug panel
       }
     };
@@ -367,7 +375,11 @@ export const DevDebugUtils = {
       
       const error = testErrors[type]();
       await ErrorHandler.handleError(error);
-      console.log(`[DevDebugUtils] Test ${type} error created`);
+      if (__DEV__) {
+
+        console.log(`[DevDebugUtils] Test ${type} error created`);
+
+      }
     }
   },
 
@@ -381,7 +393,11 @@ export const DevDebugUtils = {
       await new Promise(resolve => setTimeout(resolve, Math.random() * 2000));
       
       const duration = await PerformanceMonitor.endTiming(operationId, 'Test Performance', 'computation');
-      console.log(`[DevDebugUtils] Test performance completed in ${duration}ms`);
+      if (__DEV__) {
+
+        console.log(`[DevDebugUtils] Test performance completed in ${duration}ms`);
+
+      }
     }
   },
 
@@ -401,8 +417,16 @@ export const DevDebugUtils = {
   exportToConsole: async () => {
     if (__DEV__) {
       const debugData = await DebugUtils.exportDebugData();
-      console.log('[DevDebugUtils] Debug data exported to console:');
-      console.log(debugData);
+      if (__DEV__) {
+
+        console.log('[DevDebugUtils] Debug data exported to console:');
+
+      }
+      if (__DEV__) {
+
+        console.log(debugData);
+
+      }
     }
   },
 };
