@@ -6,7 +6,8 @@
     "start": "bunx rork start -p vep9anbk6huqelg0fppmq --tunnel",
     "start-web": "bunx rork start -p vep9anbk6huqelg0fppmq --web --tunnel",
     "start-web-dev": "DEBUG=expo* bunx rork start -p vep9anbk6huqelg0fppmq --web --tunnel",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@axe-core/playwright": "^4.10.2",
@@ -83,8 +84,8 @@
     "pino": "^9.13.0",
     "pino-pretty": "^13.1.1",
     "prettier": "^3.6.2",
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
     "react-native": "0.79.1",
     "react-native-gesture-handler": "~2.24.0",
     "react-native-reanimated": "~3.17.4",

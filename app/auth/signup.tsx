@@ -54,7 +54,12 @@ export default function SignupScreen() {
       }, 'low');
       
       // Update user context
-      updateUser(data.user);
+      updateUser({
+        ...data.user,
+        nativeLanguage: data.user.nativeLanguage || undefined,
+        selectedLanguage: data.user.selectedLanguage || undefined,
+        targetLanguage: data.user.targetLanguage || undefined,
+      });
       
       // Navigate to onboarding
       router.replace('/onboarding');
@@ -127,9 +132,11 @@ export default function SignupScreen() {
       const sanitizedName = InputSanitizer.sanitizeUsername(name);
       
       await signupMutation.mutateAsync({
-        name: sanitizedName,
         email: sanitizedEmail,
         password,
+        displayName: sanitizedName,
+        acceptedTerms: true,
+        name: sanitizedName,
       });
     } finally {
       setIsLoading(false);
