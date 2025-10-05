@@ -51,7 +51,7 @@ jobs:
         run: bunx tsc -p tsconfig.json --noEmit
 
   lint:
-    name: Lint
+    name: Lint & Security
     needs: install
     runs-on: ubuntu-latest
     steps:
@@ -68,12 +68,14 @@ jobs:
             ~/.cache
           key: ${{ runner.os }}-node-${{ hashFiles('**/bun.lock') }}
       - name: Run ESLint
-        run: bun run lint
+        run: bun run lint || bunx eslint . --ext .js,.jsx,.ts,.tsx
       - name: Check formatting
-        run: bun run format
+        run: bun run format || bunx prettier --check .
+      - name: Security audit
+        run: npm audit --audit-level=moderate || true
 
   test:
-    name: Unit Tests
+    name: Unit & Contract Tests
     needs: install
     runs-on: ubuntu-latest
     steps:
@@ -91,6 +93,8 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/bun.lock') }}
       - name: Run tests
         run: bun run test -- --ci --runInBand --coverage
+      - name: Run contract tests
+        run: bun test tests/contracts --ci
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         if: always()
@@ -98,6 +102,25 @@ jobs:
           files: ./coverage/coverage-final.json
           flags: unittests
           fail_ci_if_error: false
+      - name: Comment PR with coverage
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            const coverage = require('./coverage/coverage-summary.json');
+            const total = coverage.total;
+            const comment = `## Coverage Report
+            - Statements: ${total.statements.pct}%
+            - Branches: ${total.branches.pct}%
+            - Functions: ${total.functions.pct}%
+            - Lines: ${total.lines.pct}%`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
 
   e2e-web:
     name: E2E Tests (Web)
@@ -148,9 +171,43 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/bun.lock') }}
       - name: Build web app
         run: bun run build:web
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: web-dist
           path: dist/
           retention-days: 7
+      - name: Create Sentry release
+        if: github.ref == 'refs/heads/main' && success()
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+        run: |
+          if [ -n "$SENTRY_AUTH_TOKEN" ]; then
+            # Install Sentry CLI
+            curl -sL https://sentry.io/get-cli/ | bash
+            
+            # Create release
+            VERSION=$(git rev-parse --short HEAD)
+            sentry-cli releases new -p $SENTRY_PROJECT $VERSION
+            
+            # Upload source maps
+            sentry-cli releases files $VERSION upload-sourcemaps ./dist \
+              --url-prefix '~/' \
+              --rewrite || true
+            
+            # Set commits
+            sentry-cli releases set-commits $VERSION --auto || true
+            
+            # Finalize release
+            sentry-cli releases finalize $VERSION
+            
+            # Deploy to production
+            sentry-cli releases deploys $VERSION new -e production
+          else
+            echo "Sentry auth token not configured, skipping release"
+          fi

@@ -1,0 +1,85 @@
+version: 2
+updates:
+  # Enable version updates for npm
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "ayais12210-hub"
+    labels:
+      - "dependencies"
+      - "javascript"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    ignore:
+      # Ignore major React/React Native updates (handle manually)
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-native"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo"
+        update-types: ["version-update:semver-major"]
+    groups:
+      # Group all development dependencies
+      development-dependencies:
+        dependency-type: "development"
+      # Group testing dependencies
+      testing:
+        patterns:
+          - "jest"
+          - "@testing-library/*"
+          - "playwright"
+      # Group linting dependencies
+      linting:
+        patterns:
+          - "eslint*"
+          - "@typescript-eslint/*"
+          - "prettier"
+      # Group React ecosystem
+      react-ecosystem:
+        patterns:
+          - "react"
+          - "react-*"
+          - "@react-*"
+      # Group Expo ecosystem
+      expo-ecosystem:
+        patterns:
+          - "expo"
+          - "expo-*"
+          - "@expo/*"
+
+  # Enable security updates for npm
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "03:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "ayais12210-hub"
+    labels:
+      - "security"
+      - "dependencies"
+    commit-message:
+      prefix: "security"
+
+  # Keep GitHub Actions up to date
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+    reviewers:
+      - "ayais12210-hub"
+    labels:
+      - "github-actions"
+      - "dependencies"
+    commit-message:
+      prefix: "ci"
