@@ -13,11 +13,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Mail, Lock, Eye, EyeOff, User, Globe } from 'lucide-react-native';
+import { Mail, Lock, Eye, EyeOff, User as UserIcon, Globe } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { trpc } from '@/lib/trpc';
 import { useUser } from '@/hooks/user-store';
 import { TokenManager, SessionManager, SecurityAudit, InputSanitizer } from '@/lib/security';
+import type { User } from '@/types/user';
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -53,8 +54,33 @@ export default function SignupScreen() {
         email: data.user.email,
       }, 'low');
       
-      // Update user context
-      updateUser(data.user);
+      // Update user context - map null values to undefined
+      const userData: Partial<User> = {
+        id: data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+        nativeLanguage: data.user.nativeLanguage || undefined,
+        selectedLanguage: data.user.selectedLanguage || undefined,
+        targetLanguage: data.user.targetLanguage || undefined,
+        proficiencyLevel: data.user.proficiencyLevel,
+        isPremium: data.user.isPremium,
+        dailyMessageCount: data.user.dailyMessageCount,
+        lastMessageReset: data.user.lastMessageReset,
+        learningGoals: data.user.learningGoals,
+        interests: data.user.interests,
+        preferredTopics: data.user.preferredTopics,
+        dailyGoal: data.user.dailyGoal,
+        dailyGoalMinutes: data.user.dailyGoalMinutes,
+        streak: data.user.streak,
+        totalXP: data.user.totalXP,
+        achievements: data.user.achievements,
+        completedLessons: data.user.completedLessons,
+        onboardingCompleted: data.user.onboardingCompleted,
+        createdAt: data.user.createdAt,
+        stats: data.user.stats,
+        settings: data.user.settings,
+      };
+      updateUser(userData);
       
       // Navigate to onboarding
       router.replace('/onboarding');
@@ -127,9 +153,11 @@ export default function SignupScreen() {
       const sanitizedName = InputSanitizer.sanitizeUsername(name);
       
       await signupMutation.mutateAsync({
-        name: sanitizedName,
         email: sanitizedEmail,
         password,
+        displayName: sanitizedName,
+        acceptedTerms: true,
+        name: sanitizedName,
       });
     } finally {
       setIsLoading(false);
@@ -162,7 +190,7 @@ export default function SignupScreen() {
 
             <View style={styles.formContainer}>
               <View style={styles.inputContainer}>
-                <User size={20} color="#6B7280" style={styles.inputIcon} />
+                <UserIcon size={20} color="#6B7280" style={styles.inputIcon} />
                 <TextInput
                   style={[styles.input, errors.name && styles.inputError]}
                   placeholder="Full Name"

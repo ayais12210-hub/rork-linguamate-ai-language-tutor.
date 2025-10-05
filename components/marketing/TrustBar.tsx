@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions, Platform } from 'react-native';
 import { brand } from '@/config/brand';
 import { landingContent } from '@/content/landing';
 
@@ -54,6 +54,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600' as any,
     color: brand.palette.fg,
-    whiteSpace: 'nowrap' as any,
+    ...(Platform.OS === 'web' ? { whiteSpace: 'nowrap' } as any : {}),
   },
 });

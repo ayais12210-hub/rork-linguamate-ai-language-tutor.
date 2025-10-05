@@ -4,6 +4,23 @@ This document is a running, append-only log of implementation changes made in th
 
 ---
 
+## 2025-10-05 — Repository error fixes and TypeScript compilation
+- Fixed all TypeScript compilation errors from commit 7bee8192ddf71d5c5a94fe8a86e4c406c9fa5889
+- Updated package.json with missing scripts (format, test, e2e, build:web, typecheck)
+- Downgraded ESLint from v9 to v8.57.0 for compatibility with .eslintrc.cjs format
+- Fixed import conflicts between lucide-react-native User icon and User type in signup.tsx
+- Created missing module files for learn module (queries, mutations, flow, scoring, types, LearnScreen)
+- Fixed React Native style type issues (backdropFilter, whiteSpace, width percentage)
+- Fixed auth API parameter mismatches (newPassword → password, added displayName and acceptedTerms)
+- Fixed null vs undefined type mismatches for optional User fields
+- Replaced @rork/toolkit-sdk with apiClient for AI quiz generation
+- Fixed NodeJS.Timeout type issues with ReturnType<typeof setInterval>
+- Removed unnecessary @ts-expect-error directive
+- Added .prettierrc configuration file
+- All TypeScript compilation now passes successfully
+
+---
+
 ## 2025-10-02 — API client hardening and React Query hook
 - Replaced shared/services/api/client.ts with a typed fetch wrapper using Zod validation, AbortController timeouts, and clear ApiError typing.
 - Added requestRaw and useApiQuery helpers with strict generics and correct queryKey composition for caching.

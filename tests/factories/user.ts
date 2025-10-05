@@ -7,6 +7,21 @@ export function makeUser(overrides: Partial<any> = {}) {
     targetLanguage: 'pa',
     proficiencyLevel: 'beginner',
     createdAt: Date.now(),
+    xp: 0,
+    ...overrides,
+  };
+}
+
+export function makeUserProfile(overrides: Partial<any> = {}) {
+  return {
+    preferences: {
+      dailyGoal: 20,
+      ...overrides.preferences,
+    },
+    stats: {
+      lessonsCompleted: 0,
+      ...overrides.stats,
+    },
     ...overrides,
   };
 }
