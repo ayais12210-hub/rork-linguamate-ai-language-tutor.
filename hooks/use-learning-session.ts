@@ -49,14 +49,14 @@ export const useLearningSession = () => {
     currentStreak: 0,
   });
   const [isLoading, setIsLoading] = useState(false);
-  const sessionTimer = useRef<NodeJS.Timeout | null>(null);
+  const sessionTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const { user, updateStats } = useUser();
 
   useEffect(() => {
     loadSessions();
     return () => {
       if (sessionTimer.current) {
-        clearInterval(sessionTimer.current);
+        clearInterval(sessionTimer.current as unknown as number);
       }
     };
   }, []);
@@ -209,7 +209,7 @@ export const useLearningSession = () => {
 
     // Stop timer
     if (sessionTimer.current) {
-      clearInterval(sessionTimer.current);
+      clearInterval(sessionTimer.current as unknown as number);
       sessionTimer.current = null;
     }
 
@@ -237,7 +237,7 @@ export const useLearningSession = () => {
 
   const pauseSession = () => {
     if (sessionTimer.current) {
-      clearInterval(sessionTimer.current);
+      clearInterval(sessionTimer.current as unknown as number);
       sessionTimer.current = null;
     }
   };

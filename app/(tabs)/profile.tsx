@@ -130,7 +130,7 @@ export default function ProfileScreen() {
   
   const [errors, setErrors] = useState<Record<string, string>>({});
   
-  const selectedLanguage = LANGUAGES.find(lang => lang.code === user.selectedLanguage);
+  const selectedLanguage = LANGUAGES.find(lang => lang.code === (user.selectedLanguage ?? undefined));
 
   useEffect(() => {
     const loadJournal = async () => {
@@ -159,7 +159,7 @@ export default function ProfileScreen() {
         id: `jr_${Date.now()}`,
         text: trimmed,
         createdAt: new Date().toISOString(),
-        languageCode: user.selectedLanguage,
+        languageCode: user.selectedLanguage ?? undefined,
       };
       const updated = [entry, ...journal].slice(0, 100);
       setJournal(updated);

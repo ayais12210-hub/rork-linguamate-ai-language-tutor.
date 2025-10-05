@@ -54,6 +54,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600' as any,
     color: brand.palette.fg,
-    whiteSpace: 'nowrap' as any,
   },
 });

@@ -1,2 +1,3 @@
-export * from './learn.queries';
-export * from './learn.mutations';
+// Re-export placeholders to satisfy type references
+export const queries = {} as const;
+export const mutations = {} as const;

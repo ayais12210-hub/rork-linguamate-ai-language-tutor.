@@ -1,9 +1,11 @@
 import type { Config } from 'jest';
 
 const config: Config = {
-  preset: 'ts-jest',
+  preset: 'jest-expo',
   testEnvironment: 'jsdom',
   testMatch: ['**/__tests__/**/*.test.ts?(x)', '**/tests/**/*.test.ts?(x)'],
+  testPathIgnorePatterns: ['/node_modules/', '/tests/a11y/'],
+  setupFiles: ['<rootDir>/tests/config/jest.polyfills.ts'],
   setupFilesAfterEnv: ['<rootDir>/tests/config/jest.setup.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
@@ -39,7 +41,7 @@ const config: Config = {
     './state/**': { branches: 75, functions: 85, lines: 85, statements: 85 }
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|expo|@expo|@unimodules|@react-navigation|@tanstack)/)'
+    'node_modules/(?!(jest-)?react-native|@react-native|react-native|expo|@expo|@unimodules|@react-navigation|@tanstack|superjson|@nkzw)'
   ]
 };
 

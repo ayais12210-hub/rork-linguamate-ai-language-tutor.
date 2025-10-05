@@ -5,7 +5,7 @@ import { CheckCircle, XCircle, Zap, X } from 'lucide-react-native';
 import { LANGUAGES } from '@/constants/languages';
 import type { ModuleType } from '@/modules/types';
 import { z } from 'zod';
-import { generateObject } from '@rork/toolkit-sdk';
+import { generateObject } from '@/lib/toolkit';
 
 interface AIQuizProps {
   visible: boolean;

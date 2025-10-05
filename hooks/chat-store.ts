@@ -44,12 +44,12 @@ export const [ChatProvider, useChat] = createContextHook(() => {
   }, [messages, saveChatHistory]);
 
   const refreshSuggestions = useCallback(async () => {
-    const targetLanguage = getLanguageName(user.selectedLanguage);
+    const targetLanguage = getLanguageName(user.selectedLanguage ?? undefined);
     const fallbackSuggestions = getLanguageSpecificFallbacks(targetLanguage, user.proficiencyLevel);
 
     try {
       const recent = messages.slice(-8).map(m => ({ role: m.isUser ? 'user' as const : 'assistant' as const, content: m.text }));
-      const nativeLanguage = getLanguageName(user.nativeLanguage);
+      const nativeLanguage = getLanguageName(user.nativeLanguage ?? undefined);
 
       const system = `You generate short next-message suggestions for a language learning chat between a student and an AI coach. Return ONLY a JSON array of 3-5 short suggestions (max 80 chars each) in ${targetLanguage}, tailored to user's level (${user.proficiencyLevel}), interests (${user.interests?.join?.(', ') ?? 'general'}), and previous turns. Avoid repeating the last AI message. Include a mix of question prompts, practice tasks, and cultural tidbits. Also provide beginner-friendly options when level is beginner.`;
 
@@ -134,8 +134,8 @@ export const [ChatProvider, useChat] = createContextHook(() => {
     setIsLoading(true);
 
     try {
-      const targetLanguage = getLanguageName(user.selectedLanguage);
-      const nativeLanguage = getLanguageName(user.nativeLanguage);
+      const targetLanguage = getLanguageName(user.selectedLanguage ?? undefined);
+      const nativeLanguage = getLanguageName(user.nativeLanguage ?? undefined);
 
       const recentMessages = [...messages, userMessage].slice(-20);
       const conversationHistory = recentMessages.map(msg => ({

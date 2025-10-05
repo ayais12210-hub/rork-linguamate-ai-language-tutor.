@@ -147,9 +147,8 @@ export class ApiClient {
       return `${origin}${basePath}`.replace(/\/$/, '');
     }
     try {
-      // @ts-expect-error Expo Constants at runtime
-      const Constants = require('expo-constants').default;
-      const hostUri = Constants?.expoConfig?.hostUri || Constants?.manifest2?.extra?.expoClient?.hostUri;
+      const Constants = (require('expo-constants') as any).default;
+      const hostUri = (Constants?.expoConfig?.hostUri || Constants?.manifest2?.extra?.expoClient?.hostUri) as string | undefined;
       if (typeof hostUri === 'string' && hostUri.length > 0) {
         let cleaned = hostUri.trim();
         cleaned = cleaned.replace(/^exp:\/\//i, '').replace(/^ws:\/\//i, '').replace(/^wss:\/\//i, '');

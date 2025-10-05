@@ -120,7 +120,7 @@ export default function ForgotPasswordScreen() {
       await resetPasswordMutation.mutateAsync({
         email: sanitizedEmail,
         code,
-        newPassword,
+        password: newPassword,
       });
     } finally {
       setIsLoading(false);

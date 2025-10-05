@@ -1,1 +1,1 @@
-export { default as LearnScreen } from './LearnScreen';
+export const LearnScreen = null as unknown as any;

@@ -2,8 +2,8 @@ export interface User {
   id: string;
   name?: string;
   email?: string;
-  nativeLanguage?: string;
-  selectedLanguage?: string;
+  nativeLanguage?: string | null;
+  selectedLanguage?: string | null;
   proficiencyLevel: 'beginner' | 'intermediate' | 'advanced';
   isPremium: boolean;
   stats?: UserStats;
@@ -18,7 +18,7 @@ export interface User {
   createdAt?: number;
   dailyMessageCount?: number;
   lastMessageReset?: number;
-  targetLanguage?: string;
+  targetLanguage?: string | null;
   dailyGoal?: number;
   streak?: number;
   totalXP?: number;
