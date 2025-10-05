@@ -1,4 +1,11 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-bun run lint-staged
+# Run lint-staged for pre-commit checks
+npx lint-staged
+
+# Run type checking
+npm run typecheck
+
+# Run tests for changed files
+npm run test:changed

@@ -1,0 +1,135 @@
+name: Bug Report
+description: File a bug report to help us improve
+title: "[Bug]: "
+labels: ["bug", "triage"]
+assignees:
+  - ayais12210-hub
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! Please provide as much detail as possible to help us reproduce and fix the issue.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear and concise description of what the bug is.
+      placeholder: Tell us what you see!
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: A clear and concise description of what you expected to happen.
+      placeholder: What should have happened instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: Steps to reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: What platform are you using?
+      options:
+        - Web
+        - iOS
+        - Android
+        - All platforms
+    validations:
+      required: true
+
+  - type: input
+    id: device-info
+    attributes:
+      label: Device/Browser Information
+      description: |
+        For mobile: Device model, OS version
+        For web: Browser name and version
+      placeholder: "e.g., iPhone 14 Pro, iOS 16.1 or Chrome 108.0.5359.124"
+    validations:
+      required: true
+
+  - type: input
+    id: app-version
+    attributes:
+      label: App Version
+      description: What version of the app are you using?
+      placeholder: "e.g., 1.0.0"
+    validations:
+      required: true
+
+  - type: textarea
+    id: error-logs
+    attributes:
+      label: Error Logs
+      description: |
+        If you have any error messages or logs, please paste them here.
+        Include the Request ID if available (shown in error messages).
+      render: shell
+      placeholder: |
+        Error: Network request failed
+        Request ID: req_1234567890_abcdef123
+        
+        Stack trace:
+        at fetchData (app.js:123:45)
+        ...
+
+  - type: input
+    id: request-id
+    attributes:
+      label: Request ID
+      description: If an error occurred, please provide the Request ID shown in the error message
+      placeholder: "e.g., req_1234567890_abcdef123"
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: If applicable, add screenshots to help explain your problem.
+      placeholder: Drag and drop images here or click to upload
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Add any other context about the problem here.
+      placeholder: |
+        - Does this happen consistently or intermittently?
+        - Did this work before? When did it stop working?
+        - Are you using any specific settings or features?
+        - Network conditions (WiFi, cellular, offline)?
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our Code of Conduct
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true
+
+  - type: checkboxes
+    id: search
+    attributes:
+      label: Search
+      description: Please confirm you have searched for similar issues
+      options:
+        - label: I have searched existing issues and this is not a duplicate
+          required: true

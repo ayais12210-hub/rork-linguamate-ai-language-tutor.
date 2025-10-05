@@ -75,32 +75,66 @@ export const trpcClient = trpc.createClient({
       url: apiUrl,
       transformer: superjson,
       fetch: async (url, options) => {
-        const controller = new AbortController();
-        const id = setTimeout(() => controller.abort(), 15000);
+        // Use our enhanced HTTP client for tRPC requests
+        const { httpClient } = await import('./http');
+        
         try {
-          const res = await fetch(url, {
-            ...options,
-            signal: controller.signal,
+          // Convert fetch options to our HTTP client format
+          const response = await httpClient.request(url, {
+            method: options?.method || 'GET',
+            headers: options?.headers as Record<string, string>,
+            body: options?.body as string,
+            timeout: 15000,
+            retries: 2, // Retry tRPC calls
+          });
+          
+          // Create a Response-like object for tRPC
+          return new Response(JSON.stringify(response), {
+            status: 200,
             headers: {
-              ...(options?.headers || {}),
+              'Content-Type': 'application/json',
             },
           });
-          const ct = res.headers.get("content-type") ?? "";
-          if (ct.includes("text/html")) {
-            console.error(
-              "[tRPC] HTML response received at",
-              url,
-              "— likely frontend index. Check backend base URL."
-            );
-            throw new Error(
-              "Backend endpoint not found at " +
-                url +
-                ". Set EXPO_PUBLIC_BACKEND_URL to your API origin."
-            );
+        } catch (error) {
+          // Convert our AppError back to a fetch error for tRPC
+          if (error && typeof error === 'object' && 'kind' in error) {
+            const appError = error as any;
+            
+            // Check for HTML response error
+            if (appError.message?.includes('HTML') || appError.code === 'HTML_RESPONSE') {
+              console.error(
+                "[tRPC] HTML response received at",
+                url,
+                "— likely frontend index. Check backend base URL."
+              );
+              throw new Error(
+                "Backend endpoint not found at " +
+                  url +
+                  ". Set EXPO_PUBLIC_BACKEND_URL to your API origin."
+              );
+            }
+            
+            // Create appropriate HTTP response for tRPC error handling
+            const status = appError.kind === 'Auth' ? 401 :
+                          appError.kind === 'Validation' ? 400 :
+                          appError.kind === 'Server' ? 500 : 500;
+                          
+            return new Response(JSON.stringify({
+              error: {
+                message: appError.message,
+                code: appError.code,
+                data: appError.details,
+              }
+            }), {
+              status,
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            });
           }
-          return res as Response;
-        } finally {
-          clearTimeout(id);
+          
+          // Re-throw unknown errors
+          throw error;
         }
       },
     }),

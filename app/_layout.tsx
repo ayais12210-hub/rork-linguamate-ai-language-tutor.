@@ -8,7 +8,7 @@ import { UserProvider, useUser } from '@/hooks/user-store';
 import { ChatProvider } from '@/hooks/chat-store';
 import { LearningProgressProvider } from '@/state/learning-progress';
 import { trpc, trpcClient } from '@/lib/trpc';
-import ErrorBoundary from '@/components/ErrorBoundary';
+import ErrorBoundary from '@/app/providers/ErrorBoundary';
 import { PreferenceProvider } from '@/app/modules/personalisation/profile-store';
 import SplashCursor from '@/components/SplashCursor';
 import { MonitoringUtils } from '@/lib/monitoring';
@@ -17,6 +17,10 @@ import NetworkStatusBanner from '@/components/NetworkStatusBanner';
 import { OfflineProvider } from '@/modules/offline/OfflineProvider';
 import OfflineBanner from '@/components/OfflineBanner';
 import { offlineQueue } from '@/modules/offline/offlineQueue';
+import { initializeSentry } from '@/lib/sentry';
+import { initializeLogger } from '@/lib/log';
+import { featureFlags } from '@/lib/flags';
+import NetworkBoundary from '@/components/NetworkBoundary';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -41,10 +45,32 @@ function RootLayoutNav() {
 function MonitoringInitializer() {
   const { user } = useUser();
   useEffect(() => {
-    console.log('[RootLayout] Initializing monitoring with user', user?.id);
-    MonitoringUtils.initializeAll(user?.id).catch((e) => {
-      console.log('[RootLayout] Monitoring init error', e);
-    });
+    const initializeAll = async () => {
+      try {
+        // Initialize feature flags first
+        await featureFlags.initialize();
+        
+        // Initialize logger
+        await initializeLogger(user?.id);
+        
+        // Initialize Sentry
+        await initializeSentry({
+          environment: process.env.NODE_ENV || 'development',
+          release: process.env.EXPO_PUBLIC_APP_VERSION || '1.0.0',
+        });
+        
+        // Initialize existing monitoring
+        console.log('[RootLayout] Initializing monitoring with user', user?.id);
+        await MonitoringUtils.initializeAll(user?.id);
+        
+        console.log('[RootLayout] All monitoring systems initialized');
+      } catch (error) {
+        console.error('[RootLayout] Failed to initialize monitoring:', error);
+      }
+    };
+    
+    initializeAll();
+    
     return () => {
       MonitoringUtils.cleanup();
     };
@@ -75,18 +101,20 @@ export default function RootLayout() {
             <ChatProvider>
               <LearningProgressProvider>
                 <ErrorBoundary>
-                  <GestureHandlerRootView style={{ flex: 1 }} testID="root-gesture-container">
-                    <MonitoringInitializer />
-                    <OfflineInitializer />
-                    <OnlineStatusSync />
-                    <PreferenceProvider>
-                      <RootLayoutNav />
-                    </PreferenceProvider>
-                    <RatingPrompt />
-                    <NetworkStatusBanner />
-                    <OfflineBanner />
-                  </GestureHandlerRootView>
-                  <SplashCursor />
+                  <NetworkBoundary>
+                    <GestureHandlerRootView style={{ flex: 1 }} testID="root-gesture-container">
+                      <MonitoringInitializer />
+                      <OfflineInitializer />
+                      <OnlineStatusSync />
+                      <PreferenceProvider>
+                        <RootLayoutNav />
+                      </PreferenceProvider>
+                      <RatingPrompt />
+                      <NetworkStatusBanner />
+                      <OfflineBanner />
+                    </GestureHandlerRootView>
+                    <SplashCursor />
+                  </NetworkBoundary>
                 </ErrorBoundary>
               </LearningProgressProvider>
             </ChatProvider>

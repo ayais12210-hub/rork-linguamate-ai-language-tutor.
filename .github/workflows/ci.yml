@@ -1,156 +1,447 @@
-name: CI
+name: CI/CD Pipeline
 
 on:
-  pull_request:
   push:
     branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  release:
+    types: [published]
+
+env:
+  NODE_VERSION: '18'
+  CACHE_KEY_PREFIX: 'v1'
 
 jobs:
-  install:
-    name: Install Dependencies
+  # Lint and type checking
+  lint-and-typecheck:
+    name: Lint & Type Check
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          node-version: '20'
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      - run: npm i -g bun@1
+
       - name: Cache dependencies
         uses: actions/cache@v4
-        id: cache
         with:
           path: |
+            ~/.npm
             node_modules
-            ~/.cache
-          key: ${{ runner.os }}-node-${{ hashFiles('**/bun.lock') }}
+          key: ${{ env.CACHE_KEY_PREFIX }}-${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-node-
+            ${{ env.CACHE_KEY_PREFIX }}-${{ runner.os }}-npm-
+
       - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: bun install --frozen-lockfile || bun install
+        run: npm ci
 
-  typecheck:
-    name: Type Check
-    needs: install
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - run: npm i -g bun@1
-      - name: Restore dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-            ~/.cache
-          key: ${{ runner.os }}-node-${{ hashFiles('**/bun.lock') }}
-      - name: Type check
-        run: bunx tsc -p tsconfig.json --noEmit
-
-  lint:
-    name: Lint
-    needs: install
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - run: npm i -g bun@1
-      - name: Restore dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-            ~/.cache
-          key: ${{ runner.os }}-node-${{ hashFiles('**/bun.lock') }}
       - name: Run ESLint
-        run: bun run lint
-      - name: Check formatting
-        run: bun run format
+        run: npm run lint
 
-  test:
-    name: Unit Tests
-    needs: install
+      - name: Run TypeScript check
+        run: npm run typecheck
+
+      - name: Check Prettier formatting
+        run: npm run format:check
+
+      - name: Annotate ESLint results
+        uses: ataylorme/eslint-annotate-action@v2
+        if: failure()
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+          report-json: "eslint-report.json"
+
+  # Security scanning
+  security-scan:
+    name: Security Scan
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - run: npm i -g bun@1
-      - name: Restore dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-            ~/.cache
-          key: ${{ runner.os }}-node-${{ hashFiles('**/bun.lock') }}
-      - name: Run tests
-        run: bun run test -- --ci --runInBand --coverage
-      - name: Upload coverage
-        uses: codecov/codecov-action@v4
-        if: always()
-        with:
-          files: ./coverage/coverage-final.json
-          flags: unittests
-          fail_ci_if_error: false
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  e2e-web:
-    name: E2E Tests (Web)
-    needs: [typecheck, lint, test]
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
+
+      - name: Run CodeQL Analysis
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+      - name: Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/secrets
+            p/javascript
+            p/typescript
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+  # Unit and integration tests
+  test:
+    name: Test Suite
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    
+    strategy:
+      matrix:
+        test-type: [unit, integration, contracts]
+    
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      - run: npm i -g bun@1
-      - name: Restore dependencies
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Cache dependencies
         uses: actions/cache@v4
         with:
           path: |
+            ~/.npm
             node_modules
-            ~/.cache
-          key: ${{ runner.os }}-node-${{ hashFiles('**/bun.lock') }}
+          key: ${{ env.CACHE_KEY_PREFIX }}-${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ env.CACHE_KEY_PREFIX }}-${{ runner.os }}-npm-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        if: matrix.test-type == 'unit'
+        run: npm run test:ci -- --testPathPattern="__tests__|\.test\." --testPathIgnorePatterns="contracts|integration"
+
+      - name: Run integration tests
+        if: matrix.test-type == 'integration'
+        run: npm run test:ci -- --testPathPattern="integration"
+
+      - name: Run contract tests
+        if: matrix.test-type == 'contracts'
+        run: npm run test:ci -- --testPathPattern="contracts"
+
+      - name: Upload coverage reports
+        if: matrix.test-type == 'unit'
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+
+      - name: Comment PR with coverage
+        if: matrix.test-type == 'unit' && github.event_name == 'pull_request'
+        uses: romeovs/lcov-reporter-action@v0.3.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          lcov-file: ./coverage/lcov.info
+
+  # Build applications
+  build:
+    name: Build Applications
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [lint-and-typecheck, test]
+    
+    strategy:
+      matrix:
+        platform: [web, ios, android]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup Expo CLI
+        run: npm install -g @expo/cli
+
+      - name: Cache Expo
+        uses: actions/cache@v4
+        with:
+          path: ~/.expo
+          key: ${{ env.CACHE_KEY_PREFIX }}-${{ runner.os }}-expo-${{ hashFiles('**/app.json') }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web
+        if: matrix.platform == 'web'
+        run: npm run build:web
+
+      - name: Build iOS (development)
+        if: matrix.platform == 'ios'
+        run: |
+          expo build:ios --type archive --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build Android (development)
+        if: matrix.platform == 'android'
+        run: |
+          expo build:android --type apk --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.platform }}
+          path: |
+            dist/
+            *.apk
+            *.ipa
+          retention-days: 7
+
+  # E2E tests (web only for now)
+  e2e-test:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [build]
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
       - name: Install Playwright browsers
-        run: bunx playwright install --with-deps chromium webkit
-      - name: Run E2E tests
-        run: bun run e2e
+        run: npx playwright install --with-deps
+
+      - name: Download web build
+        uses: actions/download-artifact@v4
+        with:
+          name: build-web
+          path: dist/
+
+      - name: Start web server
+        run: |
+          npx serve dist -p 3000 &
+          npx wait-on http://localhost:3000
+
+      - name: Run Playwright tests
+        run: npx playwright test
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
+
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
-        if: failure()
+        if: always()
         with:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
 
-  build-web:
-    name: Build Web
-    needs: [typecheck, lint, test]
+  # Accessibility tests
+  a11y-test:
+    name: Accessibility Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [build]
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      - run: npm i -g bun@1
-      - name: Restore dependencies
-        uses: actions/cache@v4
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download web build
+        uses: actions/download-artifact@v4
         with:
-          path: |
-            node_modules
-            ~/.cache
-          key: ${{ runner.os }}-node-${{ hashFiles('**/bun.lock') }}
-      - name: Build web app
-        run: bun run build:web
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: web-dist
+          name: build-web
           path: dist/
+
+      - name: Run accessibility tests
+        run: npx playwright test --config=playwright.a11y.config.ts
+
+      - name: Upload a11y report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: a11y-report
+          path: playwright-report/
           retention-days: 7
+
+  # Performance tests
+  lighthouse:
+    name: Lighthouse Performance
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [build]
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download web build
+        uses: actions/download-artifact@v4
+        with:
+          name: build-web
+          path: dist/
+
+      - name: Run Lighthouse CI
+        run: |
+          npm install -g @lhci/cli
+          lhci autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+  # Dependency updates
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
+
+  # Sentry release (only on main branch and releases)
+  sentry-release:
+    name: Sentry Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [lint-and-typecheck, test, build]
+    if: github.ref == 'refs/heads/main' || github.event_name == 'release'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Sentry CLI
+        run: npm install -g @sentry/cli
+
+      - name: Create Sentry release
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          sentry-cli releases new $VERSION
+          sentry-cli releases set-commits $VERSION --auto
+          sentry-cli releases files $VERSION upload-sourcemaps dist/
+          sentry-cli releases finalize $VERSION
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+
+  # Deployment (only on main branch)
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [lint-and-typecheck, test, build, e2e-test, a11y-test]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Expo CLI
+        run: npm install -g @expo/cli
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-web
+          path: dist/
+
+      - name: Deploy to Expo
+        run: expo publish --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Deploy web to hosting
+        # Add your web deployment step here
+        run: echo "Deploy web build to your hosting provider"
+
+  # Notification on failure
+  notify-failure:
+    name: Notify on Failure
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, test, build, e2e-test, deploy]
+    if: failure() && (github.ref == 'refs/heads/main' || github.event_name == 'pull_request')
+    
+    steps:
+      - name: Notify Slack on failure
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          channel: '#dev-alerts'
+          text: 'CI/CD Pipeline failed for ${{ github.repository }}'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
