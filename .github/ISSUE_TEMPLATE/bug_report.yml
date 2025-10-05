@@ -1,0 +1,54 @@
+name: Bug report
+description: Report a reproducible problem
+labels: [bug]
+title: "bug: <short description>"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a report. Please include repro steps and logs.
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: One or two sentences.
+      placeholder: Navigation crashes on /learn when offline
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Exact steps with expected/actual behaviour.
+      placeholder: |
+        1. Open app
+        2. Go to Learn
+        3. Toggle airplane mode
+        4. Tap Refresh
+        Expected: Offline banner and queued action
+        Actual: Error screen
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      placeholder: iOS 17.5, Android 14, Web Chrome 128
+  - type: input
+    id: requestId
+    attributes:
+      label: Request ID
+      description: If shown in the error UI.
+      placeholder: ABC-123
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Paste logs, redacting PII.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I can reproduce on latest main
+        - label: I included screenshots or a screen recording

@@ -6,7 +6,16 @@
     "start": "bunx rork start -p vep9anbk6huqelg0fppmq --tunnel",
     "start-web": "bunx rork start -p vep9anbk6huqelg0fppmq --web --tunnel",
     "start-web-dev": "DEBUG=expo* bunx rork start -p vep9anbk6huqelg0fppmq --web --tunnel",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier -c .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "jest",
+    "test:ci": "jest --ci --runInBand --coverage",
+    "e2e": "playwright test",
+    "e2e:report": "playwright show-report",
+    "build:web": "expo export --platform web",
+    "precommit": "lint-staged"
   },
   "dependencies": {
     "@axe-core/playwright": "^4.10.2",
@@ -83,6 +92,7 @@
     "pino": "^9.13.0",
     "pino-pretty": "^13.1.1",
     "prettier": "^3.6.2",
+    "sentry-expo": "^7.0.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-native": "0.79.1",

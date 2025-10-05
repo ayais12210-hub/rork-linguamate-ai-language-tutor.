@@ -8,7 +8,7 @@ import { UserProvider, useUser } from '@/hooks/user-store';
 import { ChatProvider } from '@/hooks/chat-store';
 import { LearningProgressProvider } from '@/state/learning-progress';
 import { trpc, trpcClient } from '@/lib/trpc';
-import ErrorBoundary from '@/components/ErrorBoundary';
+import ProvidersErrorBoundary from '@/app/providers/ErrorBoundary';
 import { PreferenceProvider } from '@/app/modules/personalisation/profile-store';
 import SplashCursor from '@/components/SplashCursor';
 import { MonitoringUtils } from '@/lib/monitoring';
@@ -74,7 +74,7 @@ export default function RootLayout() {
           <UserProvider>
             <ChatProvider>
               <LearningProgressProvider>
-                <ErrorBoundary>
+                <ProvidersErrorBoundary>
                   <GestureHandlerRootView style={{ flex: 1 }} testID="root-gesture-container">
                     <MonitoringInitializer />
                     <OfflineInitializer />
@@ -87,7 +87,7 @@ export default function RootLayout() {
                     <OfflineBanner />
                   </GestureHandlerRootView>
                   <SplashCursor />
-                </ErrorBoundary>
+                </ProvidersErrorBoundary>
               </LearningProgressProvider>
             </ChatProvider>
           </UserProvider>
