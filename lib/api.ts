@@ -196,22 +196,17 @@ export class ApiClient {
   async transcribeAudio(formData: FormData): Promise<STTResponse> {
     const base = this.getBase();
     const url = `${base}${API_ENDPOINTS.SPEECH_TO_TEXT_PROXY}`;
-    const res = await fetch(url, { method: 'POST', body: formData });
-    const ct = res.headers.get('content-type') ?? '';
-    const text = await res.text();
-    if (!res.ok) {
-      let message = res.statusText || 'Request failed';
-      try {
-        const err = JSON.parse(text) as { message?: string };
-        if (typeof err.message === 'string') message = err.message;
-      } catch {}
-      throw new Error(`HTTP_${res.status}:${message}`);
-    }
-    if (!ct.includes('application/json')) {
-      throw new Error('INVALID_JSON');
-    }
-    const data = JSON.parse(text);
-    return STTResponseSchema.parse(data);
+
+    return this.request<STTResponse>(
+      url,
+      {
+        method: 'POST',
+        body: formData,
+        headers: {}, // Don't set Content-Type for FormData, browser will set it with boundary
+      },
+      (data) => STTResponseSchema.parse(data),
+      30000 // 30 second timeout for STT
+    );
   }
 
   // Translation service

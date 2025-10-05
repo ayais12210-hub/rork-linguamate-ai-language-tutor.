@@ -64,7 +64,19 @@ function OfflineInitializer() {
 
 export default function RootLayout() {
   useEffect(() => {
-    SplashScreen.hideAsync();
+    // Hide splash screen after a short delay to ensure app is properly initialized
+    const hideSplash = async () => {
+      try {
+        await SplashScreen.hideAsync();
+      } catch (error) {
+        console.warn('[RootLayout] Failed to hide splash screen:', error);
+      }
+    };
+
+    // Small delay to ensure all providers are initialized
+    const timer = setTimeout(hideSplash, 100);
+
+    return () => clearTimeout(timer);
   }, []);
 
   return (

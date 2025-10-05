@@ -76,7 +76,7 @@ export const trpcClient = trpc.createClient({
       transformer: superjson,
       fetch: async (url, options) => {
         const controller = new AbortController();
-        const id = setTimeout(() => controller.abort(), 15000);
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
         try {
           const res = await fetch(url, {
             ...options,
@@ -100,7 +100,7 @@ export const trpcClient = trpc.createClient({
           }
           return res as Response;
         } finally {
-          clearTimeout(id);
+          clearTimeout(timeoutId);
         }
       },
     }),
