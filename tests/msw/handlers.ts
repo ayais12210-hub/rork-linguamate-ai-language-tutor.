@@ -9,6 +9,15 @@ export const handlers = [
     return HttpResponse.json({ status: 'healthy', timestamp: Date.now() });
   }),
 
+  // STT transcribe endpoint mock
+  http.post('**/api/stt/transcribe', async () => {
+    return HttpResponse.json({ 
+      text: 'Detected speech example',
+      language: 'en',
+      confidence: 0.95
+    });
+  }),
+
   http.post('**/api/trpc/*', async ({ request }) => {
     const url = new URL(request.url);
     const pathname = url.pathname;
@@ -44,6 +53,20 @@ export const handlers = [
               xpReward: 10
             }
           ]
+        }
+      });
+    }
+
+    if (pathname.includes('lesson.generate')) {
+      return HttpResponse.json({
+        result: {
+          data: {
+            json: {
+              items: [
+                { id: '1', type: 'mcq', question: 'What is hello?', options: ['Hola', 'Bonjour'], answer: 0 }
+              ]
+            }
+          }
         }
       });
     }
