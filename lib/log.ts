@@ -23,7 +23,15 @@ export const log = {
   },
   error(scope: string, message: string, data?: unknown) {
     console.error(`[${scope}] ${message}`, data ?? '');
-    sentry?.captureMessage?.(`${scope}: ${message}`, { level: 'error', extra: data });
+    if (!sentry) return;
+    if (sentry.withScope && sentry.captureMessage) {
+      sentry.withScope((s) => {
+        if (data !== undefined) s.setExtra('details', data);
+        sentry.captureMessage(`${scope}: ${message}`, 'error');
+      });
+    } else {
+      sentry.captureMessage?.(`${scope}: ${message}`, 'error');
+    }
   },
 };
 
