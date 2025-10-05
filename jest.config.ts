@@ -1,11 +1,12 @@
 import type { Config } from 'jest';
 
 const config: Config = {
-  preset: 'ts-jest',
   testEnvironment: 'jsdom',
   testMatch: ['**/__tests__/**/*.test.ts?(x)', '**/tests/**/*.test.ts?(x)'],
   setupFilesAfterEnv: ['<rootDir>/tests/config/jest.setup.ts'],
   moduleNameMapper: {
+    '^msw/node$': '<rootDir>/node_modules/msw/lib/node/index.js',
+    '^@mswjs/interceptors/(.*)$': '<rootDir>/node_modules/@mswjs/interceptors/lib/node/$1/index.js',
     '^@/(.*)$': '<rootDir>/$1',
     '^@app/(.*)$': '<rootDir>/app/$1',
     '^@modules/(.*)$': '<rootDir>/modules/$1',
@@ -39,8 +40,14 @@ const config: Config = {
     './state/**': { branches: 75, functions: 85, lines: 85, statements: 85 }
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|expo|@expo|@unimodules|@react-navigation|@tanstack)/)'
-  ]
+    'node_modules/(?!(react-native|@react-native|expo|@expo|@unimodules|@react-navigation|@tanstack|msw|@mswjs|until-async)/)'
+  ],
+  globals: {
+    __DEV__: true
+  },
+  transform: {
+    '^.+\\.(t|j)sx?$': 'babel-jest'
+  }
 };
 
 export default config;
