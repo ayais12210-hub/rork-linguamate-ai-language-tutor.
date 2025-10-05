@@ -37,8 +37,11 @@ export const toAppError = (e: unknown): AppError => {
     const isTimeout = status === 499;
     const isNetwork = status === 0 || isTimeout;
     const isValidation = e.code === 'ZOD_PARSE_ERROR';
+    const isAuth = status === 401 || status === 403;
     const kind: AppErrorKind = isValidation
       ? 'Validation'
+      : isAuth
+      ? 'Auth'
       : isNetwork
       ? 'Network'
       : status >= 500
