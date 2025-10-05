@@ -1,0 +1,76 @@
+name: Bug report
+description: Report a bug with repro steps and environment
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please provide as much detail as possible.
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      placeholder: Short description of the problem
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: List each step to reproduce the issue
+      placeholder: |
+        1. Go to ...
+        2. Click on ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: Include screenshots or logs if possible
+    validations:
+      required: true
+  - type: input
+    id: requestId
+    attributes:
+      label: Request ID
+      description: If shown in error UI or logs
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - iOS
+        - Android
+        - Web
+        - All
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device/OS version
+      placeholder: e.g. iPhone 14 iOS 18, Pixel 8 Android 15
+  - type: input
+    id: appVersion
+    attributes:
+      label: App version/build
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Paste relevant logs. Ensure no secrets.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I verified on latest main
+        - label: I searched existing issues
