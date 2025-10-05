@@ -102,7 +102,7 @@ export class ApiClient {
   ): Promise<T> {
     try {
       const controller = typeof AbortController !== 'undefined' ? new AbortController() : undefined;
-      const id = controller ? setTimeout(() => controller.abort(), timeoutMs) : undefined;
+      const id: ReturnType<typeof setTimeout> | undefined = controller ? setTimeout(() => controller.abort(), timeoutMs) : undefined;
 
       const response = await fetch(url, {
         ...options,
@@ -115,7 +115,7 @@ export class ApiClient {
         throw new Error('NETWORK_REQUEST_FAILED');
       });
 
-      if (id) clearTimeout(id as unknown as number);
+      if (id !== undefined) clearTimeout(id);
 
       if (!response?.ok) {
         const status = response?.status ?? 0;

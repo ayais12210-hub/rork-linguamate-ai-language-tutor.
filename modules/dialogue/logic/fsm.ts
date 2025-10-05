@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Scene, Turn, Score } from '@/schemas/dialogue.schema';
 import { DialogueParams } from './adaptation';
 
@@ -108,11 +108,27 @@ export function useDialogueFSM(scene: Scene, params: DialogueParams) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [scores, setScores] = useState<Score[]>([]);
 
-  const ctx: DContext = { scene, params, turns, scores };
+  // Use refs to track the latest values without triggering re-renders
+  const turnsRef = useRef(turns);
+  const scoresRef = useRef(scores);
+  const stateRef = useRef(state);
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    turnsRef.current = turns;
+  }, [turns]);
+
+  useEffect(() => {
+    scoresRef.current = scores;
+  }, [scores]);
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   const dispatch = useCallback(
     (event: DEvent) => {
-      console.log('[DialogueFSM] Event:', event.type, 'State:', state.kind);
+      console.log('[DialogueFSM] Event:', event.type, 'State:', stateRef.current.kind);
 
       if (event.type === 'USER_INPUT') {
         const newTurn: Turn = {
@@ -124,16 +140,25 @@ export function useDialogueFSM(scene: Scene, params: DialogueParams) {
           timeMs: Date.now(),
         };
         setTurns((prev) => [...prev, newTurn]);
+        turnsRef.current = [...turnsRef.current, newTurn];
       }
 
       if (event.type === 'SCORE') {
         setScores((prev) => [...prev, event.score]);
+        scoresRef.current = [...scoresRef.current, event.score];
       }
 
-      const nextState = reduce(state, event, ctx);
+      // Use the latest values from refs to compute next state
+      const ctx: DContext = { 
+        scene, 
+        params, 
+        turns: turnsRef.current, 
+        scores: scoresRef.current 
+      };
+      const nextState = reduce(stateRef.current, event, ctx);
       setState(nextState);
     },
-    [state, ctx, params.sttLanguage]
+    [scene, params]
   );
 
   return {

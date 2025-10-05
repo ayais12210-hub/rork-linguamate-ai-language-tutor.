@@ -85,7 +85,8 @@ export class WebAudioRecorder {
       }
 
       this.mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(this.audioChunks, { type: 'audio/wav' });
+        const mimeType = this.mediaRecorder?.mimeType || 'audio/wav';
+        const audioBlob = new Blob(this.audioChunks, { type: mimeType });
         this.cleanup();
         resolve(audioBlob);
       };

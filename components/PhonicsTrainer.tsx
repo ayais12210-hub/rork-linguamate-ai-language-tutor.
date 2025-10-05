@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import * as Speech from 'expo-speech';
 
@@ -32,6 +32,15 @@ const PhonicsTrainer: React.FC<Props> = ({ items, targetLangCode, onComplete, te
   const [score, setScore] = useState<number>(0);
   const [answered, setAnswered] = useState<boolean>(false);
   const [selected, setSelected] = useState<string | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const flatGraphemes = useMemo<string[]>(() => {
     const g: string[] = [];
@@ -72,7 +81,14 @@ const PhonicsTrainer: React.FC<Props> = ({ items, targetLangCode, onComplete, te
     if (isCorrect) {
       setScore(s => s + 1);
     }
-    setTimeout(() => {
+    
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    timeoutRef.current = setTimeout(() => {
+      timeoutRef.current = null;
       if (index < items.length - 1) {
         setIndex(i => i + 1);
         setAnswered(false);

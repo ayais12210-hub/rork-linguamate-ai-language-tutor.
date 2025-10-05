@@ -78,22 +78,24 @@ export const useSpeech = () => {
     }
   };
 
-  const requestAudioPermission = async () => {
+  const requestAudioPermission = async (): Promise<boolean> => {
     if (Platform.OS === 'web') {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         stream.getTracks().forEach(track => track.stop());
         setAudioPermission(true);
+        return true;
       } catch (error) {
         console.error('Error requesting audio permission:', error);
         setAudioPermission(false);
+        return false;
       }
     } else {
       try {
         const { granted } = await Audio.requestPermissionsAsync();
         if (!granted) {
           setAudioPermission(false);
-          return;
+          return false;
         }
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: true,
@@ -104,9 +106,11 @@ export const useSpeech = () => {
           playThroughEarpieceAndroid: false,
         });
         setAudioPermission(true);
+        return true;
       } catch (error) {
         console.error('Error requesting audio permission (native):', error);
         setAudioPermission(false);
+        return false;
       }
     }
   };
@@ -122,9 +126,12 @@ export const useSpeech = () => {
       console.log(`Speaking: "${text}" in ${language || speechSettings.language}`);
       
       // Simulate speaking duration
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         setIsSpeaking(false);
       }, 2000);
+      
+      // Store timeout ID for potential cleanup
+      return () => clearTimeout(timeoutId);
     } catch (error) {
       console.error('Error speaking text:', error);
       setIsSpeaking(false);
@@ -153,11 +160,12 @@ export const useSpeech = () => {
 
   // Speech-to-Text Functions
   const startRecording = async () => {
-    let granted = audioPermission;
-    if (!granted) {
-      await requestAudioPermission();
-      granted = audioPermission;
-      if (!granted) return;
+    if (!audioPermission) {
+      const granted = await requestAudioPermission();
+      if (!granted) {
+        console.error('Audio permission not granted');
+        return;
+      }
     }
 
     try {
@@ -315,7 +323,7 @@ export const useSpeech = () => {
         const blob = await response.blob();
         const type = (blob.type && blob.type !== '') ? blob.type : 'audio/webm';
         const extension = type.includes('wav') ? 'wav' : type.includes('mp4') || type.includes('m4a') ? 'm4a' : 'webm';
-        const file = new File([blob], `recording.${extension}` , { type });
+        const file = new File([blob], `recording.${extension}`, { type });
         formData.append('audio', file);
       } else {
         const uriParts = effectiveUri.split('.');
