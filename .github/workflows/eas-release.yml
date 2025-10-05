@@ -12,8 +12,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-      - run: npm ci
+      - run: npm i -g bun@1
+      - run: bun install --frozen-lockfile
       - run: npm i -g eas-cli
       - name: Login to Expo
         run: eas whoami || eas login --token ${{ secrets.EXPO_TOKEN }}
