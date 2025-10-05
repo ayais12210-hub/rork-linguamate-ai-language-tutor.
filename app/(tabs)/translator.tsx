@@ -9,11 +9,10 @@ import {
   Alert,
   ActivityIndicator,
   Animated,
-} from 'react-native';
+ Platform } from 'react-native';
 import * as Speech from 'expo-speech';
 import * as Clipboard from 'expo-clipboard';
 import { Audio } from 'expo-av';
-import { Platform } from 'react-native';
 import {
   ArrowUpDown,
   Copy,

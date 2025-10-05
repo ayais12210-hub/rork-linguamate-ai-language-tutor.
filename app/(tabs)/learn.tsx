@@ -175,7 +175,7 @@ export default function LearnScreen() {
         let content = String(j.completion ?? '').trim();
         const match = content.match(/\{[\s\S]*\}/);
         if (match) content = match[0];
-        const parsed = JSON.parse(content) as { numbers?: Array<{ value: number; target: string }>; words?: string[]; phrases?: string[] };
+        const parsed = JSON.parse(content) as { numbers?: { value: number; target: string }[]; words?: string[]; phrases?: string[] };
         const fixed: LearnPayload = {
           ...data,
           numbers: (data.numbers ?? []).map(n => {

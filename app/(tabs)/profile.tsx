@@ -47,13 +47,12 @@ import {
   ChevronDown,
   X,
   Medal,
-} from 'lucide-react-native';
+ Lightbulb, Quote, History, Save, Trash2 } from 'lucide-react-native';
 import { useUser } from '@/hooks/user-store';
 import { useLearningProgress } from '@/state/learning-progress';
 import { LANGUAGES } from '@/constants/languages';
 import UpgradeModal from '@/components/UpgradeModal';
 import { storageHelpers, STORAGE_KEYS } from '@/lib/storage';
-import { Lightbulb, Quote, History, Save, Trash2 } from 'lucide-react-native';
 
 interface JournalEntry {
   id: string;

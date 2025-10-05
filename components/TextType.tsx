@@ -129,7 +129,7 @@ export default function TextType({
     try {
       const el: any = containerRef.current as any;
       // On web, RNW views are real DOM nodes
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+       
       const node = el && ('nodeType' in el ? el : el?._node);
       if (!node) {
         setIsVisible(true);

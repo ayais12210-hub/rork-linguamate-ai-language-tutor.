@@ -75,7 +75,7 @@ export default function TermsScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>8. Disclaimer</Text>
             <Text style={styles.sectionText}>
-              The materials on LinguaMate are provided on an 'as is' basis. LinguaMate makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.
+              The materials on LinguaMate are provided on an &apos;as is&apos; basis. LinguaMate makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.
             </Text>
           </View>
 

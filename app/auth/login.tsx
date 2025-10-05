@@ -17,8 +17,7 @@ import { Mail, Lock, Eye, EyeOff, Globe } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { trpc } from '@/lib/trpc';
 import { useUser } from '@/hooks/user-store';
-import { TokenManager, SessionManager, SecurityAudit } from '@/lib/security';
-import { InputSanitizer } from '@/lib/security';
+import { TokenManager, SessionManager, SecurityAudit , InputSanitizer } from '@/lib/security';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -218,7 +217,7 @@ export default function LoginScreen() {
               </TouchableOpacity>
 
               <View style={styles.signupContainer}>
-                <Text style={styles.signupText}>Don't have an account? </Text>
+                <Text style={styles.signupText}>Don&apos;t have an account? </Text>
                 <TouchableOpacity onPress={handleSignUp} disabled={isLoading}>
                   <Text style={styles.signupLink}>Sign Up</Text>
                 </TouchableOpacity>
