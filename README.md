@@ -1,5 +1,10 @@
 # 🌐 Linguamate — AI Language Tutor
 
+![Quality](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/quality.yml/badge.svg)
+![Security](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/security.yml/badge.svg)
+![Coverage](https://img.shields.io/badge/coverage-85%25+-brightgreen)
+![License](https://img.shields.io/badge/license-Proprietary-blue)
+
 Cross-Platform AI-Powered Language Learning App  
 *(Expo + React Native + TypeScript + tRPC + Hono backend, with Rork Toolkit integration)*
 
@@ -143,10 +148,30 @@ It combines **structured lessons**, **conversational AI practice**, and **advanc
 
 ## ⚙️ Environment Variables
 
-EXPO_PUBLIC_BACKEND_URL=https://api.example.com EXPO_PUBLIC_TOOLKIT_URL=https://toolkit.rork.com
+### Required
+```bash
+EXPO_PUBLIC_BACKEND_URL=https://api.example.com
+EXPO_PUBLIC_TOOLKIT_URL=https://toolkit.rork.com
+```
 
-- Must be set at runtime  
-- Backend exposes `/api` and `/api/trpc`  
+### Optional (Observability)
+```bash
+# Frontend Sentry (optional)
+EXPO_PUBLIC_SENTRY_DSN=https://your-sentry-dsn
+EXPO_PUBLIC_ENV=production
+EXPO_PUBLIC_COMMIT_SHA=abc123
+
+# Backend Sentry (optional)
+SENTRY_DSN=https://your-backend-sentry-dsn
+GIT_COMMIT_SHA=abc123
+
+# CI-only: Sentry source map uploads (optional)
+SENTRY_AUTH_TOKEN=your-auth-token
+SENTRY_ORG=your-org
+SENTRY_PROJECT=your-project
+```
+
+**Note:** Backend exposes `/api` and `/api/trpc`. All Sentry variables are optional; app runs without them.
 
 ---
 
@@ -158,25 +183,31 @@ app/             # Screens & navigation └─ (tabs)/      # Main tabs + hidden
 
 ## 🚀 Getting Started
 
-1. Install dependencies  
-   ```bash
-   bun install
+### Dev Quickstart
 
-2. Run with tunnel
+```bash
+# Install dependencies
+bun install
 
-bunx rork start --tunnel
+# Start full stack (app + backend + MSW)
+bun run dev:full
 
-or use:
+# Or start individually:
+bun run start          # Frontend only
+bun run dev:server     # Backend only
 
-npm run start
-npm run start-web
+# Run tests
+bun run test           # Unit tests
+bun run test:ci        # CI mode with coverage
+bun run test:e2e       # Playwright E2E tests
+bun run lint           # Lint check
+bun run typecheck      # Type check
+```
 
+### Opening the App
 
-3. Open:
-
-Mobile: scan QR with Expo Go
-
-Web: open browser at localhost:xxxx
+**Mobile:** Scan QR code with Expo Go  
+**Web:** Open browser at the provided localhost URL
 
 
 
