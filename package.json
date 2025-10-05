@@ -6,7 +6,8 @@
     "start": "bunx rork start -p vep9anbk6huqelg0fppmq --tunnel",
     "start-web": "bunx rork start -p vep9anbk6huqelg0fppmq --web --tunnel",
     "start-web-dev": "DEBUG=expo* bunx rork start -p vep9anbk6huqelg0fppmq --web --tunnel",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@axe-core/playwright": "^4.10.2",
@@ -106,7 +107,7 @@
     "@babel/core": "^7.25.2",
     "@expo/ngrok": "^4.1.0",
     "@types/react": "~19.0.10",
-    "eslint": "^9.31.0",
+    "eslint": "^8.57.1",
     "eslint-config-expo": "^9.2.0",
     "typescript": "~5.8.3"
   },

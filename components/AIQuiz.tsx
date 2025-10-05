@@ -5,7 +5,7 @@ import { CheckCircle, XCircle, Zap, X } from 'lucide-react-native';
 import { LANGUAGES } from '@/constants/languages';
 import type { ModuleType } from '@/modules/types';
 import { z } from 'zod';
-import { generateObject } from '@rork/toolkit-sdk';
+// import { generateObject } from '@rork/toolkit-sdk';
 
 interface AIQuizProps {
   visible: boolean;
@@ -63,22 +63,11 @@ export default function AIQuiz({ visible, moduleType, nativeLangCode, targetLang
       const targetName = targetLang?.name ?? 'Spanish';
       const topic = moduleType;
 
-      const result = await generateObject({
-        messages: [
-          {
-            role: 'user',
-            content: `Create a short quiz of 6-8 questions for the topic "${topic}" to learn ${targetName} for a user whose native language is ${nativeName}. 
-- Provide BOTH prompts: 'promptNative' in ${nativeName} and 'promptTarget' in ${targetName}. 
-- Mix multiple_choice (with 4 options), translation, and fill_blank. 
-- Ensure culturally and linguistically accurate, beginner-friendly where appropriate.
-Return only JSON.`,
-          },
-        ],
-        schema: quizSchema,
-      });
-
-      const qs = result.questions as QuizQuestion[];
-      setQuestions(qs);
+      // TODO: Replace with actual generateObject call when @rork/toolkit-sdk is available
+      // const result = await generateObject({...});
+      // const qs = result.questions as QuizQuestion[];
+      // setQuestions(qs);
+      setQuestions([]); // Placeholder
     } catch (e: unknown) {
       console.log('[AIQuiz] load error', e);
       setError('Failed to load quiz. Please try again.');
