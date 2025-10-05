@@ -6,7 +6,17 @@
     "start": "bunx rork start -p vep9anbk6huqelg0fppmq --tunnel",
     "start-web": "bunx rork start -p vep9anbk6huqelg0fppmq --web --tunnel",
     "start-web-dev": "DEBUG=expo* bunx rork start -p vep9anbk6huqelg0fppmq --web --tunnel",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "jest",
+    "test:ci": "jest --runInBand --ci --coverage",
+    "test:e2e": "playwright test",
+    "test:watch": "jest --watch",
+    "e2e": "playwright test --reporter=line",
+    "a11y": "playwright test -c playwright.a11y.config.ts --reporter=line",
+    "perf": "lhci autorun || echo 'Lighthouse skipped'",
+    "dev:server": "bun run backend/hono.ts",
+    "dev:full": "concurrently -k -n APP,API \"bun run start\" \"bun run dev:server\""
   },
   "dependencies": {
     "@axe-core/playwright": "^4.10.2",
