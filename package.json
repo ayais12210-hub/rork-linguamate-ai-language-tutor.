@@ -16,7 +16,10 @@
     "a11y": "playwright test -c playwright.a11y.config.ts --reporter=line",
     "perf": "lhci autorun || echo 'Lighthouse skipped'",
     "dev:server": "bun run backend/hono.ts",
-    "dev:full": "concurrently -k -n APP,API \"bun run start\" \"bun run dev:server\""
+    "dev:full": "concurrently -k -n APP,API \"bun run start\" \"bun run dev:server\"",
+    "web:build": "expo export --platform web",
+    "prettier:check": "prettier . --check",
+    "prettier:fix": "prettier . --write"
   },
   "dependencies": {
     "@axe-core/playwright": "^4.10.2",
@@ -104,7 +107,6 @@
     "react-native-screens": "~4.10.0",
     "react-native-svg": "15.11.2",
     "react-native-web": "^0.20.0",
-    "react-test-renderer": "^19.2.0",
     "semgrep": "^0.0.1",
     "superjson": "^2.2.2",
     "ts-jest": "^29.4.4",
@@ -120,7 +122,11 @@
     "@types/react": "~19.0.10",
     "eslint": "^9.31.0",
     "eslint-config-expo": "^9.2.0",
-    "typescript": "~5.8.3"
+    "jest-expo": "^54.0.12",
+    "react-test-renderer": "^19.0.0",
+    "typescript": "~5.8.3",
+    "web-streams-polyfill": "^4.2.0",
+    "whatwg-fetch": "^3.6.20"
   },
   "private": true
 }

@@ -131,6 +131,23 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
   }
 });
 
+// Simple STT endpoint for mobile fallback (mock-first approach)
+sttApp.post('/stt', async (c: Context) => {
+  console.log('[STT] Simple endpoint called');
+  
+  // If real provider keys exist, call them here.
+  // For now, return a mock to keep Expo Go compatibility.
+  const mockEnabled = process.env.STT_MOCK_ENABLED !== 'false';
+  
+  if (mockEnabled) {
+    return c.json({ text: 'hello from server (mock)' });
+  }
+  
+  // In production, you could forward to the full transcribe endpoint
+  // or implement a simple provider here
+  return c.json({ text: 'hello from server (mock)' });
+});
+
 sttApp.get('/stt/health', (c: Context) => {
   c.status(200 as any);
   return c.json({ 

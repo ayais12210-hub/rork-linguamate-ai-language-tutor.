@@ -4,6 +4,7 @@ const config: Config = {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
   testMatch: ['**/__tests__/**/*.test.ts?(x)', '**/tests/**/*.test.ts?(x)'],
+  setupFiles: ['<rootDir>/tests/config/polyfills.js'],
   setupFilesAfterEnv: ['<rootDir>/tests/config/jest.setup.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
@@ -16,8 +17,9 @@ const config: Config = {
     '^@hooks/(.*)$': '<rootDir>/hooks/$1',
     '^@constants/(.*)$': '<rootDir>/constants/$1',
     '^@backend/(.*)$': '<rootDir>/backend/$1',
+    '^react-native$': '<rootDir>/tests/config/react-native-mock.js',
     '\\.(css|less|scss)$': '<rootDir>/tests/config/styleMock.js',
-    '\\.(jpg|jpeg|png|gif|svg)$': '<rootDir>/tests/config/fileMock.js'
+    '\\.(jpg|jpeg|png|gif|svg)$': '<rootDir>/tests/config/fileMock.js',
   },
   collectCoverageFrom: [
     'app/**/*.{ts,tsx}',
@@ -39,8 +41,15 @@ const config: Config = {
     './state/**': { branches: 75, functions: 85, lines: 85, statements: 85 }
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|expo|@expo|@unimodules|@react-navigation|@tanstack)/)'
-  ]
+    'node_modules/(?!((jest-)?react-native|@react-native|expo(nent)?|@expo(nent)?/.*|@testing-library|react-clone-referenced-element|@react-navigation|@tanstack|msw|@mswjs|until-async|strict-event-emitter)/)'
+  ],
+  globals: {
+    'ts-jest': {
+      tsconfig: {
+        jsx: 'react',
+      },
+    },
+  },
 };
 
 export default config;

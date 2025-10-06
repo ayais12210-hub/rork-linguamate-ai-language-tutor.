@@ -1,10 +1,10 @@
-import '@testing-library/jest-native/extend-expect';
 import 'whatwg-url';
-import { server } from '../msw/server';
 
-beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }));
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
+// MSW setup commented out temporarily due to ESM issues
+// import { server } from '../msw/server';
+// beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }));
+// afterEach(() => server.resetHandlers());
+// afterAll(() => server.close());
 
 global.crypto = {
   ...global.crypto,
