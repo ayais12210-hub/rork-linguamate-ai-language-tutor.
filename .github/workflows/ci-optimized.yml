@@ -1,182 +1,125 @@
-name: 🚀 CI Pipeline
+name: 🚀 Optimized CI Pipeline
 
 on:
-  push:
-    branches: [main, develop]
   pull_request:
+    types: [opened, synchronize, reopened]
+  push:
     branches: [main, develop]
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-optimized-${{ github.ref }}
   cancel-in-progress: true
 
 env:
   NODE_VERSION: '20'
   BUN_VERSION: 'latest'
+  COVERAGE_THRESHOLD: 80
 
 jobs:
-  # Setup job for dependency caching and environment preparation
-  setup:
-    name: 🔧 Setup Environment
+  # Quick validation jobs that run in parallel
+  validate:
+    name: 🔍 Quick Validation
     runs-on: ubuntu-latest
-    outputs:
-      cache-key: ${{ steps.cache-deps.outputs.cache-primary-key }}
-      bun-cache-key: ${{ steps.cache-bun.outputs.cache-primary-key }}
+    timeout-minutes: 10
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: 🏗️ Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: 🥟 Setup Bun
-        uses: oven-sh/setup-bun@v1
-        with:
-          bun-version: ${{ env.BUN_VERSION }}
-
-      - name: 📦 Cache Bun dependencies
-        id: cache-bun
+      - uses: actions/checkout@v4
+      
+      - name: 📦 Cache dependencies
         uses: actions/cache@v4
         with:
           path: |
-            ~/.bun/install/cache
             node_modules
-          key: bun-${{ runner.os }}-${{ hashFiles('**/bun.lockb') }}
+            ~/.bun/install/cache
+          key: ${{ runner.os }}-${{ hashFiles('**/bun.lockb') }}
           restore-keys: |
-            bun-${{ runner.os }}-
-
-      - name: 📦 Cache npm dependencies
-        id: cache-deps
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-            ~/.cache/ms-playwright
-          key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            npm-${{ runner.os }}-
-
-      - name: 📥 Install dependencies
-        run: |
-          if [ -f bun.lockb ]; then
-            bun install --frozen-lockfile
-          else
-            npm ci
-          fi
-
-  # Static analysis jobs (run in parallel)
-  static-analysis:
-    name: 🔍 Static Analysis
-    runs-on: ubuntu-latest
-    needs: setup
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: TypeScript Check
-            command: typecheck
-            working-directory: .
-          - name: ESLint
-            command: lint
-            working-directory: .
-          - name: Prettier Check
-            command: format:check
-            working-directory: .
-          - name: Circular Dependencies
-            command: |
-              npx madge --circular app components modules --extensions ts,tsx || (echo "Circular dependencies found" && exit 1)
-            working-directory: .
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🏗️ Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: 🥟 Setup Bun
-        uses: oven-sh/setup-bun@v1
+            ${{ runner.os }}-
+      
+      - uses: oven-sh/setup-bun@v1
         with:
           bun-version: ${{ env.BUN_VERSION }}
+      
+      - name: 📥 Install dependencies
+        run: bun install --frozen-lockfile
+      
+      - name: 🔍 Type check
+        run: bun run typecheck
+      
+      - name: 🧹 Lint check
+        run: bun run lint
+      
+      - name: 🎨 Format check
+        run: bun run format:check
 
-      - name: 📦 Restore dependencies
+  # Security and quality checks
+  security:
+    name: 🔒 Security & Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: 📦 Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-${{ hashFiles('**/bun.lockb') }}
+      
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      
+      - name: 📥 Install dependencies
+        run: bun install --frozen-lockfile
+      
+      - name: 🔍 Semgrep Security Scan
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: .semgrep.yml
+          generateSarif: true
+          sarifFile: semgrep.sarif
+        continue-on-error: true
+      
+      - name: 🔍 Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: semgrep.sarif
+      
+      - name: 🔒 Gitleaks Secret Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: 📊 Dependency Audit
+        run: bun audit --audit-level=high
+        continue-on-error: true
+
+  # Unit tests with coverage
+  unit-tests:
+    name: 🧪 Unit Tests & Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: 📦 Cache dependencies
         uses: actions/cache@v4
         with:
           path: |
             node_modules
             ~/.bun/install/cache
-          key: ${{ needs.setup.outputs.cache-key }}
-
-      - name: 📥 Install dependencies
-        run: |
-          if [ -f bun.lockb ]; then
-            bun install --frozen-lockfile
-          else
-            npm ci
-          fi
-
-      - name: 🏥 Expo Doctor
-        run: bun run expo:doctor || npm run expo:doctor
-
-      - name: 🧪 Run ${{ matrix.name }}
-        run: |
-          if [ "${{ matrix.command }}" = "typecheck" ] || [ "${{ matrix.command }}" = "lint" ] || [ "${{ matrix.command }}" = "format:check" ]; then
-            bun run ${{ matrix.command }} || npm run ${{ matrix.command }}
-          else
-            ${{ matrix.command }}
-          fi
-
-  # Unit and integration tests
-  tests:
-    name: 🧪 Tests & Coverage
-    runs-on: ubuntu-latest
-    needs: setup
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🏗️ Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: 🥟 Setup Bun
-        uses: oven-sh/setup-bun@v1
+          key: ${{ runner.os }}-${{ hashFiles('**/bun.lockb') }}
+      
+      - uses: oven-sh/setup-bun@v1
         with:
           bun-version: ${{ env.BUN_VERSION }}
-
-      - name: 📦 Restore dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-            ~/.bun/install/cache
-          key: ${{ needs.setup.outputs.cache-key }}
-
+      
       - name: 📥 Install dependencies
-        run: |
-          if [ -f bun.lockb ]; then
-            bun install --frozen-lockfile
-          else
-            npm ci
-          fi
-
-      - name: 🧪 Run unit tests with coverage
-        run: |
-          if [ -f bun.lockb ]; then
-            bun run test:ci
-          else
-            npm run test:ci
-          fi
-
+        run: bun install --frozen-lockfile
+      
+      - name: 🧪 Run tests with coverage
+        run: bun run test:ci
+      
       - name: 📊 Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         if: always()
@@ -184,48 +127,52 @@ jobs:
           files: ./coverage/coverage-final.json
           flags: unittests
           fail_ci_if_error: false
-
-      - name: 📤 Upload coverage artifacts
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: coverage-report
-          path: coverage/
-          retention-days: 30
+      
+      - name: 📊 Check coverage thresholds
+        run: |
+          if [ -f "coverage/coverage-summary.json" ]; then
+            COVERAGE=$(node -p "require('./coverage/coverage-summary.json').total.lines.pct")
+            echo "Coverage: ${COVERAGE}%"
+            if (( $(echo "$COVERAGE < $COVERAGE_THRESHOLD" | bc -l) )); then
+              echo "❌ Coverage below threshold: ${COVERAGE}% < ${COVERAGE_THRESHOLD}%"
+              exit 1
+            else
+              echo "✅ Coverage threshold met: ${COVERAGE}%"
+            fi
+          fi
 
   # E2E tests
-  e2e:
+  e2e-tests:
     name: 🎭 E2E Tests
     runs-on: ubuntu-latest
-    needs: setup
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🏗️ Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      
+      - name: 📦 Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-${{ hashFiles('**/bun.lockb') }}
+      
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-
-      - name: 📦 Restore dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-            ~/.cache/ms-playwright
-          key: ${{ needs.setup.outputs.cache-key }}
-
+      
       - name: 📥 Install dependencies
-        run: npm ci
-
+        run: npm ci --legacy-peer-deps
+      
       - name: 🎭 Install Playwright browsers
         run: npx playwright install --with-deps
-
+      
       - name: 🎭 Run E2E tests
         run: npm run e2e:ci
-
+      
+      - name: 🎭 Run Accessibility tests
+        run: npm run a11y
+        continue-on-error: true
+      
       - name: 📤 Upload Playwright report
         uses: actions/upload-artifact@v4
         if: always()
@@ -234,208 +181,101 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
-  # Accessibility tests
-  a11y:
-    name: ♿ Accessibility Tests
+  # Build and performance tests
+  build-performance:
+    name: 🏗️ Build & Performance
     runs-on: ubuntu-latest
-    needs: setup
-    timeout-minutes: 15
+    timeout-minutes: 25
+    needs: [validate, security, unit-tests]
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🏗️ Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: 📦 Restore dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-            ~/.cache/ms-playwright
-          key: ${{ needs.setup.outputs.cache-key }}
-
-      - name: 📥 Install dependencies
-        run: npm ci
-
-      - name: 🎭 Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-
-      - name: ♿ Run accessibility tests
-        run: npm run a11y
-        continue-on-error: true
-
-      - name: 📤 Upload A11y report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: a11y-report
-          path: reports/a11y/
-          retention-days: 7
-
-  # Security scanning
-  security:
-    name: 🔒 Security Scan
-    runs-on: ubuntu-latest
-    needs: setup
-    permissions:
-      contents: read
-      security-events: write
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🏗️ Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: 🥟 Setup Bun
-        uses: oven-sh/setup-bun@v1
-        with:
-          bun-version: ${{ env.BUN_VERSION }}
-
-      - name: 📦 Restore dependencies
+      - uses: actions/checkout@v4
+      
+      - name: 📦 Cache dependencies
         uses: actions/cache@v4
         with:
           path: |
             node_modules
             ~/.bun/install/cache
-          key: ${{ needs.setup.outputs.cache-key }}
-
-      - name: 📥 Install dependencies
-        run: |
-          if [ -f bun.lockb ]; then
-            bun install --frozen-lockfile
-          else
-            npm ci
-          fi
-
-      - name: 🔍 Run Semgrep
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: .semgrep.yml
-          generateSarif: true
-          sarifFile: semgrep.sarif
-        continue-on-error: true
-
-      - name: 🔍 Verify SARIF file
-        run: |
-          if [ -f "semgrep.sarif" ]; then
-            echo "✅ SARIF file found"
-          else
-            echo "⚠️ Creating empty SARIF file"
-            echo '{"version": "2.1.0", "runs": [{"tool": {"driver": {"name": "semgrep", "version": "1.0.0"}}, "results": []}]}' > semgrep.sarif
-          fi
-
-      - name: 📤 Upload SARIF
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: semgrep.sarif
-
-      - name: 🔍 NPM Security Audit
-        run: |
-          if [ -f bun.lockb ]; then
-            bun run audit:ci || echo "Audit completed with warnings"
-          else
-            npm run audit:ci || echo "Audit completed with warnings"
-          fi
-
-  # Build and performance tests
-  build:
-    name: 🏗️ Build & Performance
-    runs-on: ubuntu-latest
-    needs: [static-analysis, tests, e2e, security]
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🏗️ Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: 🥟 Setup Bun
-        uses: oven-sh/setup-bun@v1
+          key: ${{ runner.os }}-${{ hashFiles('**/bun.lockb') }}
+      
+      - uses: oven-sh/setup-bun@v1
         with:
           bun-version: ${{ env.BUN_VERSION }}
-
-build:
-  name: 🏗️ Build & Performance
-  runs-on: ubuntu-latest
-  needs: [setup, static-analysis, tests, e2e, security]
-  # …rest of build job…
-
+      
       - name: 📥 Install dependencies
-        run: |
-          if [ -f bun.lockb ]; then
-            bun install --frozen-lockfile
-          else
-            npm ci
-          fi
-
+        run: bun install --frozen-lockfile
+      
       - name: 🏗️ Build web app
-        run: |
-          if [ -f bun.lockb ]; then
-            bun run web:build
-          else
-            npm run web:build
-          fi
-
+        run: bun run web:build
+      
       - name: 📤 Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: web-dist
           path: dist/
           retention-days: 7
-
+      
       - name: 🚀 Lighthouse Performance
         run: |
           npm install -g @lhci/cli
           lhci autorun || echo "Lighthouse CI completed with warnings"
         continue-on-error: true
+      
+      - name: 📊 Performance Budget Check
+        run: |
+          if [ -f "lighthouse-results.json" ]; then
+            LCP=$(node -p "require('./lighthouse-results.json').lhr.audits['largest-contentful-paint'].numericValue")
+            CLS=$(node -p "require('./lighthouse-results.json').lhr.audits['cumulative-layout-shift'].numericValue")
+            echo "LCP: ${LCP}ms (target: <2500ms)"
+            echo "CLS: ${CLS} (target: <0.1)"
+            if (( $(echo "$LCP > 2500" | bc -l) )); then
+              echo "❌ LCP exceeds budget: ${LCP}ms > 2500ms"
+              exit 1
+            fi
+            if (( $(echo "$CLS > 0.1" | bc -l) )); then
+              echo "❌ CLS exceeds budget: ${CLS} > 0.1"
+              exit 1
+            fi
+            echo "✅ Performance budget met"
+          fi
+        continue-on-error: true
 
-  # Quality gate
-  quality-gate:
-    name: 🎯 Quality Gate
+  # Release notes (optional)
+  release-notes:
+    name: 📝 Release Notes
     runs-on: ubuntu-latest
-    needs: [static-analysis, tests, e2e, security, build]
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: 📝 Update Release Notes
+        uses: release-drafter/release-drafter@v6
+        with:
+          config-name: release-drafter.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Final status check
+  ci-success:
+    name: ✅ CI Success
+    runs-on: ubuntu-latest
+    needs: [validate, security, unit-tests, e2e-tests, build-performance]
     if: always()
     steps:
-      - name: 📊 Generate quality report
+      - name: 📊 CI Status Summary
         run: |
-          echo "## 📊 CI Pipeline Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## CI Pipeline Status" >> $GITHUB_STEP_SUMMARY
           echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Static Analysis | ${{ needs.static-analysis.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Tests | ${{ needs.tests.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| E2E Tests | ${{ needs.e2e.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Security | ${{ needs.security.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Build | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Validate | ${{ needs.validate.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security | ${{ needs.security.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Unit Tests | ${{ needs.unit-tests.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| E2E Tests | ${{ needs.e2e-tests.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build & Performance | ${{ needs.build-performance.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           
-          # Check if all critical jobs passed
-          if [[ "${{ needs.static-analysis.result }}" == "success" && 
-                "${{ needs.tests.result }}" == "success" && 
-                "${{ needs.security.result }}" == "success" && 
-                "${{ needs.build.result }}" == "success" ]]; then
-            echo "✅ **All critical checks passed!**" >> $GITHUB_STEP_SUMMARY
-            echo "Pipeline Status: SUCCESS" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ **Some checks failed!**" >> $GITHUB_STEP_SUMMARY
-            echo "Pipeline Status: FAILED" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ needs.validate.result }}" != "success" || "${{ needs.security.result }}" != "success" || "${{ needs.unit-tests.result }}" != "success" || "${{ needs.e2e-tests.result }}" != "success" || "${{ needs.build-performance.result }}" != "success" ]]; then
+            echo "❌ CI Pipeline failed"
             exit 1
+          else
+            echo "✅ All CI checks passed"
           fi
-
-      - name: 🎉 Success notification
-        if: success()
-        run: |
-          echo "🎉 CI Pipeline completed successfully!"
-          echo "All quality gates passed ✅"

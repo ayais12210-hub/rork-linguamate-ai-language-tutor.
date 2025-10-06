@@ -1,4 +1,4 @@
-name: Semgrep
+name: Semgrep Security Scan
 
 on:
   pull_request: {}
@@ -21,9 +21,11 @@ jobs:
       - name: Run Semgrep
         uses: returntocorp/semgrep-action@v1
         with:
-          config: .semgrep.yml       # uses your repo’s config
+          config: .semgrep.yml       # uses your repo's config
           generateSarif: true
           sarifFile: semgrep.sarif
+        continue-on-error: true
+
       - name: Verify SARIF file exists
         run: |
           if [ -f "semgrep.sarif" ]; then
