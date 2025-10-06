@@ -18,13 +18,13 @@ export function makeUserProfile(overrides: Partial<any> = {}) {
     preferences: {
       dailyGoal: 20,
       notifications: true,
-      ...overrides.preferences,
+      ...(overrides.preferences ?? {}),
     },
     stats: {
       lessonsCompleted: 0,
       streak: 0,
       totalXp: 0,
-      ...overrides.stats,
+      ...(overrides.stats ?? {}),
     },
   };
 }
