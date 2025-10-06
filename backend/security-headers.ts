@@ -77,17 +77,32 @@ export const corsHeaders = (allowedOrigins: string[] = ['http://localhost:3000']
   };
 };
 
+// In-memory store for rate limiting (per process, not suitable for production)
+const rateLimitStore: {
+  [clientId: string]: { count: number; windowStart: number }
+} = {};
+
 export const rateLimitHeaders = (limit: number = 100, windowMs: number = 15 * 60 * 1000) => {
   return async (c: Context, next: Next) => {
     // Simple in-memory rate limiting (in production, use Redis)
     const clientId = c.req.header('x-forwarded-for') || c.req.header('x-real-ip') || 'unknown';
     const now = Date.now();
-    
-    // This is a simplified implementation - in production, use a proper rate limiting library
+
+    let entry = rateLimitStore[clientId];
+    if (!entry || now - entry.windowStart > windowMs) {
+      // New window for this client
+      entry = { count: 1, windowStart: now };
+      rateLimitStore[clientId] = entry;
+    } else {
+      entry.count += 1;
+    }
+
+    const remaining = Math.max(0, limit - entry.count);
+    const resetTime = entry.windowStart + windowMs;
+
     c.header('X-RateLimit-Limit', limit.toString());
-    c.header('X-RateLimit-Remaining', (limit - 1).toString());
-    c.header('X-RateLimit-Reset', new Date(now + windowMs).toISOString());
-    
+    c.header('X-RateLimit-Remaining', remaining.toString());
+    c.header('X-RateLimit-Reset', new Date(resetTime).toISOString());
     await next();
   };
 };
