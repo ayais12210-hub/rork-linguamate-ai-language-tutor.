@@ -265,6 +265,27 @@ describe('useSpeech', () => {
       const formatted = result.current.formatTranscriptionText('', 'basic');
       expect(formatted).toBe('');
     });
+
+    it('should add period to text without punctuation', () => {
+      const { result } = renderHook(() => useSpeech());
+      
+      const formatted = result.current.formatTranscriptionText('hello world', 'enhanced');
+      expect(formatted).toBe('Hello world.');
+    });
+
+    it('should not add period to text that already has punctuation', () => {
+      const { result } = renderHook(() => useSpeech());
+      
+      const formatted = result.current.formatTranscriptionText('hello world!', 'enhanced');
+      expect(formatted).toBe('Hello world!');
+    });
+
+    it('should handle text with only whitespace', () => {
+      const { result } = renderHook(() => useSpeech());
+      
+      const formatted = result.current.formatTranscriptionText('   ', 'enhanced');
+      expect(formatted).toBe('.');
+    });
   });
 
   describe('Speech Settings', () => {

@@ -250,7 +250,7 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
 function enhanceTranscriptionText(text: string): string {
   if (!text) return text;
 
-  return text
+  const formatted = text
     .replace(/\s+/g, ' ') // Normalize whitespace
     .replace(/([.!?])\s*([a-z])/g, '$1 $2') // Space after sentence endings
     .replace(/([a-z])([A-Z])/g, '$1 $2') // Space before capital letters
@@ -261,9 +261,14 @@ function enhanceTranscriptionText(text: string): string {
     .trim()
     .replace(/(^|[.!?]\s+)([a-z])/g, (match, prefix, letter) => 
       prefix + letter.toUpperCase()
-    ) // Capitalize first letter of each sentence
-    .replace(/([.!?])$/, '$1') // Ensure it ends with punctuation
-    || text + '.'; // Add period if no punctuation
+    ); // Capitalize first letter of each sentence
+
+  // Ensure it ends with punctuation
+  if (!/[.!?]$/.test(formatted)) {
+    return formatted + '.';
+  }
+  
+  return formatted;
 }
 
 function detectLanguageFromText(text: string): string | null {
