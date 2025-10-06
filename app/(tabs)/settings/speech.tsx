@@ -74,43 +74,48 @@ export default function SpeechSettings() {
   const supportedLanguages = useMemo(() => getSupportedLanguages(), [getSupportedLanguages]);
   const currentLanguageConfig = useMemo(() => getLanguageConfig(selectedLanguage), [getLanguageConfig, selectedLanguage]);
   const availableVoices = useMemo(() => getVoiceProfilesForLanguage(selectedLanguage), [getVoiceProfilesForLanguage, selectedLanguage]);
+  
+  // Memoize the current voice name to prevent unnecessary re-renders
+  const currentVoiceName = useMemo(() => {
+    return availableVoices.find(v => v.id === speechSettings.voice)?.name || 'Default';
+  }, [availableVoices, speechSettings.voice]);
 
-  const handleLanguageChange = (languageCode: string) => {
+  const handleLanguageChange = useCallback((languageCode: string) => {
     setSelectedLanguage(languageCode);
     updateSpeechSettings({ language: languageCode });
     setShowLanguageSelector(false);
-  };
+  }, [updateSpeechSettings]);
 
-  const handleVoiceChange = (voiceId: string) => {
+  const handleVoiceChange = useCallback((voiceId: string) => {
     updateSpeechSettings({ voice: voiceId });
     setShowVoiceSelector(false);
-  };
+  }, [updateSpeechSettings]);
 
-  const handleToneChange = (tone: SpeechSettings['tone']) => {
+  const handleToneChange = useCallback((tone: SpeechSettings['tone']) => {
     updateSpeechSettings({ tone });
-  };
+  }, [updateSpeechSettings]);
 
-  const handleEmphasisChange = (emphasis: SpeechSettings['emphasis']) => {
+  const handleEmphasisChange = useCallback((emphasis: SpeechSettings['emphasis']) => {
     updateSpeechSettings({ emphasis });
-  };
+  }, [updateSpeechSettings]);
 
-  const handleRateChange = (rate: number) => {
+  const handleRateChange = useCallback((rate: number) => {
     updateSpeechSettings({ rate });
-  };
+  }, [updateSpeechSettings]);
 
-  const handlePitchChange = (pitch: number) => {
+  const handlePitchChange = useCallback((pitch: number) => {
     updateSpeechSettings({ pitch });
-  };
+  }, [updateSpeechSettings]);
 
-  const handleVolumeChange = (volume: number) => {
+  const handleVolumeChange = useCallback((volume: number) => {
     updateSpeechSettings({ volume });
-  };
+  }, [updateSpeechSettings]);
 
-  const handlePauseDurationChange = (pauseDuration: number) => {
+  const handlePauseDurationChange = useCallback((pauseDuration: number) => {
     updateSpeechSettings({ pauseDuration });
-  };
+  }, [updateSpeechSettings]);
 
-  const testSpeech = async () => {
+  const testSpeech = useCallback(async () => {
     if (isSpeaking) {
       await stopSpeaking();
     } else {
@@ -122,23 +127,23 @@ export default function SpeechSettings() {
         useSSML: true,
       });
     }
-  };
+  }, [isSpeaking, stopSpeaking, speak, testText, selectedLanguage, speechSettings.voice, speechSettings.tone, speechSettings.emphasis]);
 
-  const testPhrase = async (phrase: string) => {
+  const testPhrase = useCallback(async (phrase: string) => {
     await speakPhrase(phrase, selectedLanguage);
-  };
+  }, [speakPhrase, selectedLanguage]);
 
-  const createNewProfile = () => {
+  const createNewProfile = useCallback(() => {
     setEditingProfile(null);
     setShowVoiceProfileModal(true);
-  };
+  }, []);
 
-  const editProfile = (profile: VoiceProfile) => {
+  const editProfile = useCallback((profile: VoiceProfile) => {
     setEditingProfile(profile);
     setShowVoiceProfileModal(true);
-  };
+  }, []);
 
-  const deleteProfile = (profileId: string) => {
+  const deleteProfile = useCallback((profileId: string) => {
     Alert.alert(
       'Delete Voice Profile',
       'Are you sure you want to delete this voice profile?',
@@ -151,9 +156,9 @@ export default function SpeechSettings() {
         },
       ]
     );
-  };
+  }, [deleteVoiceProfile]);
 
-  const saveProfile = (profileData: Omit<VoiceProfile, 'id'>) => {
+  const saveProfile = useCallback((profileData: Omit<VoiceProfile, 'id'>) => {
     if (editingProfile) {
       updateVoiceProfile(editingProfile.id, profileData);
     } else {
@@ -161,9 +166,9 @@ export default function SpeechSettings() {
     }
     setShowVoiceProfileModal(false);
     setEditingProfile(null);
-  };
+  }, [editingProfile, updateVoiceProfile, createVoiceProfile]);
 
-  const renderLanguageItem = ({ item }: { item: LanguageConfig }) => (
+  const renderLanguageItem = useCallback(({ item }: { item: LanguageConfig }) => (
     <TouchableOpacity
       style={[
         styles.languageItem,
@@ -185,9 +190,9 @@ export default function SpeechSettings() {
         <Check size={20} color="#10B981" />
       )}
     </TouchableOpacity>
-  );
+  ), [theme.colors.border.light, theme.colors.text.primary, theme.colors.text.secondary, selectedLanguage, handleLanguageChange]);
 
-  const renderVoiceItem = ({ item }: { item: VoiceProfile }) => (
+  const renderVoiceItem = useCallback(({ item }: { item: VoiceProfile }) => (
     <TouchableOpacity
       style={[
         styles.voiceItem,
@@ -211,9 +216,9 @@ export default function SpeechSettings() {
         <Check size={20} color="#10B981" />
       )}
     </TouchableOpacity>
-  );
+  ), [theme.colors.border.light, theme.colors.text.primary, theme.colors.text.secondary, theme.colors.text.tertiary, speechSettings.voice, handleVoiceChange]);
 
-  const renderProfileItem = ({ item }: { item: VoiceProfile }) => (
+  const renderProfileItem = useCallback(({ item }: { item: VoiceProfile }) => (
     <View style={[styles.profileItem, { borderBottomColor: theme.colors.border.light }]}>
       <View style={styles.profileInfo}>
         <Text style={[styles.profileName, { color: theme.colors.text.primary }]}>
@@ -244,7 +249,7 @@ export default function SpeechSettings() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), [theme.colors.border.light, theme.colors.text.primary, theme.colors.text.secondary, testText, speakWithProfile, editProfile, deleteProfile]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
@@ -331,7 +336,7 @@ export default function SpeechSettings() {
                   Voice
                 </Text>
                 <Text style={[styles.settingValue, { color: theme.colors.text.secondary }]}>
-                  {availableVoices.find(v => v.id === speechSettings.voice)?.name || 'Default'}
+                  {currentVoiceName}
                 </Text>
               </View>
             </View>

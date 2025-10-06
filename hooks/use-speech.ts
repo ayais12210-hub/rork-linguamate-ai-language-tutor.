@@ -1087,50 +1087,50 @@ export const useSpeech = () => {
     setTranscriptionResult(null);
   };
 
-  const getVoicesForLanguage = (languageCode: string): Voice[] => {
+  const getVoicesForLanguage = useCallback((languageCode: string): Voice[] => {
     return availableVoices.filter(voice => 
       voice.language.startsWith(languageCode)
     );
-  };
+  }, [availableVoices]);
 
-  const getVoiceProfilesForLanguage = (languageCode: string): VoiceProfile[] => {
+  const getVoiceProfilesForLanguage = useCallback((languageCode: string): VoiceProfile[] => {
     return voiceProfiles.filter(profile => 
       profile.language.startsWith(languageCode)
     );
-  };
+  }, [voiceProfiles]);
 
-  const getLanguageConfig = (languageCode: string): LanguageConfig | undefined => {
+  const getLanguageConfig = useCallback((languageCode: string): LanguageConfig | undefined => {
     return languageConfigs.find(config => config.code === languageCode);
-  };
+  }, [languageConfigs]);
 
-  const getSupportedLanguages = (): LanguageConfig[] => {
+  const getSupportedLanguages = useCallback((): LanguageConfig[] => {
     return languageConfigs.filter(config => 
       config.sttSupported || config.ttsSupported
     );
-  };
+  }, [languageConfigs]);
 
-  const createVoiceProfile = (profile: Omit<VoiceProfile, 'id'>): VoiceProfile => {
+  const createVoiceProfile = useCallback((profile: Omit<VoiceProfile, 'id'>): VoiceProfile => {
     const newProfile: VoiceProfile = {
       ...profile,
       id: `${profile.language}-${profile.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
     };
     setVoiceProfiles(prev => [...prev, newProfile]);
     return newProfile;
-  };
+  }, []);
 
-  const updateVoiceProfile = (id: string, updates: Partial<VoiceProfile>): void => {
+  const updateVoiceProfile = useCallback((id: string, updates: Partial<VoiceProfile>): void => {
     setVoiceProfiles(prev => 
       prev.map(profile => 
         profile.id === id ? { ...profile, ...updates } : profile
       )
     );
-  };
+  }, []);
 
-  const deleteVoiceProfile = (id: string): void => {
+  const deleteVoiceProfile = useCallback((id: string): void => {
     setVoiceProfiles(prev => prev.filter(profile => profile.id !== id));
-  };
+  }, []);
 
-  const speakWithProfile = async (text: string, profileId: string): Promise<void> => {
+  const speakWithProfile = useCallback(async (text: string, profileId: string): Promise<void> => {
     const profile = voiceProfiles.find(p => p.id === profileId);
     if (!profile) {
       console.error('Voice profile not found:', profileId);
@@ -1144,7 +1144,7 @@ export const useSpeech = () => {
             profile.characteristics.includes('friendly') ? 'friendly' : 'neutral',
       useSSML: profile.ssmlSupport,
     });
-  };
+  }, [voiceProfiles, speak]);
 
   const formatDuration = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
