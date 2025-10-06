@@ -1,4 +1,5 @@
 #!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
-bun run lint-staged
+pnpm run lint
+pnpm run typecheck
+pnpm test -w
+pnpm gitleaks detect --redact --no-git

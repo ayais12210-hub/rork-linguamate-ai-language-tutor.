@@ -29,7 +29,8 @@
     "gitleaks:scan:report": "gitleaks detect --config .gitleaks.toml --report-format json --report-path gitleaks-report.json",
     "dev:server": "bun run backend/hono.ts",
     "dev:full": "concurrently -k -n APP,API \"bun run start\" \"bun run dev:server\"",
-    "web:build": "expo export --platform web"
+    "web:build": "expo export --platform web",
+    "prepare": "husky"
   },
   "dependencies": {
     "@axe-core/playwright": "^4.10.2",

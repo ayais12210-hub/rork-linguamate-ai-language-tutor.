@@ -1,150 +1,76 @@
-title = "Linguamate Gitleaks Configuration"
-version = "8.25.0"
+# Gitleaks configuration for Linguamate AI Tutor
+# This configuration helps detect secrets and sensitive information
 
-[allowlist]
-description = "False positives and test fixtures for Linguamate project"
-files = [
-  "tests/fixtures/.*",
-  "docs/snippets/.*",
-  "**/*.test.*",
-  "**/*.spec.*",
-  "**/__tests__/.*",
-  "**/test-utils/.*",
-  "**/coverage/.*",
-  "**/node_modules/.*",
-  "**/.git/.*",
-  "**/dist/.*",
-  "**/build/.*",
-  "**/.expo/.*",
-  "**/android/.*",
-  "**/ios/.*",
-  "**/web-build/.*"
-]
+[gitleaks]
+  # Scan only staged files by default
+  staged = false
+  # Don't scan git history by default
+  history = false
+  # Verbose output
+  verbose = true
+  # Redact secrets in output
+  redact = true
 
-# Allow common test patterns and dummy values
-regexes = [
-  # Test API keys and tokens
-  '''(?i)(test|dummy|fake|mock)_(api|token|key|secret)_[0-9a-f]{8,32}''',
-  '''(?i)(test|dummy|fake|mock)_(password|pwd|pass)_[0-9a-f]{8,32}''',
-  
-  # Common test patterns
-  '''(?i)test.*[0-9a-f]{32}''',
-  '''(?i)dummy.*[0-9a-f]{32}''',
-  '''(?i)example.*[0-9a-f]{32}''',
-  '''(?i)sample.*[0-9a-f]{32}''',
-  
-  # Public keys (safe to commit)
-  '''-----BEGIN PUBLIC KEY-----[\s\S]*-----END PUBLIC KEY-----''',
-  
-  # Common hash patterns that aren't secrets
-  '''[0-9a-f]{40}''',  # SHA-1 hashes (often used for git commits, not secrets)
-  '''[0-9a-f]{64}''',  # SHA-256 hashes (often used for checksums, not secrets)
-  
-  # Common test database URLs
-  '''postgresql://test:test@localhost:5432/test''',
-  '''mysql://test:test@localhost:3306/test''',
-  '''mongodb://test:test@localhost:27017/test''',
-  '''sqlite://.*test.*''',
-  
-  # Common test JWT tokens (obviously fake)
-  '''eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9\..*''',
-  '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\..*''',
-  
-  # Common test email patterns
-  '''test@example\.com''',
-  '''admin@test\.com''',
-  '''user@localhost''',
-  '''test@localhost''',
-  '''example@example\.com''',
-  
-  # Common test phone numbers
-  '''\+1-555-0123''',
-  '''555-0123''',
-  '''\+1-800-555-0199''',
-  
-  # Common test credit card patterns (Luhn test numbers)
-  '''4[0-9]{12}(?:[0-9]{3})?''',  # Visa test numbers
-  '''5[1-5][0-9]{14}''',           # MasterCard test numbers
-  '''3[47][0-9]{13}''',            # American Express test numbers
-  
-  # Expo/React Native specific patterns
-  '''expo://.*''',
-  '''exp://.*''',
-  '''rork://.*''',
-  
-  # Common development patterns
-  '''localhost:[0-9]+''',
-  '''127\.0\.0\.1:[0-9]+''',
-  '''0\.0\.0\.0:[0-9]+''',
-  
-  # Common test UUIDs
-  '''[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}''',
-  
-  # Common test API endpoints
-  '''https?://localhost:[0-9]+/.*''',
-  '''https?://127\.0\.0\.1:[0-9]+/.*''',
-  '''https?://api\.example\.com/.*''',
-  
-  # Common placeholder values
-  '''change_me.*''',
-  '''your_.*_here''',
-  '''<.*>''',
-  '''\$\{.*\}''',
-  
-  # Common test configuration values
-  '''development''',
-  '''test''',
-  '''staging''',
-  '''demo''',
-]
-
-# Allow specific file patterns that commonly contain test data
-[allowlist.paths]
-paths = [
-  "**/test/**",
-  "**/tests/**",
-  "**/__tests__/**",
-  "**/fixtures/**",
-  "**/mocks/**",
-  "**/stubs/**",
-  "**/examples/**",
-  "**/samples/**",
-  "**/demos/**",
-  "**/playground/**",
-  "**/sandbox/**",
-  "**/coverage/**",
-  "**/docs/**",
-  "**/README*",
-  "**/CHANGELOG*",
-  "**/LICENSE*",
-  "**/.env.example",
-  "**/app.json",
-  "**/eas.json",
-  "**/babel.config.*",
-  "**/jest.config.*",
-  "**/playwright.config.*",
-  "**/lighthouserc.*",
-  "**/commitlint.config.*",
-  "**/eslint.config.*"
-]
-
-# Specific allowlist for known safe patterns in this project
-[allowlist.commits]
-commits = [
-  # Add specific commit hashes that are known to contain false positives
-  # Example: "abc123def456"
-]
-
-# Allowlist for specific secrets that are known to be safe
-[allowlist.secrets]
-secrets = [
-  # Add specific secret values that are known to be safe (be very careful here)
-  # Example: "sk_test_1234567890abcdef"
-]
-
-# Custom rules for this project
+# Rules for detecting secrets
 [[rules]]
-id = "linguamate-specific"
-description = "Linguamate project specific patterns"
-regex = '''(?i)(rork|linguamate|expo|react-native).*[0-9a-f]{8,32}'''
-tags = ["linguamate", "expo", "react-native"]
+  description = "Generic API Key"
+  regex = '''(?i)(api[_-]?key|apikey|api_key|api-key)\s*[:=]\s*['"]?[a-zA-Z0-9]{20,}['"]?'''
+  tags = ["key", "api"]
+
+[[rules]]
+  description = "Generic Secret"
+  regex = '''(?i)(secret|password|passwd|pwd)\s*[:=]\s*['"]?[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{}|;':",./<>?]{8,}['"]?'''
+  tags = ["secret", "password"]
+
+[[rules]]
+  description = "JWT Token"
+  regex = '''eyJ[a-zA-Z0-9_-]*\.[a-zA-Z0-9_-]*\.[a-zA-Z0-9_-]*'''
+  tags = ["jwt", "token"]
+
+[[rules]]
+  description = "AWS Access Key"
+  regex = '''AKIA[0-9A-Z]{16}'''
+  tags = ["aws", "key"]
+
+[[rules]]
+  description = "AWS Secret Key"
+  regex = '''(?i)aws[_-]?secret[_-]?access[_-]?key\s*[:=]\s*['"]?[a-zA-Z0-9/+=]{40}['"]?'''
+  tags = ["aws", "secret"]
+
+[[rules]]
+  description = "GitHub Token"
+  regex = '''ghp_[a-zA-Z0-9]{36}'''
+  tags = ["github", "token"]
+
+[[rules]]
+  description = "OpenAI API Key"
+  regex = '''sk-[a-zA-Z0-9]{48}'''
+  tags = ["openai", "api", "key"]
+
+[[rules]]
+  description = "Database URL"
+  regex = '''(?i)(mongodb|postgres|mysql|redis)://[^\s]+'''
+  tags = ["database", "url"]
+
+[[rules]]
+  description = "Private Key"
+  regex = '''-----BEGIN [A-Z ]+ PRIVATE KEY-----'''
+  tags = ["private", "key"]
+
+# Exclude certain files and directories
+[gitleaks.allowlist]
+  description = "Allowlist for Linguamate"
+  files = [
+    "package-lock.json",
+    "yarn.lock",
+    "pnpm-lock.yaml",
+    "*.lock",
+    "*.log",
+    "node_modules/**",
+    ".git/**",
+    "dist/**",
+    "build/**",
+    "coverage/**",
+    ".next/**",
+    ".expo/**"
+  ]
