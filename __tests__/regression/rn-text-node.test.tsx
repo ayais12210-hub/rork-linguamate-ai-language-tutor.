@@ -11,21 +11,6 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 import { View, Text } from 'react-native';
 
-// Suppress console errors for expected test failures
-const originalError = console.error;
-beforeAll(() => {
-  console.error = jest.fn((message) => {
-    if (message?.toString().includes('text node cannot be a child')) {
-      // Suppress this specific error in tests
-      return;
-    }
-    originalError(message);
-  });
-});
-
-afterAll(() => {
-  console.error = originalError;
-});
 
 describe('React Native Text Node Regression Tests', () => {
   it('should allow text wrapped in Text component', () => {
