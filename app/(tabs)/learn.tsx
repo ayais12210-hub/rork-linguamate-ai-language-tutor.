@@ -141,7 +141,10 @@ export default function LearnScreen() {
       await learnQuery.refetch();
     } catch (err) {
       // Don't show error to user since we have fallback content
-      console.warn('[Learn] Failed to refresh data, using cached fallback:', err);
+      console.warn(
+        `[Learn] Failed to refresh learn content for target language "${targetLang?.name}" and native language "${nativeLang?.name}". Using cached or fallback content instead. Error:`,
+        err
+      );
     }
   }, [learnQuery, targetLang, nativeLang]);
 
