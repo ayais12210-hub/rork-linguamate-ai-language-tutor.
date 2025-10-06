@@ -170,7 +170,17 @@ ${report.summary.recommendations.length > 0
     console.log('\nRecommendations:');
     report.summary.recommendations.forEach(rec => console.log(`- ${rec}`));
   }
-  
+
+  // Enforce quality gate
+  const threshold = process.env.QUALITY_THRESHOLD
+    ? Number(process.env.QUALITY_THRESHOLD)
+    : 75;
+  if (report.overall < threshold) {
+    console.error(
+      `\n❌ Quality score ${report.overall} is below the threshold (${threshold}). Failing the process.`
+    );
+    process.exit(1);
+  }
 } catch (error) {
   console.error('Error computing quality score:', error);
   process.exit(1);
