@@ -258,10 +258,12 @@ describe('Validation Middleware', () => {
       try {
         CommonSchemas.pagination.parse({ page: -1, limit: 200 });
       } catch (error: any) {
-        expect(error.errors).toBeDefined();
-        expect(error.errors.length).toBeGreaterThan(0);
-        expect(error.errors[0]).toHaveProperty('path');
-        expect(error.errors[0]).toHaveProperty('message');
+        // Zod throws ZodError with `issues` property in v4
+        const issues = error.issues || error.errors;
+        expect(issues).toBeDefined();
+        expect(issues.length).toBeGreaterThan(0);
+        expect(issues[0]).toHaveProperty('path');
+        expect(issues[0]).toHaveProperty('message');
       }
     });
   });
