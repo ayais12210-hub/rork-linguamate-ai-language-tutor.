@@ -29,7 +29,13 @@
     "gitleaks:scan:report": "gitleaks detect --config .gitleaks.toml --report-format json --report-path gitleaks-report.json",
     "dev:server": "bun run backend/hono.ts",
     "dev:full": "concurrently -k -n APP,API \"bun run start\" \"bun run dev:server\"",
-    "web:build": "expo export --platform web"
+    "web:build": "expo export --platform web",
+    "backend:dev": "bun run --watch backend/hono.ts",
+    "backend:test": "jest backend/ --passWithNoTests",
+    "backend:test:watch": "jest backend/ --watch",
+    "backend:test:coverage": "jest backend/ --coverage --collectCoverageFrom='backend/**/*.ts'",
+    "backend:typecheck": "tsc --noEmit --project tsconfig.json",
+    "backend:lint": "eslint backend/ --ext .ts --max-warnings=0"
   },
   "dependencies": {
     "@axe-core/playwright": "^4.10.2",

@@ -19,9 +19,31 @@ app.use("*", correlationMiddleware);
 app.use("*", securityHeadersMiddleware);
 app.use("*", requestLoggerMiddleware);
 
-// Enable CORS for all routes (dev-friendly)
+// Enable CORS with production allowlist
+const allowedOrigins = (process.env.CORS_ORIGIN || "").split(",").map(o => o.trim()).filter(Boolean);
+const isDev = process.env.NODE_ENV === "development";
+
 app.use("*", cors({
-  origin: (origin) => origin ?? "*",
+  origin: (origin) => {
+    // Development: allow all origins if no CORS_ORIGIN is set
+    if (isDev && allowedOrigins.length === 0) {
+      return origin ?? "*";
+    }
+    
+    // Production: strict allowlist
+    if (!origin) {
+      // Allow same-origin requests (no Origin header)
+      return null;
+    }
+    
+    // Check if origin is in allowlist
+    if (allowedOrigins.includes(origin) || allowedOrigins.includes("*")) {
+      return origin;
+    }
+    
+    // Reject unknown origins
+    return null;
+  },
   allowHeaders: ["Content-Type", "Authorization", "x-correlation-id", "x-session-id"],
   allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   credentials: true,
