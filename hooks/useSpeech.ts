@@ -41,9 +41,12 @@ export function useSpeech() {
   const speak = useCallback(async (text: string, options?: SpeechOptions) => {
     try {
       // Stop any current speech
-      if (isSpeaking) {
+      // Stop any current speech
+      if (currentUtteranceRef.current) {
         await Speech.stop();
       }
+
+      setIsSpeaking(true);
 
       setIsSpeaking(true);
       setIsPaused(false);
