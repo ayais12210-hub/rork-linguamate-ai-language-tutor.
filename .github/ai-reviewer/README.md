@@ -1,56 +1,134 @@
-# AI Reviewer Notes
+# AI PR Reviewer Debug Guide
 
-- Target stack: Expo 53+, React Native, TypeScript strict, React Hook Form/Zod, Jest+RTL, Playwright.
-- Priorities:
-  1. **Runtime safety**: hook rules, component purity, memo boundaries, navigation & params.
-  2. **Type soundness**: generics, discriminated unions, `never` exhaustiveness.
-  3. **RN performance**: `useCallback`, `useMemo`, `React.memo`, FlatList keys, re-render hot spots.
-  4. **Styling**: Tailwind class drift, duplicated styles, inaccessible contrast.
-  5. **I/O**: networking, Zod schemas, graceful error states, offline safety.
-  6. **Tests**: add RTL tests for crash-prone files; e2e smoke for onboarding, translator, STT/TTs flows.
-  7. **Security**: secrets, URL allowlists, dependency risks.
+This guide helps you debug and fix issues with the AI PR Reviewer workflow.
 
-## Setup
+## Quick Fixes
 
-In your repo: Settings → Secrets and variables → Actions → New repository secret
+### 1. Add Debug Secrets
+Go to your repository → Settings → Secrets and variables → Actions → New repository secret:
 
-Add one of:
-- `OPENAI_API_KEY`
+```
+ACTIONS_STEP_DEBUG=true
+ACTIONS_RUNNER_DEBUG=true
+```
+
+### 2. Ensure Required Secrets
+Add at least one AI provider API key:
+- `OPENAI_API_KEY` (recommended)
 - `ANTHROPIC_API_KEY`
 - `DEEPSEEK_API_KEY`
 - `GEMINI_API_KEY`
 
-No extra packages required.
+### 3. Check Permissions
+The workflow now includes:
+```yaml
+permissions:
+  contents: read
+  pull-requests: write
+```
 
-## Configuration
+## Common Issues & Solutions
 
-The workflow can be configured via environment variables in `.github/workflows/ai-pr-reviewer.yml`:
+### Issue: "Run AI Review – Process completed with exit code 1"
 
-- `AI_MODEL`: The model to use (e.g., `gpt-4o-mini`, `claude-3-5-sonnet`, `deepseek-chat`, `gemini-1.5-pro`)
-- `MAX_TOKENS`: Maximum tokens for the AI response (default: `8000`)
-- `DIFF_LIMIT_KB`: Maximum size of diff chunks in KB (default: `900`)
-- `REVIEW_TONE`: The tone for the review (default: `precise, implementation-first, UK English`)
-- `PROJECT_CONTEXT_PATHS`: Newline-separated list of files/directories to include as context
+**Root Causes:**
+1. Missing API key
+2. Insufficient permissions
+3. Git fetch/diff issues
+4. API rate limits or errors
 
-## What You'll See
+**Debug Steps:**
+1. Check the "Debug Environment" step output
+2. Look for specific error messages in the logs
+3. Verify API keys are set correctly
 
-On every PR (not draft), the workflow runs, chunks the diff, sends to your chosen model, and posts a single, structured review comment with:
+### Issue: "No AI provider key found"
 
-1. Executive summary
-2. Must-fix issues (with mini patch diffs)
-3. Nice-to-have clean-ups
-4. Concrete tests to add
-5. CI/tooling suggestions
+**Solution:**
+Add at least one API key in repository secrets:
+- Go to Settings → Secrets and variables → Actions
+- Add `OPENAI_API_KEY` with your OpenAI API key
+- Or add another provider key
 
-## Adding More Review Agents
+### Issue: "Failed to post PR comment"
 
-If you want multiple perspectives, duplicate the job under different names with different models (e.g., one OpenAI, one Anthropic), or add third-party apps:
+**Causes:**
+- Missing `pull-requests: write` permission
+- Invalid `GITHUB_TOKEN`
+- Network issues
 
-- SonarCloud (quality/security)
-- CodeQL (security)
-- DeepSource (bugs & style)
-- Reviewpad (policy automation)
-- Danger JS (custom PR rules)
-- Codecov (coverage gates)
+**Solution:**
+The workflow now includes proper permissions and error handling.
 
-These will appear alongside the AI reviewer under Checks/Reviews.
+## Local Testing
+
+### Test the AI reviewer locally:
+
+```bash
+# Set your API key
+export OPENAI_API_KEY=sk-your-key-here
+
+# Run the debug script
+node .github/ai-reviewer/debug.mjs
+```
+
+### Test with a real PR diff:
+
+```bash
+# Create a test diff
+git diff HEAD~1 > test.diff
+
+# Test the reviewer with the diff
+export OPENAI_API_KEY=sk-your-key-here
+export GITHUB_REPOSITORY=your-org/your-repo
+export GITHUB_EVENT_PATH=/path/to/mock-event.json
+export GITHUB_TOKEN=your-token
+
+node .github/ai-reviewer/review.mjs
+```
+
+## Workflow Structure
+
+The AI review is now integrated into the main CI workflow with:
+
+1. **Isolation**: Runs as separate job with `continue-on-error: true`
+2. **Debugging**: Comprehensive logging and environment checks
+3. **Error Handling**: Graceful failure with detailed error messages
+4. **Permissions**: Proper GitHub permissions for PR comments
+
+## Monitoring
+
+After implementing fixes:
+
+1. **Re-run the failed job** to see detailed debug output
+2. **Check the "Debug Environment" step** for configuration issues
+3. **Look for specific error messages** in the "Run AI Review" step
+4. **Verify the "Surface AI review result" step** shows the outcome
+
+## Troubleshooting Checklist
+
+- [ ] Debug secrets added (`ACTIONS_STEP_DEBUG=true`)
+- [ ] At least one AI API key is set
+- [ ] Workflow has `pull-requests: write` permission
+- [ ] PR is not in draft mode
+- [ ] Git history is available (fetch-depth: 0)
+- [ ] API key has sufficient credits/quota
+- [ ] Network connectivity to AI provider APIs
+
+## Success Indicators
+
+When working correctly, you should see:
+- ✅ Debug environment shows all required variables
+- ✅ AI provider selected and model confirmed
+- ✅ Git diff retrieved successfully
+- ✅ AI API calls complete without errors
+- ✅ PR comment posted with review results
+- ✅ "AI review completed successfully" message
+
+## Need Help?
+
+If issues persist after following this guide:
+1. Check the GitHub Actions logs for specific error messages
+2. Verify your API keys are valid and have sufficient quota
+3. Test locally using the debug script
+4. Check the AI provider's status page for outages

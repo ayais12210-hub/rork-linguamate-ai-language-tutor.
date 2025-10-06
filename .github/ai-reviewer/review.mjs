@@ -31,8 +31,21 @@ const {
   PROJECT_CONTEXT_PATHS = ""
 } = env;
 
+// Enhanced error handling and debugging
+console.log("🔍 AI Reviewer Debug Info:");
+console.log("GITHUB_REPOSITORY:", GITHUB_REPOSITORY || "MISSING");
+console.log("GITHUB_EVENT_PATH:", GITHUB_EVENT_PATH || "MISSING");
+console.log("GITHUB_TOKEN:", GITHUB_TOKEN ? "PRESENT" : "MISSING");
+console.log("Provider keys available:", {
+  OPENAI: !!OPENAI_API_KEY,
+  ANTHROPIC: !!ANTHROPIC_API_KEY,
+  DEEPSEEK: !!DEEPSEEK_API_KEY,
+  GEMINI: !!GEMINI_API_KEY
+});
+
 if (!GITHUB_REPOSITORY || !GITHUB_EVENT_PATH || !GITHUB_TOKEN) {
-  console.error("Missing required GitHub env (GITHUB_REPOSITORY/GITHUB_EVENT_PATH/GITHUB_TOKEN).");
+  console.error("❌ Missing required GitHub env (GITHUB_REPOSITORY/GITHUB_EVENT_PATH/GITHUB_TOKEN).");
+  console.error("Available env vars:", Object.keys(env).filter(k => k.startsWith('GITHUB_')));
   process.exit(1);
 }
 
@@ -43,34 +56,71 @@ else if (ANTHROPIC_API_KEY) provider = "anthropic";
 else if (DEEPSEEK_API_KEY) provider = "deepseek";
 else if (GEMINI_API_KEY) provider = "gemini";
 if (!provider) {
-  console.error("No AI provider key found. Add one secret: OPENAI_API_KEY or ANTHROPIC_API_KEY or DEEPSEEK_API_KEY or GEMINI_API_KEY.");
+  console.error("❌ No AI provider key found. Add one secret: OPENAI_API_KEY or ANTHROPIC_API_KEY or DEEPSEEK_API_KEY or GEMINI_API_KEY.");
+  console.error("Current environment keys:", Object.keys(env).filter(k => k.includes('API_KEY')));
   process.exit(1);
 }
 
-// ---------- Load PR event ----------
-const event = JSON.parse(readFileSync(GITHUB_EVENT_PATH, "utf8"));
-const pr = event.pull_request;
-const repo = GITHUB_REPOSITORY;
-const [owner, repoName] = repo.split("/");
-const prNumber = pr.number;
-const baseRef = pr.base.ref;
-const headRef = pr.head.ref;
+console.log(`✅ Using AI provider: ${provider} with model: ${AI_MODEL}`);
 
-const run = (cmd) => execSync(cmd, { encoding: "utf8" }).trim();
+// ---------- Load PR event ----------
+let event, pr, repo, owner, repoName, prNumber, baseRef, headRef;
+try {
+  event = JSON.parse(readFileSync(GITHUB_EVENT_PATH, "utf8"));
+  pr = event.pull_request;
+  repo = GITHUB_REPOSITORY;
+  [owner, repoName] = repo.split("/");
+  prNumber = pr.number;
+  baseRef = pr.base.ref;
+  headRef = pr.head.ref;
+  
+  console.log(`📋 PR #${prNumber}: ${pr.title}`);
+  console.log(`🔀 Base: ${baseRef}, Head: ${headRef}`);
+  console.log(`👤 Author: ${pr.user?.login}`);
+} catch (error) {
+  console.error("❌ Failed to parse GitHub event:", error.message);
+  process.exit(1);
+}
+
+const run = (cmd) => {
+  try {
+    return execSync(cmd, { encoding: "utf8" }).trim();
+  } catch (error) {
+    console.error(`❌ Command failed: ${cmd}`);
+    console.error(`Error: ${error.message}`);
+    throw error;
+  }
+};
 
 // Fetch complete history (already fetch-depth:0 in workflow, but safe)
-try { run("git fetch --all --prune"); } catch {}
+try { 
+  console.log("🔄 Fetching git history...");
+  run("git fetch --all --prune"); 
+} catch (e) {
+  console.warn("⚠️ Git fetch failed, continuing...");
+}
 
 // Get unified diff for this PR
-const baseSha = run(`git rev-parse origin/${baseRef}`);
-const headSha = run(`git rev-parse HEAD`);
 let diff = "";
 try {
+  console.log("🔍 Getting git diff...");
+  const baseSha = run(`git rev-parse origin/${baseRef}`);
+  const headSha = run(`git rev-parse HEAD`);
+  console.log(`📊 Base SHA: ${baseSha}, Head SHA: ${headSha}`);
+  
   diff = run(`git diff --unified=1 ${baseSha}...${headSha}`);
+  console.log(`📝 Diff size: ${Buffer.byteLength(diff, 'utf8')} bytes`);
 } catch (e) {
-  // fallback: from the PR base SHA in the event
-  const fallbackBase = pr.base.sha;
-  diff = run(`git diff --unified=1 ${fallbackBase}...${headSha}`);
+  console.warn("⚠️ Primary diff method failed, trying fallback...");
+  try {
+    // fallback: from the PR base SHA in the event
+    const fallbackBase = pr.base.sha;
+    diff = run(`git diff --unified=1 ${fallbackBase}...HEAD`);
+    console.log(`📝 Fallback diff size: ${Buffer.byteLength(diff, 'utf8')} bytes`);
+  } catch (fallbackError) {
+    console.error("❌ Both diff methods failed:", fallbackError.message);
+    process.exit(1);
+  }
 }
 
 // Load optional project context files (small, to give model awareness)
@@ -125,6 +175,7 @@ const diffChunks = chunkText(diff, limit);
 // ---------- AI call wrappers ----------
 async function callOpenAI(prompt) {
   try {
+    console.log(`🔗 Calling OpenAI API with model: ${AI_MODEL}`);
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -141,12 +192,19 @@ async function callOpenAI(prompt) {
         ]
       })
     });
+    
     const j = await res.json();
     if (!res.ok) {
+      console.error(`❌ OpenAI API error: HTTP ${res.status} ${res.statusText}`);
+      console.error(`Response:`, JSON.stringify(j, null, 2));
       throw new Error(`[OpenAI] API error: HTTP ${res.status} ${res.statusText} - ${JSON.stringify(j)}`);
     }
-    return j.choices?.[0]?.message?.content || "";
+    
+    const content = j.choices?.[0]?.message?.content || "";
+    console.log(`✅ OpenAI response received (${content.length} chars)`);
+    return content;
   } catch (err) {
+    console.error(`❌ OpenAI error:`, err.message);
     throw new Error(`[OpenAI] Network or fetch error: ${err && err.message ? err.message : err}`);
   }
 }
@@ -235,9 +293,18 @@ const prompts = diffChunks.map((chunk, i) =>
 
 // ---------- Review all chunks ----------
 let combined = "";
+console.log(`🤖 Starting AI review of ${prompts.length} chunk(s)...`);
+
 for (let i = 0; i < prompts.length; i++) {
-  const piece = await callModel(prompts[i]);
-  combined += `\n\n### Chunk ${i+1} Review\n${piece}\n`;
+  try {
+    console.log(`📝 Processing chunk ${i+1}/${prompts.length}...`);
+    const piece = await callModel(prompts[i]);
+    combined += `\n\n### Chunk ${i+1} Review\n${piece}\n`;
+    console.log(`✅ Chunk ${i+1} completed`);
+  } catch (error) {
+    console.error(`❌ Failed to process chunk ${i+1}:`, error.message);
+    combined += `\n\n### Chunk ${i+1} Review\n**Error**: Failed to process this chunk: ${error.message}\n`;
+  }
 }
 
 // ---------- Post PR comment ----------
@@ -246,19 +313,34 @@ const postBody = `
 ${combined}
 `;
 
+console.log("📤 Posting review comment to PR...");
 const apiBase = "https://api.github.com";
-const res = await fetch(`${apiBase}/repos/${owner}/${repoName}/issues/${prNumber}/comments`, {
-  method: "POST",
-  headers: {
-    "Authorization": `token ${GITHUB_TOKEN}`,
-    "Accept": "application/vnd.github+json",
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({ body: postBody })
-});
-if (!res.ok) {
-  const txt = await res.text();
-  console.error("Failed to post PR comment:", res.status, txt);
+const commentUrl = `${apiBase}/repos/${owner}/${repoName}/issues/${prNumber}/comments`;
+
+try {
+  const res = await fetch(commentUrl, {
+    method: "POST",
+    headers: {
+      "Authorization": `token ${GITHUB_TOKEN}`,
+      "Accept": "application/vnd.github+json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ body: postBody })
+  });
+  
+  if (!res.ok) {
+    const txt = await res.text();
+    console.error("❌ Failed to post PR comment:");
+    console.error(`Status: ${res.status} ${res.statusText}`);
+    console.error(`Response: ${txt}`);
+    console.error(`URL: ${commentUrl}`);
+    process.exit(1);
+  }
+  
+  const responseData = await res.json();
+  console.log("✅ AI review posted successfully!");
+  console.log(`🔗 Comment URL: ${responseData.html_url}`);
+} catch (error) {
+  console.error("❌ Network error posting comment:", error.message);
   process.exit(1);
 }
-console.log("AI review posted.");

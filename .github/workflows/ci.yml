@@ -5,6 +5,10 @@ on:
   push:
     branches: [main, develop]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   typecheck:
     name: Type Check
@@ -32,6 +36,15 @@ jobs:
       - name: Check for circular dependencies
         run: |
           npx madge --circular app components modules || (echo "Circular dependencies found" && exit 1)
+      - name: Upload lint results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lint-results
+          path: |
+            .eslintcache
+            eslint-report.json
+          retention-days: 7
 
   unit:
     name: Unit Tests
@@ -43,6 +56,16 @@ jobs:
         run: bun install --frozen-lockfile
       - name: Run tests with coverage
         run: bun run test:ci
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            coverage/
+            test-results.xml
+            junit.xml
+          retention-days: 7
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         if: always()
@@ -153,3 +176,67 @@ jobs:
         run: |
           npm install -g @lhci/cli
           lhci autorun || echo "Lighthouse CI completed with warnings"
+
+  ai-review:
+    name: AI Code Review
+    if: github.event_name == 'pull_request' && !github.event.pull_request.draft
+    needs: [typecheck, lint, unit, e2e, semgrep]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Debug Environment
+        run: |
+          echo "Node version: $(node -v)"
+          echo "NPM version: $(npm -v)"
+          echo "Git version: $(git --version)"
+          echo "GitHub event: ${{ github.event_name }}"
+          echo "PR number: ${{ github.event.pull_request.number }}"
+          echo "Is draft: ${{ github.event.pull_request.draft }}"
+          echo "Available secrets: GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN != '' }}, OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY != '' }}, ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY != '' }}, DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY != '' }}, GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY != '' }}"
+
+      - name: Run AI Review
+        id: ai_review
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          AI_MODEL: "gpt-4o-mini"
+          MAX_TOKENS: "8000"
+          DIFF_LIMIT_KB: "900"
+          REVIEW_TONE: "precise, implementation-first, UK English"
+          PROJECT_CONTEXT_PATHS: |
+            package.json
+            tsconfig.json
+            app/
+            components/
+            modules/
+            tests/
+            .github/
+        run: |
+          echo "Starting AI review process..."
+          node .github/ai-reviewer/review.mjs
+          echo "AI review completed with exit code: $?"
+
+      - name: Surface AI review result
+        if: always()
+        run: |
+          echo "AI review step outcome: ${{ steps.ai_review.outcome }}"
+          echo "AI review step conclusion: ${{ steps.ai_review.conclusion }}"
+          if [ "${{ steps.ai_review.outcome }}" != "success" ]; then
+            echo "⚠️ AI review failed, but continuing pipeline..."
+            echo "Check the logs above for detailed error information"
+          else
+            echo "✅ AI review completed successfully"
+          fi
