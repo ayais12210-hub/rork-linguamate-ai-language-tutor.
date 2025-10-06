@@ -1,0 +1,21 @@
+name: Tests & Coverage
+on:
+  pull_request:
+  push: { branches: ["main"] }
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - run: npm ci
+      - run: |
+          npx --yes jest --coverage --coverageReporters=text-lcov > coverage.lcov || true
+      - uses: coverallsapp/github-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: coverage.lcov

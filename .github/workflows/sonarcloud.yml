@@ -1,0 +1,30 @@
+name: SonarCloud
+on:
+  push: { branches: ["main"] }
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - run: npm ci
+      - run: npm run build --if-present
+      - run: |
+          # Produce lcov even if your test script doesn't yet
+          npx --yes jest --coverage --coverageReporters=text-lcov > coverage/lcov.info || true
+      - uses: SonarSource/sonarcloud-github-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=<REPLACE_WITH_YOUR_PROJECT_KEY>
+            -Dsonar.organization=<REPLACE_WITH_YOUR_ORG_KEY>
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.pullrequest.github.summary_comment=true
