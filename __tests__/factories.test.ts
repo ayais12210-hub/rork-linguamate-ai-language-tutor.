@@ -1,4 +1,4 @@
-import { makeLesson, makeExercise, makeUser, makeUserProfile } from '../tests/factories';
+import { makeLesson, makeExercise, makeUser, makeUserProfile } from '../tests/factories/index';
 
 describe('Test Factories', () => {
   describe('makeLesson', () => {

@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { PostHogProvider as PostHogProviderBase, PostHog } from 'posthog-react-native';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
@@ -38,9 +38,6 @@ interface AnalyticsProviderProps {
   children: ReactNode;
 }
 
-import { ReactNode, useEffect, useState } from 'react';
-…
-
 export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
   const [client, setClient] = useState<PostHog | null>(posthogClient);
 
@@ -66,10 +63,6 @@ export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
 
 // Export PostHog client for direct access
 export const getPostHogClient = () => posthogClient;
-}
-
-// Export PostHog client for direct access
-export const getPostHogClient = () => posthogClient;
 
 // Helper functions for common analytics events
 export const analyticsEvents = {
@@ -78,7 +71,7 @@ export const analyticsEvents = {
     posthogClient?.capture('lesson_started', {
       lessonId,
       lessonType,
-      difficulty,
+      difficulty: difficulty || null,
     });
   },
 
@@ -95,7 +88,7 @@ export const analyticsEvents = {
     posthogClient?.capture('lesson_failed', {
       lessonId,
       lessonType,
-      reason,
+      reason: reason || null,
     });
   },
 

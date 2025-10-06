@@ -82,7 +82,7 @@ export async function getJson<T>(
         'Invalid server response format',
         {
           cause: parsed.error,
-          context: { url, validationErrors: parsed.error.errors },
+          context: { url, validationErrors: parsed.error.issues },
         }
       );
       return err(error);
@@ -171,7 +171,7 @@ export async function postJson<T, U>(
         'Invalid server response format',
         {
           cause: parsed.error,
-          context: { url, validationErrors: parsed.error.errors },
+          context: { url, validationErrors: parsed.error.issues },
         }
       );
       return err(error);
