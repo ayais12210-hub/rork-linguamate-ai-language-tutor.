@@ -1,0 +1,279 @@
+name: 🚀 Main CI Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+  BUN_VERSION: 'latest'
+
+jobs:
+  # Quick validation for PRs
+  quick-check:
+    name: ⚡ Quick Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 🥟 Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: 📥 Install dependencies
+        run: |
+          if [ -f bun.lockb ]; then
+            bun install --frozen-lockfile
+          else
+            npm ci
+          fi
+
+      - name: 🏥 Expo Doctor
+        run: |
+          if [ -f bun.lockb ]; then
+            bun run expo:doctor
+          else
+            npm run expo:doctor
+          fi
+
+      - name: 🔍 TypeScript Check
+        run: bun run typecheck || npm run typecheck
+
+      - name: 🧹 Lint Check
+        run: bun run lint || npm run lint
+
+      - name: 🎨 Format Check
+        run: bun run format:check || npm run format:check
+
+  # Full CI pipeline for main branch and important PRs
+  full-ci:
+    name: 🔄 Full CI Pipeline
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'push'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: TypeScript Check
+            command: typecheck
+          - name: ESLint
+            command: lint
+          - name: Prettier Check
+            command: format:check
+          - name: Unit Tests
+            command: test:ci
+          - name: Security Audit
+            command: audit:ci
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 🥟 Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: 📥 Install dependencies
+        run: |
+          if [ -f bun.lockb ]; then
+            bun install --frozen-lockfile
+          else
+            npm ci
+          fi
+
+      - name: 🏥 Expo Doctor
+        run: bun run expo:doctor || npm run expo:doctor
+
+      - name: 🧪 Run ${{ matrix.name }}
+        run: |
+          if [ -f bun.lockb ]; then
+            bun run ${{ matrix.command }} || npm run ${{ matrix.command }}
+          else
+            npm run ${{ matrix.command }}
+          fi
+
+      - name: 📊 Upload coverage (if tests)
+        if: matrix.command == 'test:ci'
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/coverage-final.json
+          flags: unittests
+          fail_ci_if_error: false
+
+  # E2E tests (only for main/develop)
+  e2e-tests:
+    name: 🎭 E2E Tests
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    needs: full-ci
+    timeout-minutes: 20
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📥 Install dependencies
+        run: npm ci
+
+      - name: 🎭 Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: 🎭 Run E2E tests
+        run: npm run e2e:ci
+
+      - name: 📤 Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  # Security scanning
+  security-scan:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 🥟 Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: 📥 Install dependencies
+        run: |
+          if [ -f bun.lockb ]; then
+            bun install --frozen-lockfile
+          else
+            npm ci
+          fi
+
+      - name: 🔍 Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: .semgrep.yml
+          generateSarif: true
+          sarifFile: semgrep.sarif
+        continue-on-error: true
+
+      - name: 📤 Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: semgrep.sarif
+
+  # Build and deploy
+  build-deploy:
+    name: 🏗️ Build & Deploy
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    needs: [full-ci, e2e-tests, security-scan]
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 🥟 Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: 📥 Install dependencies
+        run: |
+          if [ -f bun.lockb ]; then
+            bun install --frozen-lockfile
+          else
+            npm ci
+          fi
+
+      - name: 🏗️ Build web app
+        run: |
+          if [ -f bun.lockb ]; then
+            bun run web:build
+          else
+            npm run web:build
+          fi
+
+      - name: 📤 Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: dist/
+          retention-days: 7
+
+      - name: 🚀 Lighthouse Performance
+        run: |
+          npm install -g @lhci/cli
+          lhci autorun || echo "Lighthouse CI completed with warnings"
+        continue-on-error: true
+
+  # Quality gate
+  quality-gate:
+    name: 🎯 Quality Gate
+    runs-on: ubuntu-latest
+    needs: [quick-check, full-ci, e2e-tests, security-scan, build-deploy]
+    if: always()
+    steps:
+      - name: 📊 Generate summary
+        run: |
+          echo "## 📊 CI Pipeline Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Quick Check | ${{ needs.quick-check.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Full CI | ${{ needs.full-ci.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| E2E Tests | ${{ needs.e2e-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Scan | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build & Deploy | ${{ needs.build-deploy.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Determine overall status
+          if [[ "${{ needs.full-ci.result }}" == "success" ]]; then
+            echo "✅ **CI Pipeline completed successfully!**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **CI Pipeline failed!**" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi

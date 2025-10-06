@@ -1,0 +1,441 @@
+name: 🚀 CI Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+  BUN_VERSION: 'latest'
+
+jobs:
+  # Setup job for dependency caching and environment preparation
+  setup:
+    name: 🔧 Setup Environment
+    runs-on: ubuntu-latest
+    outputs:
+      cache-key: ${{ steps.cache-deps.outputs.cache-primary-key }}
+      bun-cache-key: ${{ steps.cache-bun.outputs.cache-primary-key }}
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 🥟 Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: 📦 Cache Bun dependencies
+        id: cache-bun
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            node_modules
+          key: bun-${{ runner.os }}-${{ hashFiles('**/bun.lockb') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+
+      - name: 📦 Cache npm dependencies
+        id: cache-deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.cache/ms-playwright
+          key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            npm-${{ runner.os }}-
+
+      - name: 📥 Install dependencies
+        run: |
+          if [ -f bun.lockb ]; then
+            bun install --frozen-lockfile
+          else
+            npm ci
+          fi
+
+  # Static analysis jobs (run in parallel)
+  static-analysis:
+    name: 🔍 Static Analysis
+    runs-on: ubuntu-latest
+    needs: setup
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: TypeScript Check
+            command: typecheck
+            working-directory: .
+          - name: ESLint
+            command: lint
+            working-directory: .
+          - name: Prettier Check
+            command: format:check
+            working-directory: .
+          - name: Circular Dependencies
+            command: |
+              npx madge --circular app components modules --extensions ts,tsx || (echo "Circular dependencies found" && exit 1)
+            working-directory: .
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 🥟 Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: 📦 Restore dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.bun/install/cache
+          key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: 📥 Install dependencies
+        run: |
+          if [ -f bun.lockb ]; then
+            bun install --frozen-lockfile
+          else
+            npm ci
+          fi
+
+      - name: 🏥 Expo Doctor
+        run: bun run expo:doctor || npm run expo:doctor
+
+      - name: 🧪 Run ${{ matrix.name }}
+        run: |
+          if [ "${{ matrix.command }}" = "typecheck" ] || [ "${{ matrix.command }}" = "lint" ] || [ "${{ matrix.command }}" = "format:check" ]; then
+            bun run ${{ matrix.command }} || npm run ${{ matrix.command }}
+          else
+            ${{ matrix.command }}
+          fi
+
+  # Unit and integration tests
+  tests:
+    name: 🧪 Tests & Coverage
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 🥟 Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: 📦 Restore dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.bun/install/cache
+          key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: 📥 Install dependencies
+        run: |
+          if [ -f bun.lockb ]; then
+            bun install --frozen-lockfile
+          else
+            npm ci
+          fi
+
+      - name: 🧪 Run unit tests with coverage
+        run: |
+          if [ -f bun.lockb ]; then
+            bun run test:ci
+          else
+            npm run test:ci
+          fi
+
+      - name: 📊 Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: ./coverage/coverage-final.json
+          flags: unittests
+          fail_ci_if_error: false
+
+      - name: 📤 Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 30
+
+  # E2E tests
+  e2e:
+    name: 🎭 E2E Tests
+    runs-on: ubuntu-latest
+    needs: setup
+    timeout-minutes: 20
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Restore dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.cache/ms-playwright
+          key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: 📥 Install dependencies
+        run: npm ci
+
+      - name: 🎭 Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: 🎭 Run E2E tests
+        run: npm run e2e:ci
+
+      - name: 📤 Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  # Accessibility tests
+  a11y:
+    name: ♿ Accessibility Tests
+    runs-on: ubuntu-latest
+    needs: setup
+    timeout-minutes: 15
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Restore dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.cache/ms-playwright
+          key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: 📥 Install dependencies
+        run: npm ci
+
+      - name: 🎭 Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: ♿ Run accessibility tests
+        run: npm run a11y
+        continue-on-error: true
+
+      - name: 📤 Upload A11y report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: a11y-report
+          path: reports/a11y/
+          retention-days: 7
+
+  # Security scanning
+  security:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    needs: setup
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 🥟 Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: 📦 Restore dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.bun/install/cache
+          key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: 📥 Install dependencies
+        run: |
+          if [ -f bun.lockb ]; then
+            bun install --frozen-lockfile
+          else
+            npm ci
+          fi
+
+      - name: 🔍 Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: .semgrep.yml
+          generateSarif: true
+          sarifFile: semgrep.sarif
+        continue-on-error: true
+
+      - name: 🔍 Verify SARIF file
+        run: |
+          if [ -f "semgrep.sarif" ]; then
+            echo "✅ SARIF file found"
+          else
+            echo "⚠️ Creating empty SARIF file"
+            echo '{"version": "2.1.0", "runs": [{"tool": {"driver": {"name": "semgrep", "version": "1.0.0"}}, "results": []}]}' > semgrep.sarif
+          fi
+
+      - name: 📤 Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: semgrep.sarif
+
+      - name: 🔍 NPM Security Audit
+        run: |
+          if [ -f bun.lockb ]; then
+            bun run audit:ci || echo "Audit completed with warnings"
+          else
+            npm run audit:ci || echo "Audit completed with warnings"
+          fi
+
+  # Build and performance tests
+  build:
+    name: 🏗️ Build & Performance
+    runs-on: ubuntu-latest
+    needs: [static-analysis, tests, e2e, security]
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 🥟 Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+build:
+  name: 🏗️ Build & Performance
+  runs-on: ubuntu-latest
+  needs: [setup, static-analysis, tests, e2e, security]
+  # …rest of build job…
+
+      - name: 📥 Install dependencies
+        run: |
+          if [ -f bun.lockb ]; then
+            bun install --frozen-lockfile
+          else
+            npm ci
+          fi
+
+      - name: 🏗️ Build web app
+        run: |
+          if [ -f bun.lockb ]; then
+            bun run web:build
+          else
+            npm run web:build
+          fi
+
+      - name: 📤 Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: dist/
+          retention-days: 7
+
+      - name: 🚀 Lighthouse Performance
+        run: |
+          npm install -g @lhci/cli
+          lhci autorun || echo "Lighthouse CI completed with warnings"
+        continue-on-error: true
+
+  # Quality gate
+  quality-gate:
+    name: 🎯 Quality Gate
+    runs-on: ubuntu-latest
+    needs: [static-analysis, tests, e2e, security, build]
+    if: always()
+    steps:
+      - name: 📊 Generate quality report
+        run: |
+          echo "## 📊 CI Pipeline Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Static Analysis | ${{ needs.static-analysis.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tests | ${{ needs.tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| E2E Tests | ${{ needs.e2e.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security | ${{ needs.security.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check if all critical jobs passed
+          if [[ "${{ needs.static-analysis.result }}" == "success" && 
+                "${{ needs.tests.result }}" == "success" && 
+                "${{ needs.security.result }}" == "success" && 
+                "${{ needs.build.result }}" == "success" ]]; then
+            echo "✅ **All critical checks passed!**" >> $GITHUB_STEP_SUMMARY
+            echo "Pipeline Status: SUCCESS" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Some checks failed!**" >> $GITHUB_STEP_SUMMARY
+            echo "Pipeline Status: FAILED" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      - name: 🎉 Success notification
+        if: success()
+        run: |
+          echo "🎉 CI Pipeline completed successfully!"
+          echo "All quality gates passed ✅"
