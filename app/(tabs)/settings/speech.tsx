@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -71,9 +71,9 @@ export default function SpeechSettings() {
   const [testText, setTestText] = useState('Hello, this is a test of the speech synthesis system.');
   const [selectedLanguage, setSelectedLanguage] = useState(speechSettings.language);
 
-  const supportedLanguages = getSupportedLanguages();
-  const currentLanguageConfig = getLanguageConfig(selectedLanguage);
-  const availableVoices = getVoiceProfilesForLanguage(selectedLanguage);
+  const supportedLanguages = useMemo(() => getSupportedLanguages(), [getSupportedLanguages]);
+  const currentLanguageConfig = useMemo(() => getLanguageConfig(selectedLanguage), [getLanguageConfig, selectedLanguage]);
+  const availableVoices = useMemo(() => getVoiceProfilesForLanguage(selectedLanguage), [getVoiceProfilesForLanguage, selectedLanguage]);
 
   const handleLanguageChange = (languageCode: string) => {
     setSelectedLanguage(languageCode);
