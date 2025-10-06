@@ -388,14 +388,25 @@ export class SecureKeyManager {
           keyCount++;
           const metadata = await storage.getItem(`${keyName}_metadata`);
           if (metadata) {
-            const parsed = JSON.parse(metadata);
-            keyTypes.push(parsed.keyType);
+            try {
+              const parsed = JSON.parse(metadata);
+              keyTypes.push(parsed.keyType);
+            } catch (e) {
+              console.warn(`[SecureKeyManager] Failed to parse metadata for key ${keyName}:`, e);
+            }
           }
         }
       }
       
       const migrationLog = await storage.getItem('key_migration_log');
-      const lastMigration = migrationLog ? JSON.parse(migrationLog)[0]?.timestamp : undefined;
+      let lastMigration: number | undefined = undefined;
+      if (migrationLog) {
+        try {
+          lastMigration = JSON.parse(migrationLog)[0]?.timestamp;
+        } catch (e) {
+          console.warn('[SecureKeyManager] Failed to parse migration log:', e);
+        }
+      }
       
       return {
         keyCount,
