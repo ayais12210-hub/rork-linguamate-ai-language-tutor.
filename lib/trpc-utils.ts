@@ -1,30 +1,30 @@
 import { TRPCClientError } from '@trpc/client';
 
 /**
+ * Checks if a message indicates a network/connectivity issue.
+ */
+function isNetworkErrorMessage(message: string, includeBackendNotAvailable: boolean = false): boolean {
+  const msg = message.toLowerCase();
+  return (
+    msg.includes('failed to fetch') ||
+    msg.includes('network error') ||
+    (includeBackendNotAvailable && msg.includes('backend not available')) ||
+    msg.includes('connection refused') ||
+    msg.includes('timeout')
+  );
+}
+
+/**
  * Checks if a tRPC error is a network/connectivity issue
  */
 export function isNetworkError(error: unknown): boolean {
   if (error instanceof TRPCClientError) {
-    const message = error.message.toLowerCase();
-    return (
-      message.includes('failed to fetch') ||
-      message.includes('network error') ||
-      message.includes('backend not available') ||
-      message.includes('connection refused') ||
-      message.includes('timeout')
-    );
+    return isNetworkErrorMessage(error.message, true);
   }
-  
+
   if (error instanceof Error) {
-    const message = error.message.toLowerCase();
-    return (
-      message.includes('failed to fetch') ||
-      message.includes('network error') ||
-      message.includes('connection refused') ||
-      message.includes('timeout')
-    );
+    return isNetworkErrorMessage(error.message, false);
   }
-  
   return false;
 }
 
