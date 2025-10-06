@@ -1,0 +1,63 @@
+{
+  "common": {
+    "welcome": "लिंगुआमेट में आपका स्वागत है",
+    "continue": "जारी रखें",
+    "cancel": "रद्द करें",
+    "save": "सहेजें",
+    "delete": "हटाएँ",
+    "edit": "संपादित करें",
+    "loading": "लोड हो रहा है...",
+    "error": "एक त्रुटि हुई",
+    "success": "सफलता",
+    "retry": "पुनः प्रयास करें"
+  },
+  "auth": {
+    "login": "लॉग इन",
+    "signup": "साइन अप",
+    "logout": "लॉग आउट",
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "forgotPassword": "पासवर्ड भूल गए?",
+    "dontHaveAccount": "कोई खाता नहीं है?",
+    "alreadyHaveAccount": "पहले से खाता है?"
+  },
+  "lessons": {
+    "title": "पाठ",
+    "start": "पाठ शुरू करें",
+    "complete": "पाठ पूरा करें",
+    "progress": "प्रगति",
+    "score": "स्कोर",
+    "difficulty": "कठिनाई"
+  },
+  "practice": {
+    "title": "अभ्यास",
+    "speak": "बोलें",
+    "listen": "सुनें",
+    "repeat": "मेरे बाद दोहराएँ",
+    "excellent": "उत्कृष्ट!",
+    "good": "अच्छा काम!",
+    "tryAgain": "फिर से कोशिश करें"
+  },
+  "settings": {
+    "title": "सेटिंग्स",
+    "language": "भाषा",
+    "notifications": "सूचनाएं",
+    "sound": "आवाज़",
+    "privacy": "गोपनीयता",
+    "account": "खाता"
+  },
+  "subscription": {
+    "title": "प्रीमियम लें",
+    "features": "प्रीमियम सुविधाएं",
+    "unlimited": "असीमित पाठ",
+    "offline": "ऑफ़लाइन मोड",
+    "noAds": "कोई विज्ञापन नहीं",
+    "subscribe": "अभी सब्सक्राइब करें"
+  },
+  "errors": {
+    "networkError": "नेटवर्क त्रुटि। कृपया अपना कनेक्शन जांचें।",
+    "serverError": "सर्वर त्रुटि। कृपया बाद में पुनः प्रयास करें।",
+    "invalidInput": "अमान्य इनपुट। कृपया अपना डेटा जांचें।",
+    "notFound": "संसाधन नहीं मिला।"
+  }
+}

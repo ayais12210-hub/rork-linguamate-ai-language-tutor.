@@ -1,0 +1,63 @@
+{
+  "common": {
+    "welcome": "Welcome to LinguaMate",
+    "continue": "Continue",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "success": "Success",
+    "retry": "Retry"
+  },
+  "auth": {
+    "login": "Log In",
+    "signup": "Sign Up",
+    "logout": "Log Out",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot Password?",
+    "dontHaveAccount": "Don't have an account?",
+    "alreadyHaveAccount": "Already have an account?"
+  },
+  "lessons": {
+    "title": "Lessons",
+    "start": "Start Lesson",
+    "complete": "Complete Lesson",
+    "progress": "Progress",
+    "score": "Score",
+    "difficulty": "Difficulty"
+  },
+  "practice": {
+    "title": "Practice",
+    "speak": "Speak",
+    "listen": "Listen",
+    "repeat": "Repeat after me",
+    "excellent": "Excellent!",
+    "good": "Good job!",
+    "tryAgain": "Try again"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "notifications": "Notifications",
+    "sound": "Sound",
+    "privacy": "Privacy",
+    "account": "Account"
+  },
+  "subscription": {
+    "title": "Go Premium",
+    "features": "Premium Features",
+    "unlimited": "Unlimited lessons",
+    "offline": "Offline mode",
+    "noAds": "No advertisements",
+    "subscribe": "Subscribe Now"
+  },
+  "errors": {
+    "networkError": "Network error. Please check your connection.",
+    "serverError": "Server error. Please try again later.",
+    "invalidInput": "Invalid input. Please check your data.",
+    "notFound": "Resource not found."
+  }
+}

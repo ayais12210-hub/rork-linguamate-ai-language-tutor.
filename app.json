@@ -107,6 +107,19 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "updates": {
+      "enabled": true,
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/${EAS_PROJECT_ID}"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "${EAS_PROJECT_ID}"
+      }
     }
   }
 }

@@ -17,6 +17,10 @@ import NetworkStatusBanner from '@/components/NetworkStatusBanner';
 import { OfflineProvider } from '@/modules/offline/OfflineProvider';
 import OfflineBanner from '@/components/OfflineBanner';
 import { offlineQueue } from '@/modules/offline/offlineQueue';
+import { MonitoringProvider } from '@/app/providers/MonitoringProvider';
+import { AnalyticsProvider } from '@/app/providers/AnalyticsProvider';
+import { initializeRevenueCat } from '@/features/subscriptions/revenuecat';
+import '@/src/i18n';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -45,6 +49,12 @@ function MonitoringInitializer() {
     MonitoringUtils.initializeAll(user?.id).catch((e) => {
       console.log('[RootLayout] Monitoring init error', e);
     });
+    
+    // Initialize RevenueCat
+    initializeRevenueCat().catch((e) => {
+      console.log('[RootLayout] RevenueCat init error', e);
+    });
+    
     return () => {
       MonitoringUtils.cleanup();
     };
@@ -80,31 +90,35 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <trpc.Provider client={trpcClient} queryClient={queryClient}>
-        <OfflineProvider>
-          <UserProvider>
-            <ChatProvider>
-              <LearningProgressProvider>
-                <AppErrorBoundary>
-                  <GestureHandlerRootView style={{ flex: 1 }} testID="root-gesture-container">
-                    <MonitoringInitializer />
-                    <OfflineInitializer />
-                    <OnlineStatusSync />
-                    <PreferenceProvider>
-                      <RootLayoutNav />
-                    </PreferenceProvider>
-                    <RatingPrompt />
-                    <NetworkStatusBanner />
-                    <OfflineBanner />
-                  </GestureHandlerRootView>
-                  <SplashCursor />
-                </AppErrorBoundary>
-              </LearningProgressProvider>
-            </ChatProvider>
-          </UserProvider>
-        </OfflineProvider>
-      </trpc.Provider>
-    </QueryClientProvider>
+    <MonitoringProvider>
+      <AnalyticsProvider>
+        <QueryClientProvider client={queryClient}>
+          <trpc.Provider client={trpcClient} queryClient={queryClient}>
+            <OfflineProvider>
+              <UserProvider>
+                <ChatProvider>
+                  <LearningProgressProvider>
+                    <AppErrorBoundary>
+                      <GestureHandlerRootView style={{ flex: 1 }} testID="root-gesture-container">
+                        <MonitoringInitializer />
+                        <OfflineInitializer />
+                        <OnlineStatusSync />
+                        <PreferenceProvider>
+                          <RootLayoutNav />
+                        </PreferenceProvider>
+                        <RatingPrompt />
+                        <NetworkStatusBanner />
+                        <OfflineBanner />
+                      </GestureHandlerRootView>
+                      <SplashCursor />
+                    </AppErrorBoundary>
+                  </LearningProgressProvider>
+                </ChatProvider>
+              </UserProvider>
+            </OfflineProvider>
+          </trpc.Provider>
+        </QueryClientProvider>
+      </AnalyticsProvider>
+    </MonitoringProvider>
   );
 }
