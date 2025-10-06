@@ -5,6 +5,10 @@ on:
   push:
     branches: [main, develop]
 
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   install:
     name: Install Dependencies
@@ -163,6 +167,7 @@ jobs:
             p/secrets
             p/owasp-top-ten
           generateSarif: "1"
+          sarifFile: "semgrep.sarif"
       - name: Upload Semgrep SARIF results
         uses: github/codeql-action/upload-sarif@v3
         if: always()
