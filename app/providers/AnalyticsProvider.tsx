@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { PostHogProvider as PostHogProviderBase, PostHog } from 'posthog-react-native';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
@@ -38,8 +38,6 @@ interface AnalyticsProviderProps {
   children: ReactNode;
 }
 
-import { ReactNode, useEffect, useState } from 'react';
-…
 
 export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
   const [client, setClient] = useState<PostHog | null>(posthogClient);
@@ -66,10 +64,6 @@ export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
 
 // Export PostHog client for direct access
 export const getPostHogClient = () => posthogClient;
-}
-
-// Export PostHog client for direct access
-export const getPostHogClient = () => posthogClient;
 
 // Helper functions for common analytics events
 export const analyticsEvents = {
@@ -78,7 +72,7 @@ export const analyticsEvents = {
     posthogClient?.capture('lesson_started', {
       lessonId,
       lessonType,
-      difficulty,
+      difficulty: difficulty ?? '',
     });
   },
 
@@ -95,7 +89,7 @@ export const analyticsEvents = {
     posthogClient?.capture('lesson_failed', {
       lessonId,
       lessonType,
-      reason,
+      reason: reason ?? '',
     });
   },
 
@@ -146,25 +140,25 @@ export const analyticsEvents = {
   },
 
   // Feature usage
-  featureUsed: (featureName: string, properties?: Record<string, any>) => {
+  featureUsed: (featureName: string, properties?: Record<string, string | number | boolean>) => {
     posthogClient?.capture('feature_used', {
       featureName,
-      ...properties,
+      ...(properties ?? {}),
     });
   },
 
   // Screen views
-  screenViewed: (screenName: string, properties?: Record<string, any>) => {
+  screenViewed: (screenName: string, properties?: Record<string, string | number | boolean>) => {
     posthogClient?.capture('screen_viewed', {
       screenName,
-      ...properties,
+      ...(properties ?? {}),
     });
   },
 };
 
 // User identification
-export const identifyUser = (userId: string, properties?: Record<string, any>) => {
-  posthogClient?.identify(userId, properties);
+export const identifyUser = (userId: string, properties?: Record<string, string | number | boolean>) => {
+  posthogClient?.identify(userId, properties ?? {});
 };
 
 export const resetUser = () => {

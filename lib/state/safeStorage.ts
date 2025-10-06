@@ -80,7 +80,7 @@ export class SafeStorage {
               'Stored data does not match expected schema',
               {
                 cause: validation.error,
-                context: { key, validationErrors: validation.error.errors },
+                context: { key, validationErrors: validation.error.issues },
               }
             );
           }
@@ -117,7 +117,7 @@ export class SafeStorage {
               'Data does not match expected schema',
               {
                 cause: validation.error,
-                context: { key, validationErrors: validation.error.errors },
+                context: { key, validationErrors: validation.error.issues },
               }
             );
           }

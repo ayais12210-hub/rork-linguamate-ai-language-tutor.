@@ -35,7 +35,7 @@ export function validateRequest<T extends ZodSchema>(
       await next();
     } catch (error) {
       if (error instanceof ZodError) {
-        const formattedErrors = error.errors.map((err) => ({
+        const formattedErrors = error.issues.map((err) => ({
           path: err.path.join('.'),
           message: err.message,
           code: err.code,
@@ -84,7 +84,7 @@ export function validateFormData<T extends ZodSchema>(
       
       for (const [key, value] of formData.entries()) {
         // Handle File/Blob objects
-        if (value instanceof File || value instanceof Blob) {
+        if ((typeof File !== 'undefined' && value instanceof File) || (typeof Blob !== 'undefined' && value instanceof Blob)) {
           // Validate file size if specified
           if (options?.maxFileSize && value.size > options.maxFileSize) {
             c.status(413);
@@ -97,7 +97,7 @@ export function validateFormData<T extends ZodSchema>(
           }
 
           // Validate MIME type if specified
-          if (options?.allowedMimeTypes && value instanceof File) {
+          if (options?.allowedMimeTypes && typeof File !== 'undefined' && value instanceof File) {
             if (!options.allowedMimeTypes.includes(value.type)) {
               c.status(400);
               return c.json({
@@ -123,7 +123,7 @@ export function validateFormData<T extends ZodSchema>(
       await next();
     } catch (error) {
       if (error instanceof ZodError) {
-        const formattedErrors = error.errors.map((err) => ({
+        const formattedErrors = error.issues.map((err) => ({
           path: err.path.join('.'),
           message: err.message,
           code: err.code,

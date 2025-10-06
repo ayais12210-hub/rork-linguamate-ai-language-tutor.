@@ -63,10 +63,13 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
 
       // Track error for observability
       await trackError('react_boundary', {
-        message: error.message,
-        componentStack: errorInfo.componentStack,
+        errorMessage: error.message,
+        error: appError,
+        context: {
+          componentStack: errorInfo.componentStack,
+          retryCount: this.state.retryCount,
+        },
         errorId: appError.errorId,
-        retryCount: this.state.retryCount,
       });
 
       // Call custom error handler if provided
@@ -89,8 +92,10 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
     }
 
     await trackError('error_boundary_retry', {
-      errorId: this.state.errorId,
-      retryCount: this.state.retryCount + 1,
+      errorId: this.state.errorId ?? undefined,
+      context: {
+        retryCount: this.state.retryCount + 1,
+      },
     });
 
     this.setState({
