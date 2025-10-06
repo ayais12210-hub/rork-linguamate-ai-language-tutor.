@@ -1,9 +1,11 @@
 # 🌐 Linguamate — AI Language Tutor
 
-![Quality](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/quality.yml/badge.svg)
-![Security](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/security.yml/badge.svg)
-![Coverage](https://img.shields.io/badge/coverage-85%25+-brightgreen)
-![License](https://img.shields.io/badge/license-Proprietary-blue)
+[![Tests](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/ci.yml/badge.svg)](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/ci.yml)
+[![Gitleaks](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/gitleaks.yml/badge.svg)](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/gitleaks.yml)
+[![Docs](https://img.shields.io/badge/docs-reference-blue?style=flat-square&logo=readthedocs)](https://github.com/ayais12210-hub/Linguamate-ai-tutor/tree/main/docs)
+[![Expo](https://img.shields.io/badge/Expo-53-blue?style=flat-square&logo=expo&logoColor=white)](https://expo.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE.md)
 
 Cross-Platform AI-Powered Language Learning App  
 *(Expo + React Native + TypeScript + tRPC + Hono backend, with Rork Toolkit integration)*
