@@ -116,8 +116,8 @@ function generateReport(score) {
   if (score.breakdown.security.score < 85) {
     report.summary.recommendations.push('Address security vulnerabilities');
   }
-  if (score.breakdown.e2e.score < 80) {
-    report.summary.recommendations.push('Fix failing E2E tests');
+  if (score.breakdown.a11y.score < 80) {
+    report.summary.recommendations.push('Fix failing accessibility tests');
   }
 
   return report;
