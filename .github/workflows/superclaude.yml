@@ -43,7 +43,7 @@ jobs:
       - name: Deep Quality Analysis
         run: |
           mkdir -p reports
-          /sc:analyze --focus quality --depth deep --format report > reports/superclaude-quality.txt || true
+          /sc:analyze --focus quality --depth deep --format report > reports/superclaude-quality.txt
 
       - name: Upload Analysis Report
         uses: actions/upload-artifact@v4
