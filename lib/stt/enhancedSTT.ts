@@ -22,7 +22,7 @@ export class EnhancedSTTProvider implements STTProvider {
   ): Promise<Result<void>> {
     return wrapAsync(async () => {
       if (this.isListening) {
-        return createAppError(
+        throw createAppError(
           'ValidationError',
           'STT is already listening',
           { context: { action: 'start' } }
@@ -35,11 +35,11 @@ export class EnhancedSTTProvider implements STTProvider {
       // Check permissions first
       const permissionResult = await this.requestPermission();
       if (!permissionResult.ok) {
-        return permissionResult.error;
+        throw permissionResult.error;
       }
 
       if (!permissionResult.value) {
-        return createAppError(
+        throw createAppError(
           'PermissionError',
           'Microphone permission is required for speech recognition',
           { hint: 'Please enable microphone access in your browser settings' }
@@ -65,7 +65,7 @@ export class EnhancedSTTProvider implements STTProvider {
           error: startResult.error,
           context: { language: this.currentLanguage },
         });
-        return startResult.error;
+        throw startResult.error;
       }
 
       this.isListening = true;
@@ -78,39 +78,24 @@ export class EnhancedSTTProvider implements STTProvider {
   async stop(): Promise<Result<STTResult>> {
     return wrapAsync(async () => {
       if (!this.isListening || !this.currentProvider) {
-        return createAppError(
+        throw createAppError(
           'ValidationError',
           'STT is not currently listening',
           { context: { action: 'stop' } }
         );
       }
 
-      try {
-        const result = await this.currentProvider.stop();
-        this.isListening = false;
-        
-        await trackError('stt_stopped', {
-          context: { 
-            language: this.currentLanguage,
-            textLength: result.text?.length || 0,
-          },
-        });
+      const result = await this.currentProvider.stop();
+      this.isListening = false;
+      
+      await trackError('stt_stopped', {
+        context: { 
+          language: this.currentLanguage,
+          textLength: result.text?.length || 0,
+        },
+      });
 
-        return ok(result);
-      } catch (error) {
-        this.isListening = false;
-        const appError = createAppError(
-          'UnknownError',
-          'Failed to stop speech recognition',
-          { cause: error }
-        );
-        
-        await trackError('stt_stop_failed', {
-          error: appError,
-        });
-        
-        return err(appError);
-      }
+      return result;
     });
   }
 
@@ -121,149 +106,93 @@ export class EnhancedSTTProvider implements STTProvider {
   async requestPermission(): Promise<Result<boolean>> {
     return wrapAsync(async () => {
       if (!this.currentProvider) {
-        return createAppError(
+        throw createAppError(
           'ValidationError',
           'No STT provider available',
           { context: { action: 'requestPermission' } }
         );
       }
 
-      try {
-        const granted = await this.currentProvider.requestPermission();
-        return ok(granted);
-      } catch (error) {
-        const appError = createAppError(
-          'PermissionError',
-          'Failed to request microphone permission',
-          { cause: error }
-        );
-        
-        await trackError('stt_permission_request_failed', {
-          error: appError,
-        });
-        
-        return err(appError);
-      }
+      const granted = await this.currentProvider.requestPermission();
+      return granted;
     });
   }
 
   async isPermissionGranted(): Promise<Result<boolean>> {
     return wrapAsync(async () => {
       if (!this.currentProvider) {
-        return createAppError(
+        throw createAppError(
           'ValidationError',
           'No STT provider available',
           { context: { action: 'isPermissionGranted' } }
         );
       }
 
-      try {
-        const granted = await this.currentProvider.isPermissionGranted();
-        return ok(granted);
-      } catch (error) {
-        const appError = createAppError(
-          'PermissionError',
-          'Failed to check microphone permission',
-          { cause: error }
-        );
-        
-        return err(appError);
-      }
+      const granted = await this.currentProvider.isPermissionGranted();
+      return granted;
     });
   }
 
   async getAvailableLanguages(): Promise<Result<string[]>> {
     return wrapAsync(async () => {
       if (!this.currentProvider) {
-        return createAppError(
+        throw createAppError(
           'ValidationError',
           'No STT provider available',
           { context: { action: 'getAvailableLanguages' } }
         );
       }
 
-      try {
-        const languages = await this.currentProvider.getAvailableLanguages();
-        return ok(languages);
-      } catch (error) {
-        const appError = createAppError(
-          'UnknownError',
-          'Failed to get available languages',
-          { cause: error }
-        );
-        
-        return err(appError);
-      }
+      const languages = await this.currentProvider.getAvailableLanguages();
+      return languages;
     });
   }
 
   async setLanguage(language: string): Promise<Result<void>> {
     return wrapAsync(async () => {
       if (!this.currentProvider) {
-        return createAppError(
+        throw createAppError(
           'ValidationError',
           'No STT provider available',
           { context: { action: 'setLanguage', language } }
         );
       }
 
-      try {
-        await this.currentProvider.setLanguage(language);
-        this.currentLanguage = language;
-        return ok(undefined);
-      } catch (error) {
-        const appError = createAppError(
-          'ValidationError',
-          'Failed to set language',
-          { cause: error, context: { language } }
-        );
-        
-        return err(appError);
-      }
+      await this.currentProvider.setLanguage(language);
+      this.currentLanguage = language;
     });
   }
 
   async cancel(): Promise<Result<void>> {
     return wrapAsync(async () => {
       if (!this.isListening || !this.currentProvider) {
-        return createAppError(
+        throw createAppError(
           'ValidationError',
           'STT is not currently listening',
           { context: { action: 'cancel' } }
         );
       }
 
-      try {
-        await this.currentProvider.cancel();
-        this.isListening = false;
-        return ok(undefined);
-      } catch (error) {
-        const appError = createAppError(
-          'UnknownError',
-          'Failed to cancel speech recognition',
-          { cause: error }
-        );
-        
-        return err(appError);
-      }
+      await this.currentProvider.cancel();
+      this.isListening = false;
     });
   }
 
   private async tryStartWithProvider(provider: STTProvider | null): Promise<Result<void>> {
     if (!provider) {
-      return createAppError(
+      return err(createAppError(
         'ValidationError',
         'No STT provider available',
         { context: { action: 'tryStartWithProvider' } }
-      );
+      ));
     }
 
     if (!provider.supported()) {
-      return createAppError(
+      return err(createAppError(
         'ValidationError',
         'STT provider not supported on this device',
         { context: { provider: provider.constructor.name } }
-      );
+      ));
     }
 
     try {
@@ -308,7 +237,7 @@ export class EnhancedTTSProvider {
   ): Promise<Result<void>> {
     return wrapAsync(async () => {
       if (this.isSpeaking) {
-        return createAppError(
+        throw createAppError(
           'ValidationError',
           'TTS is already speaking',
           { context: { action: 'speak' } }
@@ -316,7 +245,7 @@ export class EnhancedTTSProvider {
       }
 
       if (!text || text.trim().length === 0) {
-        return createAppError(
+        throw createAppError(
           'ValidationError',
           'Text to speak cannot be empty',
           { context: { action: 'speak' } }
@@ -359,8 +288,6 @@ export class EnhancedTTSProvider {
             language: options.language || this.currentLanguage,
           },
         });
-
-        return ok(undefined);
       } catch (error) {
         this.isSpeaking = false;
         const appError = createAppError(
@@ -373,7 +300,7 @@ export class EnhancedTTSProvider {
           error: appError,
         });
         
-        return err(appError);
+        throw appError;
       }
     });
   }
@@ -381,44 +308,22 @@ export class EnhancedTTSProvider {
   async stop(): Promise<Result<void>> {
     return wrapAsync(async () => {
       if (!this.isSpeaking) {
-        return createAppError(
+        throw createAppError(
           'ValidationError',
           'TTS is not currently speaking',
           { context: { action: 'stop' } }
         );
       }
 
-      try {
-        const { stop } = await import('expo-speech');
-        await stop();
-        this.isSpeaking = false;
-        return ok(undefined);
-      } catch (error) {
-        const appError = createAppError(
-          'UnknownError',
-          'Failed to stop TTS',
-          { cause: error }
-        );
-        
-        return err(appError);
-      }
+      const { stop } = await import('expo-speech');
+      await stop();
+      this.isSpeaking = false;
     });
   }
 
   async setLanguage(language: string): Promise<Result<void>> {
     return wrapAsync(async () => {
-      try {
-        this.currentLanguage = language;
-        return ok(undefined);
-      } catch (error) {
-        const appError = createAppError(
-          'ValidationError',
-          'Failed to set TTS language',
-          { cause: error, context: { language } }
-        );
-        
-        return err(appError);
-      }
+      this.currentLanguage = language;
     });
   }
 

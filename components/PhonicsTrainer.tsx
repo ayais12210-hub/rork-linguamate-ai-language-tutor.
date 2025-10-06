@@ -211,7 +211,7 @@ const PhonicsTrainer: React.FC<Props> = (props) => {
   return (
     <ErrorBoundary
       fallback={({ error, retry }) => (
-        <View style={styles.container}>
+        <View style={styles.center}>
           <Text style={styles.errorText}>Speech functionality unavailable</Text>
           <TouchableOpacity onPress={retry} style={styles.retryButton}>
             <Text style={styles.retryText}>Retry</Text>

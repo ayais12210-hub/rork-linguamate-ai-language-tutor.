@@ -65,9 +65,12 @@ export function withScreenBoundary<P extends object>(
         // Track error for observability
         await trackError('screen_boundary', {
           screen: screenName,
-          message: error.message,
-          componentStack: errorInfo.componentStack,
+          errorMessage: error.message,
           errorId: appError.errorId,
+          error: appError,
+          context: {
+            componentStack: errorInfo.componentStack,
+          },
         });
 
         // Call custom error handler if provided

@@ -75,7 +75,7 @@ export const analyticsEvents = {
     posthogClient?.capture('lesson_started', {
       lessonId,
       lessonType,
-      difficulty,
+      ...(difficulty ? { difficulty } : {}),
     });
   },
 
@@ -92,7 +92,7 @@ export const analyticsEvents = {
     posthogClient?.capture('lesson_failed', {
       lessonId,
       lessonType,
-      reason,
+      ...(reason ? { reason } : {}),
     });
   },
 

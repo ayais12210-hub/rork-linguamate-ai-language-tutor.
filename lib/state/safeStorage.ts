@@ -24,7 +24,7 @@ export class SafeStorage {
   }
 
   async initialize(): Promise<Result<void>> {
-    return wrapAsync<T>(async () => {
+    return wrapAsync<void>(async () => {
       // Load quarantine entries
       const quarantineData = await AsyncStorage.getItem(QUARANTINE_KEY);
       if (quarantineData) {
@@ -58,7 +58,7 @@ export class SafeStorage {
           if (options.quarantine !== false) {
             await this.quarantineEntry(key, value, 'JSON_PARSE_ERROR', parseError);
           }
-          return createAppError(
+          throw createAppError(
             'StorageError',
             'Failed to parse stored data',
             {
@@ -75,7 +75,7 @@ export class SafeStorage {
             if (options.quarantine !== false) {
               await this.quarantineEntry(key, value, 'VALIDATION_ERROR', validation.error);
             }
-            return createAppError(
+            throw createAppError(
               'ValidationError',
               'Stored data does not match expected schema',
               {
@@ -96,7 +96,7 @@ export class SafeStorage {
 
         return parsedValue as T;
       } catch (error) {
-        return createAppError(
+        throw createAppError(
           'StorageError',
           'Failed to retrieve data from storage',
           {
@@ -119,7 +119,7 @@ export class SafeStorage {
         if (options.validate) {
           const validation = options.validate.safeParse(value);
           if (!validation.success) {
-            return createAppError(
+            throw createAppError(
               'ValidationError',
               'Data does not match expected schema',
               {
@@ -142,7 +142,7 @@ export class SafeStorage {
         // Check storage quota (rough estimate)
         const currentSize = await this.getStorageSize();
         if (currentSize + serialized.length > 5 * 1024 * 1024) { // 5MB limit
-          return createAppError(
+          throw createAppError(
             'StorageError',
             'Storage quota exceeded',
             {
@@ -153,7 +153,7 @@ export class SafeStorage {
 
         await AsyncStorage.setItem(key, serialized);
       } catch (error) {
-        return createAppError(
+        throw createAppError(
           'StorageError',
           'Failed to store data',
           {
@@ -167,20 +167,9 @@ export class SafeStorage {
 
   async removeItem(key: string): Promise<Result<void>> {
     return wrapAsync<void>(async () => {
-      try {
-        await AsyncStorage.removeItem(key);
-        this.quarantineEntries.delete(key);
-        await this.saveQuarantineEntries();
-      } catch (error) {
-        return createAppError(
-          'StorageError',
-          'Failed to remove data from storage',
-          {
-            cause: error,
-            context: { key },
-          }
-        );
-      }
+      await AsyncStorage.removeItem(key);
+      this.quarantineEntries.delete(key);
+      await this.saveQuarantineEntries();
     });
   }
 
@@ -201,22 +190,14 @@ export class SafeStorage {
   }
 
   async getAllKeys(): Promise<Result<string[]>> {
-    return wrapAsync<Array<{ key: string; reason: string; timestamp: number }>>(async () => {
-      try {
-        const keys = await AsyncStorage.getAllKeys();
-        return keys.filter(key => !key.startsWith(QUARANTINE_PREFIX));
-      } catch (error) {
-        return createAppError(
-          'StorageError',
-          'Failed to get storage keys',
-          { cause: error }
-        );
-      }
+    return wrapAsync<string[]>(async () => {
+      const keys = await AsyncStorage.getAllKeys();
+      return keys.filter(key => !key.startsWith(QUARANTINE_PREFIX));
     });
   }
 
   async getQuarantineEntries(): Promise<Result<Array<{ key: string; reason: string; timestamp: number }>>> {
-    return wrapAsync<void>(async () => {
+    return wrapAsync<Array<{ key: string; reason: string; timestamp: number }>>(async () => {
       const entries: Array<{ key: string; reason: string; timestamp: number }> = [];
       
       for (const key of this.quarantineEntries) {
@@ -246,7 +227,7 @@ export class SafeStorage {
       const data = await AsyncStorage.getItem(quarantineKey);
       
       if (!data) {
-        return createAppError(
+        throw createAppError(
           'StorageError',
           'Quarantine entry not found',
           { context: { key } }

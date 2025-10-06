@@ -130,6 +130,8 @@ export default function SignupScreen() {
         name: sanitizedName,
         email: sanitizedEmail,
         password,
+        displayName: sanitizedName,
+        acceptedTerms: agreedToTerms,
       });
     } finally {
       setIsLoading(false);

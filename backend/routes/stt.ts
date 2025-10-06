@@ -77,7 +77,7 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
     }
 
     // Validate audio file
-    if (!(audioFile instanceof File || audioFile instanceof Blob)) {
+    if (!((typeof File !== 'undefined' && audioFile instanceof File) || (typeof Blob !== 'undefined' && audioFile instanceof Blob))) {
       console.log('[STT] Invalid audio file type');
       c.status(400 as any);
       return c.json({ message: 'Invalid audio file format' });

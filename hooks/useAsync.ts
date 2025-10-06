@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AppError, toAppError } from '@/lib/errors';
+import { AppError, asAppError } from '@/lib/errors/AppError';
 
 export type AsyncStatus = 'idle' | 'loading' | 'success' | 'error';
 
@@ -37,7 +37,7 @@ export function useAsync<T>(options?: { autoResetMs?: number }) {
         scheduleAutoReset();
         return result;
       } catch (e) {
-        const appErr = toAppError(e);
+        const appErr = asAppError(e);
         setState({ status: 'error', error: appErr });
         scheduleAutoReset();
         return undefined;

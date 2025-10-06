@@ -5,7 +5,12 @@ import { CheckCircle, XCircle, Zap, X } from 'lucide-react-native';
 import { LANGUAGES } from '@/constants/languages';
 import type { ModuleType } from '@/modules/types';
 import { z } from 'zod';
-import { generateObject } from '@rork/toolkit-sdk';
+// TODO: Add proper AI generation library
+// import { generateObject } from '@rork/toolkit-sdk';
+const generateObject = async (options: any) => {
+  // Placeholder implementation
+  throw new Error('AI generation not configured');
+};
 
 interface AIQuizProps {
   visible: boolean;

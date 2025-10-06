@@ -84,7 +84,7 @@ export function validateFormData<T extends ZodSchema>(
       
       for (const [key, value] of formData.entries()) {
         // Handle File/Blob objects
-        if (value instanceof File || value instanceof Blob) {
+        if ((typeof File !== 'undefined' && value instanceof File) || (typeof Blob !== 'undefined' && value instanceof Blob)) {
           // Validate file size if specified
           if (options?.maxFileSize && value.size > options.maxFileSize) {
             c.status(413);

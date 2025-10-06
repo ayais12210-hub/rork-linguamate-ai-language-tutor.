@@ -70,7 +70,8 @@ export const corsHeaders = (allowedOrigins: string[] = ['http://localhost:3000']
     c.header('Access-Control-Max-Age', '86400');
     
     if (c.req.method === 'OPTIONS') {
-      return c.text('', 204);
+      c.status(204 as any);
+      return c.text('');
     }
     
     await next();
