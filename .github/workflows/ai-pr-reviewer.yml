@@ -1,0 +1,47 @@
+name: AI PR Reviewer
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [ "**" ]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run AI Review
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Provide ONE of the below (or multiple). The script will pick what you set.
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }} # optional
+          AI_MODEL: "gpt-4o-mini" # examples: gpt-4o-mini, claude-3-5-sonnet, deepseek-chat, gemini-1.5-pro
+          MAX_TOKENS: "8000"
+          DIFF_LIMIT_KB: "900"   # chunks large diffs; per-chunk target size
+          REVIEW_TONE: "precise, implementation-first, UK English"
+          PROJECT_CONTEXT_PATHS: |
+            package.json
+            tsconfig.json
+            app/
+            components/
+            modules/
+            tests/
+            .github/
+        run: node .github/ai-reviewer/review.mjs
