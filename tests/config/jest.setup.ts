@@ -6,6 +6,9 @@ import 'whatwg-url';
 // afterEach(() => server.resetHandlers());
 // afterAll(() => server.close());
 
+// Set up React Native globals for testing
+(global as any).__DEV__ = process.env.NODE_ENV !== 'production';
+
 global.crypto = {
   ...global.crypto,
   randomUUID: () => {

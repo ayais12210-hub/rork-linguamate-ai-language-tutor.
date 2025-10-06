@@ -77,14 +77,14 @@ describe('SecureKeyManager', () => {
 
   describe('Development Fallback', () => {
     it('should provide development fallback keys', () => {
-      const originalDev = global.__DEV__;
-      global.__DEV__ = true;
+      const originalDev = (global as any).__DEV__;
+      (global as any).__DEV__ = true;
       
       const fallbackKey = SecureKeyManager['getDevelopmentFallback']('default');
       
       expect(fallbackKey).toMatch(/^dev-fallback-default-/);
       
-      global.__DEV__ = originalDev;
+      (global as any).__DEV__ = originalDev;
     });
   });
 
@@ -123,8 +123,8 @@ describe('MMKV Storage Integration', () => {
   });
 
   it('should provide fallback in development mode', async () => {
-    const originalDev = global.__DEV__;
-    global.__DEV__ = true;
+    const originalDev = (global as any).__DEV__;
+    (global as any).__DEV__ = true;
 
     const mockInitialize = jest.spyOn(SecureKeyManager, 'initialize');
     mockInitialize.mockRejectedValue(new Error('Secure storage not available'));
@@ -132,19 +132,19 @@ describe('MMKV Storage Integration', () => {
     // Should not throw in development mode
     await expect(initializeSecureStorage()).resolves.not.toThrow();
 
-    global.__DEV__ = originalDev;
+    (global as any).__DEV__ = originalDev;
   });
 
   it('should throw in production if initialization fails', async () => {
-    const originalDev = global.__DEV__;
-    global.__DEV__ = false;
+    const originalDev = (global as any).__DEV__;
+    (global as any).__DEV__ = false;
 
     const mockInitialize = jest.spyOn(SecureKeyManager, 'initialize');
     mockInitialize.mockRejectedValue(new Error('Secure storage not available'));
 
     await expect(initializeSecureStorage()).rejects.toThrow('Failed to initialize secure storage');
 
-    global.__DEV__ = originalDev;
+    (global as any).__DEV__ = originalDev;
   });
 });
 
