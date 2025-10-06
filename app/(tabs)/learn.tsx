@@ -7,6 +7,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import { GraduationCap, Volume2, RefreshCw, ChevronRight, Lightbulb, Sparkles, Grid, Hash, Quote, Trophy, Target, ShieldCheck, Flame, Star, CheckCircle2, XCircle, Shuffle, Play, BookOpen, Waves, Mic, Square, PlayCircle } from 'lucide-react-native';
 import { trpcClient } from '@/lib/trpc';
 import { useQuery } from '@tanstack/react-query';
+import { safeTrpcQuery } from '@/lib/trpc-utils';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Speech from 'expo-speech';
 import { useGamification } from '@/hooks/use-gamification';
@@ -91,6 +92,7 @@ export default function LearnScreen() {
   const [pronunciationScore, setPronunciationScore] = useState<number | null>(null);
   const [pronunciationFeedback, setPronunciationFeedback] = useState<string>('');
   const [fixingLang, setFixingLang] = useState<boolean>(false);
+  const [isUsingFallback, setIsUsingFallback] = useState<boolean>(false);
   const speech = useSpeech();
 
   const targetLang = useMemo(() => LANGUAGES.find(l => l.code === user.selectedLanguage), [user.selectedLanguage]);
@@ -101,13 +103,22 @@ export default function LearnScreen() {
     enabled: !!targetLang && !!nativeLang,
     queryFn: async () => {
       if (!targetLang || !nativeLang) throw new Error('Languages not selected');
-      try {
-        const payload = await trpcClient.learn.getContent.query({ targetName: targetLang.name, nativeName: nativeLang.name });
-        return payload as LearnPayload;
-      } catch (err) {
-        console.error('[Learn] tRPC query failed, using fallback:', err);
-        return buildFallbackContent(nativeLang.name, targetLang.name);
-      }
+      
+      let usedFallback = false;
+      const result = await safeTrpcQuery(
+        () => trpcClient.learn.getContent.query({ targetName: targetLang.name, nativeName: nativeLang.name }),
+        () => {
+          usedFallback = true;
+          return buildFallbackContent(nativeLang.name, targetLang.name);
+        },
+        {
+          logError: true,
+          errorMessage: 'Failed to fetch learn content'
+        }
+      );
+      
+      setIsUsingFallback(usedFallback);
+      return result;
     },
     retry: false,
     staleTime: 1000 * 60 * 5,
@@ -126,7 +137,15 @@ export default function LearnScreen() {
       return;
     }
     setError(null);
-    await learnQuery.refetch();
+    try {
+      await learnQuery.refetch();
+    } catch (err) {
+      // Don't show error to user since we have fallback content
+      console.warn(
+        `[Learn] Failed to refresh learn content for target language "${targetLang?.name}" and native language "${nativeLang?.name}". Using cached or fallback content instead. Error:`,
+        err
+      );
+    }
   }, [learnQuery, targetLang, nativeLang]);
 
   const sectionHeader = useCallback((icon: React.ReactElement, title: string, subtitle?: string) => (
@@ -463,6 +482,9 @@ export default function LearnScreen() {
               <Text style={styles.heroKicker} testID="learn-kicker">{nativeLang.flag} → {targetLang.flag}</Text>
               <Text style={styles.heroTitle} testID="learn-title">Master {targetLang.name}</Text>
               <Text style={styles.heroSubtitle}>Alphabet, numbers, words, phrases, tips and a smart quiz — crafted for you.</Text>
+              {isUsingFallback && (
+                <Text style={styles.heroFallbackNote}>Using offline content</Text>
+              )}
             </View>
             <View style={styles.heroBadge}>
               <GraduationCap size={28} color="#065F46" />
@@ -912,6 +934,7 @@ const styles = StyleSheet.create({
   heroKicker: { color: 'white', fontSize: 12, fontWeight: '700', opacity: 0.9 },
   heroTitle: { color: 'white', fontSize: 26, fontWeight: '800', marginTop: 6 },
   heroSubtitle: { color: 'rgba(255,255,255,0.9)', fontSize: 14, marginTop: 6, lineHeight: 20 },
+  heroFallbackNote: { color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 4, fontStyle: 'italic' },
   heroBadge: { backgroundColor: 'white', width: 48, height: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   heroStatsRow: { marginTop: 14, flexDirection: 'row', gap: 8 },
   heroStatCard: { flex: 1, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 12, paddingVertical: 8, paddingHorizontal: 10 },

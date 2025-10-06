@@ -87,7 +87,7 @@ export const trpcClient = trpc.createClient({
           });
           const ct = res.headers.get("content-type") ?? "";
           if (ct.includes("text/html")) {
-            console.error(
+            console.warn(
               "[tRPC] HTML response received at",
               url,
               "— likely frontend index. Check backend base URL."
@@ -99,6 +99,23 @@ export const trpcClient = trpc.createClient({
             );
           }
           return res as Response;
+        } catch (error) {
+          // Handle network errors gracefully
+          if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+            console.warn("[tRPC] Backend not available, will use fallback content");
+            throw new Error("Backend not available");
+          }
+          // Handle other network-related errors
+          if (error instanceof Error && (
+            error.message.includes('NetworkError') ||
+            error.message.includes('connection refused') ||
+            error.message.includes('timeout') ||
+            error.message.includes('ECONNREFUSED')
+          )) {
+            console.warn("[tRPC] Network error, will use fallback content:", error.message);
+            throw new Error("Backend not available");
+          }
+          throw error;
         } finally {
           clearTimeout(timeoutId);
         }
