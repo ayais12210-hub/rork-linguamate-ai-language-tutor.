@@ -137,10 +137,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
         with:
-          config-path: .gitleaks.toml
-          redact: true
-          verbose: true
-
+          args: --config-path=.gitleaks.toml --redact --verbose
   security-summary:
     name: Security Summary
     runs-on: ubuntu-latest
