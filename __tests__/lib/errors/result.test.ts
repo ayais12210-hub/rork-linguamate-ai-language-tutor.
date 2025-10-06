@@ -6,14 +6,18 @@ describe('Result helpers', () => {
     it('should create ok result', () => {
       const result = ok('success');
       expect(result.ok).toBe(true);
-      expect(result.value).toBe('success');
+      if (result.ok) {
+        expect(result.value).toBe('success');
+      }
     });
 
     it('should create err result', () => {
       const error = createAppError('NetworkError', 'Connection failed');
       const result = err(error);
       expect(result.ok).toBe(false);
-      expect(result.error).toBe(error);
+      if (!result.ok) {
+        expect(result.error).toBe(error);
+      }
     });
   });
 
