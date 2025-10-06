@@ -188,7 +188,7 @@ else
     print_error "❌ Some tests failed! Please review the issues above."
     echo ""
     echo "Common fixes:"
-    echo "- Replace hardcoded secrets with \${{ secrets.SECRET_NAME }}"
+    echo '- Replace hardcoded secrets with ${{ secrets.SECRET_NAME }}'
     echo "- Fix YAML syntax errors"
     echo "- Add proper workflow triggers"
     echo "- Use environment variables for testing"
