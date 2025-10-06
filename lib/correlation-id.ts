@@ -9,7 +9,15 @@ import { AsyncLocalStorage } from 'async_hooks';
 const CORRELATION_ID_KEY = 'x-correlation-id';
 
 export class CorrelationIdManager {
+  private static instance: CorrelationIdManager;
   private storage = new AsyncLocalStorage<{ id: string | null }>();
+
+  static getInstance(): CorrelationIdManager {
+    if (!CorrelationIdManager.instance) {
+      CorrelationIdManager.instance = new CorrelationIdManager();
+    }
+    return CorrelationIdManager.instance;
+  }
 
   runWithId<T>(fn: () => T, id?: string): T {
     const correlationId = id || uuidv4();
@@ -56,7 +64,7 @@ export class CorrelationIdManager {
   }
 }
 
-export const correlationIdManager = new CorrelationIdManager();
+export const correlationIdManager = CorrelationIdManager.getInstance();
 
 // Helper function to wrap tRPC client with correlation IDs
 export function withCorrelationId<T extends Record<string, any>>(

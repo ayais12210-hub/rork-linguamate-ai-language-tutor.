@@ -9,7 +9,17 @@ import reactHooks from 'eslint-plugin-react-hooks';
 
 export default [
   {
-    ignores: ['node_modules/**', 'dist/**', 'build/**', '.expo/**'],
+    ignores: [
+      'node_modules/**', 
+      'dist/**', 
+      'build/**', 
+      '.expo/**',
+      'coverage/**',
+      '**/*.d.ts',
+      '**/node_modules/**',
+      '.next/**',
+      'out/**'
+    ],
   },
   // Global config for all files
   {

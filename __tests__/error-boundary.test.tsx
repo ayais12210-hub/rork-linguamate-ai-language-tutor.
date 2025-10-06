@@ -1,9 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react-native';
-import ErrorBoundary from '@/components/ErrorBoundary';
-
-// Component that throws an error
-import { View, Text } from 'react-native';
+import { AppErrorBoundary } from '@/components/boundaries/AppErrorBoundary';
+import { View, Text, TouchableOpacity } from 'react-native';
 
 // Component that throws an error
 const ThrowError = ({ shouldThrow }: { shouldThrow: boolean }) => {
@@ -13,7 +11,7 @@ const ThrowError = ({ shouldThrow }: { shouldThrow: boolean }) => {
   return <View testID="no-error"><Text>No error</Text></View>;
 };
 
-describe('ErrorBoundary', () => {
+describe('AppErrorBoundary', () => {
   beforeEach(() => {
     // Suppress console.error for these tests
     jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -25,15 +23,15 @@ describe('ErrorBoundary', () => {
 
   it('should render children when there is no error', () => {
     render(
-      <ErrorBoundary
-        fallback={() => (
+      <AppErrorBoundary
+        fallback={({ error, retry }) => (
           <View testID="error-fallback">
             <Text>Error occurred</Text>
           </View>
         )}
       >
         <ThrowError shouldThrow={false} />
-      </ErrorBoundary>
+      </AppErrorBoundary>
     );
 
     expect(screen.getByTestId('no-error')).toBeTruthy();
@@ -42,9 +40,15 @@ describe('ErrorBoundary', () => {
 
   it('should render fallback when there is an error', () => {
     render(
-      <ErrorBoundary fallback={<div testID="error-fallback">Error occurred</div>}>
+      <AppErrorBoundary 
+        fallback={({ error, retry }) => (
+          <View testID="error-fallback">
+            <Text>Error occurred</Text>
+          </View>
+        )}
+      >
         <ThrowError shouldThrow={true} />
-      </ErrorBoundary>
+      </AppErrorBoundary>
     );
 
     expect(screen.getByTestId('error-fallback')).toBeTruthy();
@@ -53,8 +57,8 @@ describe('ErrorBoundary', () => {
 
   it('should call retry function when retry button is pressed', () => {
     render(
-      <ErrorBoundary 
-        fallback={({ retry }) => (
+      <AppErrorBoundary 
+        fallback={({ error, retry }) => (
           <View testID="error-fallback">
             <TouchableOpacity testID="retry-button" onPress={retry}>
               <Text>Retry</Text>
@@ -63,7 +67,7 @@ describe('ErrorBoundary', () => {
         )}
       >
         <ThrowError shouldThrow={true} />
-      </ErrorBoundary>
+      </AppErrorBoundary>
     );
 
     const retryButton = screen.getByTestId('retry-button');
