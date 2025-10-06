@@ -1,0 +1,26 @@
+# GitHub Linguist configuration
+# Force TypeScript as the primary language and ignore generated files
+
+# Force TypeScript source files to be counted
+*.ts linguist-detectable=true
+*.tsx linguist-detectable=true
+
+# Ignore build artifacts and generated files (so they don't dominate language stats)
+dist/* linguist-vendored
+build/* linguist-vendored
+web-build/* linguist-vendored
+out/* linguist-vendored
+public/* linguist-vendored
+coverage/* linguist-vendored
+
+# Mark minified files as generated
+*.min.js linguist-generated=true
+*.min.css linguist-generated=true
+
+# Ignore other common build/generated directories
+node_modules/* linguist-vendored
+.next/* linguist-vendored
+.nuxt/* linguist-vendored
+.cache/* linguist-vendored
+.temp/* linguist-vendored
+.tmp/* linguist-vendored
