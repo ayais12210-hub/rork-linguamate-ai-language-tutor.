@@ -76,7 +76,6 @@ export default [
     files: ['**/__tests__/**', '**/*.test.ts', '**/*.test.tsx'],
     languageOptions: {
       globals: {
-        ...jest.configs.recommended.globals,
         describe: true,
         test: true,
         it: true,
