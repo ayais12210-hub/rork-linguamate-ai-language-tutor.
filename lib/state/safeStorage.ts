@@ -24,7 +24,7 @@ export class SafeStorage {
   }
 
   async initialize(): Promise<Result<void>> {
-    return wrapAsync(async () => {
+    return wrapAsync<T>(async () => {
       // Load quarantine entries
       const quarantineData = await AsyncStorage.getItem(QUARANTINE_KEY);
       if (quarantineData) {
@@ -48,7 +48,7 @@ export class SafeStorage {
         const value = await AsyncStorage.getItem(key);
         
         if (value === null) {
-          return options.defaultValue as T;
+          return (options.defaultValue as T) ?? (undefined as unknown as T);
         }
 
         let parsedValue: unknown;
@@ -80,7 +80,14 @@ export class SafeStorage {
               'Stored data does not match expected schema',
               {
                 cause: validation.error,
-                context: { key, validationErrors: validation.error.errors },
+                context: {
+                  key,
+                  validationErrors: validation.error.issues.map(issue => ({
+                    path: issue.path.join('.'),
+                    message: issue.message,
+                    code: issue.code,
+                  })),
+                },
               }
             );
           }
@@ -106,7 +113,7 @@ export class SafeStorage {
     value: T,
     options: StorageOptions = {}
   ): Promise<Result<void>> {
-    return wrapAsync(async () => {
+    return wrapAsync<void>(async () => {
       try {
         // Validate with schema if provided
         if (options.validate) {
@@ -117,7 +124,14 @@ export class SafeStorage {
               'Data does not match expected schema',
               {
                 cause: validation.error,
-                context: { key, validationErrors: validation.error.errors },
+                context: {
+                  key,
+                  validationErrors: validation.error.issues.map(issue => ({
+                    path: issue.path.join('.'),
+                    message: issue.message,
+                    code: issue.code,
+                  })),
+                },
               }
             );
           }
@@ -152,7 +166,7 @@ export class SafeStorage {
   }
 
   async removeItem(key: string): Promise<Result<void>> {
-    return wrapAsync(async () => {
+    return wrapAsync<void>(async () => {
       try {
         await AsyncStorage.removeItem(key);
         this.quarantineEntries.delete(key);
@@ -171,7 +185,7 @@ export class SafeStorage {
   }
 
   async clear(): Promise<Result<void>> {
-    return wrapAsync(async () => {
+    return wrapAsync<void>(async () => {
       try {
         await AsyncStorage.clear();
         this.quarantineEntries.clear();
@@ -187,7 +201,7 @@ export class SafeStorage {
   }
 
   async getAllKeys(): Promise<Result<string[]>> {
-    return wrapAsync(async () => {
+    return wrapAsync<Array<{ key: string; reason: string; timestamp: number }>>(async () => {
       try {
         const keys = await AsyncStorage.getAllKeys();
         return keys.filter(key => !key.startsWith(QUARANTINE_PREFIX));
@@ -202,7 +216,7 @@ export class SafeStorage {
   }
 
   async getQuarantineEntries(): Promise<Result<Array<{ key: string; reason: string; timestamp: number }>>> {
-    return wrapAsync(async () => {
+    return wrapAsync<void>(async () => {
       const entries: Array<{ key: string; reason: string; timestamp: number }> = [];
       
       for (const key of this.quarantineEntries) {

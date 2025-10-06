@@ -74,7 +74,7 @@ export function validateWithZod<T extends z.ZodType>(
     {
       cause: result.error,
       context: {
-        validationErrors: result.error.errors.map(issue => ({
+        validationErrors: result.error.issues.map(issue => ({
           path: issue.path.join('.'),
           message: issue.message,
           code: issue.code,
