@@ -25,7 +25,7 @@ jobs:
           fetch-depth: 0  # scan full history when needed
 
       - name: Run Gitleaks
-        uses: zricethezav/gitleaks-action@v2
+        uses: zricethezav/gitleaks-action@v2.3.6
         with:
           args: detect --redact --config .gitleaks.toml --report-format sarif --report-path gitleaks.sarif
 
