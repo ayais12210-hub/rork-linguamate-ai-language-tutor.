@@ -6,20 +6,24 @@
     "start": "bunx rork start -p vep9anbk6huqelg0fppmq --tunnel",
     "start-web": "bunx rork start -p vep9anbk6huqelg0fppmq --web --tunnel",
     "start-web-dev": "DEBUG=expo* bunx rork start -p vep9anbk6huqelg0fppmq --web --tunnel",
-    "lint": "expo lint",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext .ts,.tsx --max-warnings=0 --report-unused-disable-directives",
+    "format:check": "prettier . --check",
+    "format:fix": "prettier . --write",
     "test": "jest",
-    "test:ci": "jest --runInBand --ci --coverage",
-    "test:e2e": "playwright test",
+    "test:ci": "jest --ci --runInBand --coverage --coverageReporters=text --coverageReporters=cobertura",
     "test:watch": "jest --watch",
     "e2e": "playwright test --reporter=line",
+    "e2e:ci": "playwright install --with-deps && playwright test",
     "a11y": "playwright test -c playwright.a11y.config.ts --reporter=line",
     "perf": "lhci autorun || echo 'Lighthouse skipped'",
+    "expo:doctor": "expo-doctor --fix",
+    "audit:ci": "npm audit --audit-level=high",
+    "scan": "npm-run-all -l -s expo:doctor typecheck lint format:check test:ci",
+    "scan:full": "npm-run-all -l -s expo:doctor typecheck lint format:check test:ci e2e:ci audit:ci",
     "dev:server": "bun run backend/hono.ts",
     "dev:full": "concurrently -k -n APP,API \"bun run start\" \"bun run dev:server\"",
-    "web:build": "expo export --platform web",
-    "prettier:check": "prettier . --check",
-    "prettier:fix": "prettier . --write"
+    "web:build": "expo export --platform web"
   },
   "dependencies": {
     "@axe-core/playwright": "^4.10.2",
@@ -114,7 +118,14 @@
     "wait-on": "^9.0.1",
     "whatwg-url": "^15.1.0",
     "zod": "^4.1.8",
-    "zustand": "^5.0.2"
+    "zustand": "^5.0.2",
+    "npm-run-all": "^4.1.5",
+    "expo-doctor": "^1.0.2"
+  },
+  "jest": {
+    "coverageThreshold": {
+      "global": { "branches": 60, "functions": 65, "lines": 70, "statements": 70 }
+    }
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

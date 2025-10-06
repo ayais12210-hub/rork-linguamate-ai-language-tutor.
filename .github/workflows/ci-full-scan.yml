@@ -1,0 +1,153 @@
+name: CI Full Scan
+
+on:
+  pull_request:
+    branches: ["**"]
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  security-events: write        # for SARIF uploads
+  actions: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      node-cache-key: ${{ steps.cache-node.outputs.cache-primary-key }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - name: Cache node_modules
+        id: cache-node
+        uses: actions/cache@v4
+        with:
+          path: |
+            **/node_modules
+            ~/.cache/ms-playwright
+          key: node-${{ runner.os }}-${{ hashFiles('**/package-lock.json', '**/pnpm-lock.yaml', '**/yarn.lock', '**/bun.lock') }}
+      - name: Install deps
+        run: |
+          if [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
+          elif [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+          elif [ -f bun.lock ]; then bun install --frozen-lockfile; \
+          else npm ci; fi
+
+  static:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - name: Install deps (cached)
+        run: |
+          if [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
+          elif [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+          elif [ -f bun.lock ]; then bun install --frozen-lockfile; \
+          else npm ci; fi
+      - name: Expo Doctor
+        run: npm run expo:doctor
+      - name: TypeScript Check
+        run: npm run typecheck
+      - name: ESLint
+        run: npm run lint
+      - name: Prettier Check
+        run: npm run format:check
+
+  tests:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - name: Install deps
+        run: |
+          if [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
+          elif [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+          elif [ -f bun.lock ]; then bun install --frozen-lockfile; \
+          else npm ci; fi
+      - name: Unit/Integration (Jest + RTL)
+        run: npm run test:ci
+      - name: Upload coverage (Codecov optional)
+        if: always()
+        uses: codecov/codecov-action@v4
+        with:
+          fail_ci_if_error: true
+
+  e2e:
+    needs: tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - name: Install deps
+        run: |
+          if [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
+          elif [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+          elif [ -f bun.lock ]; then bun install --frozen-lockfile; \
+          else npm ci; fi
+      - name: Playwright E2E
+        run: npm run e2e:ci
+
+  semgrep:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: returntocorp/semgrep-action@v1
+        with:
+          config: ".semgrep.yml"
+          generateSarif: "1"
+          sarifFile: "semgrep.sarif"
+          upload-sarif: "never"
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif
+
+  codeql:
+    # Deep security scan; runs in PRs to main and pushes
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/autobuild@v3
+      - uses: github/codeql-action/analyze@v3
+
+  audit:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - name: Install deps
+        run: |
+          if [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
+          elif [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+          elif [ -f bun.lock ]; then bun install --frozen-lockfile; \
+          else npm ci; fi
+      - name: npm audit (fail on high+)
+        run: npm run audit:ci
+
+  # Gate: require all scans to pass before success
+  gate:
+    needs: [static, tests, e2e, semgrep, codeql, audit]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "All checks passed."
