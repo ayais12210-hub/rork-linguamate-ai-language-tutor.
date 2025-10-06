@@ -34,7 +34,22 @@ jobs:
             echo "Available files:"
             ls -la *.sarif 2>/dev/null || echo "No SARIF files found"
             echo "Creating empty SARIF file for upload..."
-            echo '{"version": "2.1.0", "runs": [{"tool": {"driver": {"name": "semgrep", "version": "1.0.0"}}, "results": []}]}' > semgrep.sarif
+            cat > semgrep.sarif <<EOF
+{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "semgrep",
+          "version": "1.0.0"
+        }
+      },
+      "results": []
+    }
+  ]
+}
+EOF
           fi
 
       - name: Upload SARIF to GitHub Security tab
