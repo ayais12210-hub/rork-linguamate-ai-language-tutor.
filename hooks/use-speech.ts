@@ -633,10 +633,16 @@ export const useSpeech = () => {
   }): string => {
     const { voice, rate, pitch, volume, tone, emphasis, pauseDuration } = options;
     
+    // Constants for tone adjustments
+    // DRAMATIC_TONE_RATE_MULTIPLIER: Slows down the speech rate for dramatic effect
+    const DRAMATIC_TONE_RATE_MULTIPLIER = 0.8;
+    // DRAMATIC_TONE_PITCH_INCREASE: Raises the pitch slightly for dramatic effect
+    const DRAMATIC_TONE_PITCH_INCREASE = 0.2;
+
     // Apply tone-based modifications
     let processedText = text;
     if (tone === 'dramatic') {
-      processedText = `<prosody rate="${rate * 0.8}" pitch="${pitch + 0.2}">${text}</prosody>`;
+      processedText = `<prosody rate="${rate * DRAMATIC_TONE_RATE_MULTIPLIER}" pitch="${pitch + DRAMATIC_TONE_PITCH_INCREASE}">${text}</prosody>`;
     } else if (tone === 'casual') {
       processedText = `<prosody rate="${rate * 1.1}" pitch="${pitch - 0.1}">${text}</prosody>`;
     } else if (tone === 'professional') {
