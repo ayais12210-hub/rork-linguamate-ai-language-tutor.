@@ -170,8 +170,6 @@ EOF
         uses: gitleaks/gitleaks-action@v2
         env:
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
   # Security summary
   security-summary:

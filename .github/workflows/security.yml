@@ -136,7 +136,6 @@ jobs:
         env:
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           args: --config-path=.gitleaks.toml --redact --verbose
   security-summary:
     name: Security Summary
