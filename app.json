@@ -111,14 +111,14 @@
     "updates": {
       "enabled": true,
       "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/[YOUR-PROJECT-ID]"
+      "url": "https://u.expo.dev/${EAS_PROJECT_ID}"
     },
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "extra": {
       "eas": {
-        "projectId": "[YOUR-PROJECT-ID]"
+        "projectId": "${EAS_PROJECT_ID}"
       }
     }
   }
