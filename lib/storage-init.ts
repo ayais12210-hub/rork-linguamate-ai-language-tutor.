@@ -33,7 +33,11 @@ export async function initializeAppStorage(): Promise<void> {
         keyCount: stats.keyCount,
         keyTypes: stats.keyTypes,
         platform: stats.platform,
-        lastMigration: stats.lastMigration ? new Date(stats.lastMigration).toISOString() : 'none',
+        lastMigration: (() => {
+          if (!stats.lastMigration) return 'none';
+          const date = new Date(stats.lastMigration);
+          return isNaN(date.getTime()) ? 'invalid' : date.toISOString();
+        })(),
       });
       
       console.log('[Storage Init] Secure storage initialization completed successfully');
