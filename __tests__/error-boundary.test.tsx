@@ -25,7 +25,13 @@ describe('ErrorBoundary', () => {
 
   it('should render children when there is no error', () => {
     render(
-      <ErrorBoundary fallback={<div testID="error-fallback">Error occurred</div>}>
+      <ErrorBoundary
+        fallback={() => (
+          <View testID="error-fallback">
+            <Text>Error occurred</Text>
+          </View>
+        )}
+      >
         <ThrowError shouldThrow={false} />
       </ErrorBoundary>
     );
