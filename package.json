@@ -29,6 +29,12 @@
     "gitleaks:scan:report": "gitleaks detect --config .gitleaks.toml --report-format json --report-path gitleaks-report.json",
     "dev:server": "bun run backend/hono.ts",
     "dev:full": "concurrently -k -n APP,API \"bun run start\" \"bun run dev:server\"",
+    "backend:dev": "bun run backend/hono.ts",
+    "backend:build": "tsc --noEmit --project tsconfig.json",
+    "backend:test": "jest --testPathPatterns=backend --verbose",
+    "backend:typecheck": "tsc --noEmit --project tsconfig.json",
+    "backend:lint": "eslint backend/ --ext .ts --max-warnings=0",
+    "backend:start": "NODE_ENV=production bun run backend/hono.ts",
     "web:build": "expo export --platform web"
   },
   "dependencies": {
