@@ -31,7 +31,31 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env
 
 # typescript
 *.tsbuildinfo
 .vercel
+
+# MCP servers (vendor only dist/, not full repos)
+.mcp/*/node_modules/
+.mcp/*/temp/
+.mcp/*/.git/
+
+# Keep structure but ignore contents of MCP server directories
+.mcp/github-mcp-server/*
+!.mcp/github-mcp-server/README.md
+.mcp/postgres-mcp-server/*
+!.mcp/postgres-mcp-server/README.md
+.mcp/redis-mcp-server/*
+!.mcp/redis-mcp-server/README.md
+.mcp/sentry-mcp-server/*
+!.mcp/sentry-mcp-server/README.md
+.mcp/vercel-mcp-server/*
+!.mcp/vercel-mcp-server/README.md
+.mcp/eas-mcp-server/*
+!.mcp/eas-mcp-server/README.md
+.mcp/stripe-mcp-server/*
+!.mcp/stripe-mcp-server/README.md
+.mcp/revenuecat-mcp-server/*
+!.mcp/revenuecat-mcp-server/README.md

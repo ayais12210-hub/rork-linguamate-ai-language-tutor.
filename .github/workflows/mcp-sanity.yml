@@ -1,0 +1,207 @@
+name: MCP Sanity Check
+
+on:
+  pull_request:
+    paths:
+      - '.cursor/mcp.json'
+      - '.env.example'
+      - 'docs/mcp.md'
+      - '.github/workflows/mcp-sanity.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - '.cursor/mcp.json'
+      - '.env.example'
+      - 'docs/mcp.md'
+
+jobs:
+  mcp-lint:
+    name: Validate MCP Configuration
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate mcp.json is valid JSON
+        run: |
+          echo "📋 Validating .cursor/mcp.json..."
+          if [ ! -f .cursor/mcp.json ]; then
+            echo "❌ .cursor/mcp.json not found"
+            exit 1
+          fi
+          
+          # Check if it's valid JSON
+          if ! jq empty .cursor/mcp.json 2>/dev/null; then
+            echo "❌ .cursor/mcp.json is not valid JSON"
+            exit 1
+          fi
+          
+          echo "✅ .cursor/mcp.json is valid JSON"
+
+      - name: Verify write scopes are limited
+        run: |
+          echo "🔒 Checking filesystem write scopes..."
+          
+          # Extract write permissions
+          WRITE_SCOPES=$(jq -r '.mcpServers["fs-local"].permissions.write[]?' .cursor/mcp.json)
+          
+          # Define allowed write directories
+          ALLOWED_WRITE=("tests" "docs" ".github" "schemas")
+          
+          # Define forbidden write directories
+          FORBIDDEN_WRITE=("app" "components" "backend" "lib" "hooks" "modules" "state" "node_modules" ".")
+          
+          echo "Current write scopes:"
+          echo "$WRITE_SCOPES"
+          echo ""
+          
+          # Check for forbidden scopes
+          for scope in $WRITE_SCOPES; do
+            for forbidden in "${FORBIDDEN_WRITE[@]}"; do
+              if [ "$scope" = "$forbidden" ]; then
+                echo "❌ SECURITY: Write access to '$scope' is not allowed"
+                echo "   This violates the safe-by-default principle."
+                echo "   Only tests, docs, .github, and schemas should be writable."
+                exit 1
+              fi
+            done
+          done
+          
+          echo "✅ Write scopes are properly limited"
+
+      - name: Check for sensitive data in env.example
+        run: |
+          echo "🔍 Scanning .env.example for sensitive data..."
+          
+          # Check for actual tokens/keys (not placeholder values)
+          SUSPICIOUS_PATTERNS=(
+            "ghp_[a-zA-Z0-9]+"                    # GitHub tokens
+            "sk-[a-zA-Z0-9]+"                     # OpenAI/Stripe keys
+            "xoxb-[a-zA-Z0-9]+"                   # Slack tokens
+            "[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{4}" # Credit cards
+            "AIza[0-9A-Za-z_-]{35}"               # Google API keys
+          )
+          
+          FOUND_SECRETS=0
+          
+          for pattern in "${SUSPICIOUS_PATTERNS[@]}"; do
+            if grep -qE "$pattern" .env.example; then
+              echo "❌ Found potential secret matching pattern: $pattern"
+              FOUND_SECRETS=1
+            fi
+          done
+          
+          if [ $FOUND_SECRETS -eq 1 ]; then
+            echo "❌ .env.example contains potential secrets"
+            echo "   Only placeholder values should be committed"
+            exit 1
+          fi
+          
+          echo "✅ No sensitive data detected in .env.example"
+
+      - name: Verify required MCP env vars are documented
+        run: |
+          echo "📝 Verifying MCP env vars are documented..."
+          
+          # Extract env keys referenced in mcp.json
+          MCP_ENV_VARS=$(jq -r '
+            .mcpServers | 
+            to_entries[] | 
+            .value.env | 
+            to_entries[] | 
+            select(.value | startswith("${env:")) | 
+            .value | 
+            gsub("\\$\\{env:"; "") | 
+            gsub("\\}"; "")
+          ' .cursor/mcp.json | sort -u)
+          
+          echo "Required env vars from mcp.json:"
+          echo "$MCP_ENV_VARS"
+          echo ""
+          
+          MISSING_VARS=()
+          
+          for var in $MCP_ENV_VARS; do
+            if ! grep -q "^$var=" .env.example; then
+              MISSING_VARS+=("$var")
+            fi
+          done
+          
+          if [ ${#MISSING_VARS[@]} -gt 0 ]; then
+            echo "❌ Missing env vars in .env.example:"
+            printf '%s\n' "${MISSING_VARS[@]}"
+            exit 1
+          fi
+          
+          echo "✅ All MCP env vars are documented in .env.example"
+
+      - name: Check HTTP allowed hosts list
+        run: |
+          echo "🌐 Validating HTTP allowed hosts..."
+          
+          ALLOWED_HOSTS=$(jq -r '.mcpServers.http.env.MCP_HTTP_ALLOWED_HOSTS // ""' .cursor/mcp.json)
+          
+          if [ -z "$ALLOWED_HOSTS" ]; then
+            echo "⚠️  Warning: No HTTP hosts configured"
+            exit 0
+          fi
+          
+          echo "Allowed hosts: $ALLOWED_HOSTS"
+          
+          # Check for wildcard or overly permissive hosts
+          if echo "$ALLOWED_HOSTS" | grep -qE "(^\*|,\*,|,\*$)"; then
+            echo "❌ SECURITY: Wildcard (*) in allowed hosts is not permitted"
+            exit 1
+          fi
+          
+          echo "✅ HTTP hosts are properly scoped"
+
+      - name: Validate MCP documentation exists
+        run: |
+          echo "📚 Checking MCP documentation..."
+          
+          if [ ! -f docs/mcp.md ]; then
+            echo "❌ docs/mcp.md not found"
+            echo "   MCP configuration must be documented for contributors"
+            exit 1
+          fi
+          
+          # Check for key sections
+          REQUIRED_SECTIONS=(
+            "Quick start"
+            "Security model"
+            "Typical tasks"
+            "Troubleshooting"
+          )
+          
+          for section in "${REQUIRED_SECTIONS[@]}"; do
+            if ! grep -qi "$section" docs/mcp.md; then
+              echo "⚠️  Warning: Missing section '$section' in docs/mcp.md"
+            fi
+          done
+          
+          echo "✅ MCP documentation exists"
+
+      - name: Summary
+        if: success()
+        run: |
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ MCP Sanity Check PASSED"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "✓ mcp.json is valid JSON"
+          echo "✓ Write scopes are limited to safe directories"
+          echo "✓ No secrets in .env.example"
+          echo "✓ All env vars are documented"
+          echo "✓ HTTP hosts are properly scoped"
+          echo "✓ MCP documentation exists"
+          echo ""
+          echo "🤖 Your MCP configuration is production-ready!"
