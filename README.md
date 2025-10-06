@@ -1,9 +1,16 @@
 # 🌐 Linguamate — AI Language Tutor
 
-![Quality](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/quality.yml/badge.svg)
-![Security](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/security.yml/badge.svg)
-![Coverage](https://img.shields.io/badge/coverage-85%25+-brightgreen)
-![License](https://img.shields.io/badge/license-Proprietary-blue)
+<!-- Badges -->
+[![CI](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/ci.yml/badge.svg)](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/ci.yml)
+[![Quality](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/quality.yml/badge.svg)](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/quality.yml)
+[![Security](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/security.yml/badge.svg)](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/security.yml)
+[![Gitleaks](https://img.shields.io/badge/protected%20by-gitleaks-blue?logo=git&logoColor=white)](https://github.com/gitleaks/gitleaks)
+[![CodeQL](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/codeql.yml/badge.svg)](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/codeql.yml)
+[![Coverage](https://img.shields.io/badge/coverage-85%25+-brightgreen)](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/ci.yml)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React Native](https://img.shields.io/badge/React%20Native-0.76-61DAFB?logo=react&logoColor=white)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-53-000020?logo=expo&logoColor=white)](https://expo.dev/)
+[![License](https://img.shields.io/badge/License-Proprietary-red)](LICENSE)
 
 Cross-Platform AI-Powered Language Learning App  
 *(Expo + React Native + TypeScript + tRPC + Hono backend, with Rork Toolkit integration)*
