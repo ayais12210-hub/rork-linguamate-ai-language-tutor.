@@ -306,7 +306,18 @@ export class SecureKeyManager {
       };
       
       const logKey = 'key_migration_log';
-      const existingLogs = await storage.getItem(logKey) || [];
+      let existingLogsRaw = await storage.getItem(logKey);
+      let existingLogs: any[] = [];
+      if (existingLogsRaw) {
+        try {
+          existingLogs = JSON.parse(existingLogsRaw);
+          if (!Array.isArray(existingLogs)) {
+            existingLogs = [];
+          }
+        } catch (e) {
+          existingLogs = [];
+        }
+      }
       const updatedLogs = [logEntry, ...existingLogs].slice(0, 100); // Keep last 100 entries
       
       await storage.setItem(logKey, JSON.stringify(updatedLogs));
