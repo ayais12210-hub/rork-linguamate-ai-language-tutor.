@@ -81,12 +81,23 @@ test.describe('Accessibility Tests', () => {
       const style = window.getComputedStyle(el);
       return {
         outline: style.outline,
+        outlineWidth: style.outlineWidth,
+        outlineStyle: style.outlineStyle,
         boxShadow: style.boxShadow,
+        borderTopWidth: style.borderTopWidth,
+        borderRightWidth: style.borderRightWidth,
+        borderBottomWidth: style.borderBottomWidth,
+        borderLeftWidth: style.borderLeftWidth,
       };
     });
     
-    // Should have some form of focus indicator
-    expect(focusStyle.outline !== 'none' || focusStyle.boxShadow !== 'none').toBeTruthy();
+    // Should have some form of visible focus indicator
+    const hasOutline = focusStyle.outlineStyle !== 'none' && parseFloat(focusStyle.outlineWidth) > 0;
+    const hasBoxShadow = !!focusStyle.boxShadow && focusStyle.boxShadow !== 'none' && focusStyle.boxShadow !== '';
+    const hasBorder =
+      [focusStyle.borderTopWidth, focusStyle.borderRightWidth, focusStyle.borderBottomWidth, focusStyle.borderLeftWidth]
+        .some(w => parseFloat(w) > 0);
+    expect(hasOutline || hasBoxShadow || hasBorder).toBeTruthy();
   });
 
   test('should have proper ARIA roles', async ({ page }) => {
