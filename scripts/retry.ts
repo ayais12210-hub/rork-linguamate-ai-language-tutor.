@@ -244,12 +244,50 @@ export async function retryWithResult<T>(
     }
   }
   
+export async function retryWithResult<T>(
+  fn: () => Promise<T>,
+  options: RetryOptions = {}
+): Promise<RetryResult<T>> {
+  const startTime = Date.now();
+  const {
+    maxRetries = DEFAULT_MAX_RETRIES,
+    // ...other options
+  } = options;
+
+  let lastError: unknown;
+  let attemptsUsed = 0;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    attemptsUsed = attempt + 1;
+    try {
+      const result = await fn();
+      return {
+        success: true,
+        data: result,
+        attempts: attempt + 1,
+        totalDuration: Date.now() - startTime,
+      };
+    } catch (error) {
+      lastError = error;
+      const shouldRetry = attempt < maxRetries && isRetryable(error);
+      if (!shouldRetry) {
+        return {
+          success: false,
+          error,
+          attempts: attemptsUsed,
+          totalDuration: Date.now() - startTime,
+        };
+      }
+    }
+  }
+
   return {
     success: false,
     error: lastError,
-    attempts: maxRetries + 1,
+    attempts: attemptsUsed || maxRetries + 1,
     totalDuration: Date.now() - startTime,
   };
+}
 }
 
 /**
