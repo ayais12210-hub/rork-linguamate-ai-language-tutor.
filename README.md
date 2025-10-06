@@ -1,9 +1,16 @@
 # 🌐 Linguamate — AI Language Tutor
 
-![Quality](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/quality.yml/badge.svg)
-![Security](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/security.yml/badge.svg)
-![Coverage](https://img.shields.io/badge/coverage-85%25+-brightgreen)
-![License](https://img.shields.io/badge/license-Proprietary-blue)
+<!-- Badges -->
+[![CI/CD](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/quality.yml/badge.svg)](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/quality.yml)
+[![Security](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/security.yml/badge.svg)](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/security.yml)
+[![Gitleaks](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/gitleaks.yml/badge.svg)](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/gitleaks.yml)
+[![CodeQL](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/codeql.yml/badge.svg)](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/codeql.yml)
+[![Coverage](https://img.shields.io/badge/coverage-85%25+-brightgreen?logo=codecov)](https://github.com/ayais12210-hub/Linguamate-ai-tutor)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React Native](https://img.shields.io/badge/React%20Native-0.79-61dafb?logo=react&logoColor=white)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-53-000020?logo=expo&logoColor=white)](https://expo.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE.md)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/ayais12210-hub/Linguamate-ai-tutor/pulls)
 
 Cross-Platform AI-Powered Language Learning App  
 *(Expo + React Native + TypeScript + tRPC + Hono backend, with Rork Toolkit integration)*
@@ -664,5 +671,5 @@ Backups: If persistent storage (DB) is later added, automate backups.
 
 📜 License
 
-Proprietary. © 2025 Rork. All rights reserved.
+MIT License. © 2025 LinguaMate AI / Rork Inc. / Contributors. See [LICENSE.md](LICENSE.md) for details.
 
