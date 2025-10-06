@@ -44,7 +44,12 @@ jobs:
           fi
 
       - name: 🏥 Expo Doctor
-        run: bun run expo:doctor || npm run expo:doctor
+        run: |
+          if [ -f bun.lockb ]; then
+            bun run expo:doctor
+          else
+            npm run expo:doctor
+          fi
 
       - name: 🔍 TypeScript Check
         run: bun run typecheck || npm run typecheck
