@@ -66,13 +66,15 @@ function computeQualityScore() {
     reports.security.score = 85;
   }
 
-  // Check E2E results (simplified)
+  // Check E2E results (from dedicated E2E JSON reporter)
   try {
-    const e2ePath = 'reports/a11y/results.json';
+    const e2ePath = 'reports/e2e/results.json';
     if (fs.existsSync(e2ePath)) {
       const e2eResults = JSON.parse(fs.readFileSync(e2ePath, 'utf8'));
-      const total = e2eResults.stats?.total || 0;
-      const passed = e2eResults.stats?.passed || 0;
+      // Assume e2eResults has a 'tests' array with 'status' field ('passed', 'failed', etc.)
+      const tests = Array.isArray(e2eResults.tests) ? e2eResults.tests : [];
+      const total = tests.length;
+      const passed = tests.filter(t => t.status === 'passed').length;
       reports.e2e.score = total > 0 ? Math.round((passed / total) * 100) : 80;
     } else {
       reports.e2e.score = 80; // Default if no E2E results
