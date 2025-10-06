@@ -37,8 +37,8 @@ jobs:
             exit 1
           fi
           
-          # Check if it's valid JSON
-          if ! jq empty .cursor/mcp.json 2>/dev/null; then
+          # Check if it's valid JSON using Node.js
+          if ! node -e "JSON.parse(require('fs').readFileSync('.cursor/mcp.json', 'utf8'))" 2>/dev/null; then
             echo "❌ .cursor/mcp.json is not valid JSON"
             exit 1
           fi
@@ -49,17 +49,17 @@ jobs:
         run: |
           echo "🔒 Checking filesystem write scopes..."
           
-          # Extract write permissions
-          WRITE_SCOPES=$(jq -r '.mcpServers["fs-local"].permissions.write[]?' .cursor/mcp.json)
-          
-          # Define allowed write directories
-          ALLOWED_WRITE=("tests" "docs" ".github" "schemas")
+          # Extract write permissions using Node.js
+          WRITE_SCOPES=$(node -e "
+            const config = JSON.parse(require('fs').readFileSync('.cursor/mcp.json', 'utf8'));
+            const scopes = config.mcpServers?.['fs-local']?.permissions?.write || [];
+            console.log(scopes.join(' '));
+          ")
           
           # Define forbidden write directories
           FORBIDDEN_WRITE=("app" "components" "backend" "lib" "hooks" "modules" "state" "node_modules" ".")
           
-          echo "Current write scopes:"
-          echo "$WRITE_SCOPES"
+          echo "Current write scopes: $WRITE_SCOPES"
           echo ""
           
           # Check for forbidden scopes
@@ -110,17 +110,22 @@ jobs:
         run: |
           echo "📝 Verifying MCP env vars are documented..."
           
-          # Extract env keys referenced in mcp.json
-          MCP_ENV_VARS=$(jq -r '
-            .mcpServers | 
-            to_entries[] | 
-            .value.env | 
-            to_entries[] | 
-            select(.value | startswith("${env:")) | 
-            .value | 
-            gsub("\\$\\{env:"; "") | 
-            gsub("\\}"; "")
-          ' .cursor/mcp.json | sort -u)
+          # Extract env keys referenced in mcp.json using Node.js
+          MCP_ENV_VARS=$(node -e "
+            const config = JSON.parse(require('fs').readFileSync('.cursor/mcp.json', 'utf8'));
+            const envVars = new Set();
+            
+            Object.values(config.mcpServers || {}).forEach(server => {
+              if (server.env) {
+                Object.values(server.env).forEach(value => {
+                  const match = value.match(/\\\$\{env:([^}]+)\}/);
+                  if (match) envVars.add(match[1]);
+                });
+              }
+            });
+            
+            Array.from(envVars).sort().forEach(v => console.log(v));
+          ")
           
           echo "Required env vars from mcp.json:"
           echo "$MCP_ENV_VARS"
@@ -146,7 +151,12 @@ jobs:
         run: |
           echo "🌐 Validating HTTP allowed hosts..."
           
-          ALLOWED_HOSTS=$(jq -r '.mcpServers.http.env.MCP_HTTP_ALLOWED_HOSTS // ""' .cursor/mcp.json)
+          # Extract HTTP allowed hosts using Node.js
+          ALLOWED_HOSTS=$(node -e "
+            const config = JSON.parse(require('fs').readFileSync('.cursor/mcp.json', 'utf8'));
+            const hosts = config.mcpServers?.http?.env?.MCP_HTTP_ALLOWED_HOSTS || '';
+            console.log(hosts);
+          ")
           
           if [ -z "$ALLOWED_HOSTS" ]; then
             echo "⚠️  Warning: No HTTP hosts configured"

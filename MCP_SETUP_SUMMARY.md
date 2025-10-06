@@ -17,6 +17,7 @@ Successfully configured **Model Context Protocol (MCP)** for the Linguamate repo
 
 1. **`.cursor/mcp.json`**
    - Configured 3 active MCP servers: filesystem, GitHub, HTTP
+   - **All servers use `npx`** - no manual installation required
    - Scoped filesystem write access to: `tests`, `docs`, `.github`, `schemas`
    - HTTP requests limited to approved hosts (OpenAI, Anthropic, ElevenLabs, Vercel, Expo, etc.)
    - 7 optional servers ready to enable (Postgres, Redis, Sentry, Vercel, EAS, Stripe, RevenueCat)
@@ -56,6 +57,7 @@ Successfully configured **Model Context Protocol (MCP)** for the Linguamate repo
 
 6. **`.github/workflows/mcp-sanity.yml`**
    - CI workflow to validate MCP configuration on every PR
+   - **Uses Node.js for JSON parsing** (no external dependencies like jq)
    - Checks:
      - ✅ `mcp.json` is valid JSON
      - ✅ Write scopes are limited (rejects `app`, `components`, `backend`, etc.)
@@ -137,11 +139,21 @@ cp .env.example .env
 2. Create a new token with `public_repo` scope (for public repos)
 3. Add to `.env`: `GITHUB_TOKEN=your_token_here`
 
-### 2. Restart Cursor
+### 2. Ensure Node.js is Installed
 
-Cursor will automatically detect `.cursor/mcp.json` and load the MCP servers.
+MCP servers use `npx` to automatically download packages. Ensure you have Node.js 18+ installed:
 
-### 3. Test MCP Integration
+```bash
+node --version  # Should be v18 or higher
+```
+
+### 3. Restart Cursor
+
+Cursor will automatically detect `.cursor/mcp.json` and download the MCP servers via `npx`.
+
+**No manual installation needed** - servers are fetched on demand!
+
+### 4. Test MCP Integration
 
 Open Cursor AI Chat and try:
 

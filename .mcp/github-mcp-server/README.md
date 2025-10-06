@@ -1,16 +1,15 @@
 # GitHub MCP Server
 
-This directory is for the GitHub Model Context Protocol server.
+The GitHub MCP server is **already configured** and ready to use!
 
-## Setup
+## Current Setup
 
-**Option A: Use npm package (recommended)**
+The server uses the official npm package via `npx`:
 
-Update `.cursor/mcp.json`:
 ```json
 "github": {
   "command": "npx",
-  "args": ["@modelcontextprotocol/server-github"],
+  "args": ["-y", "@modelcontextprotocol/server-github"],
   "env": {
     "GITHUB_TOKEN": "${env:GITHUB_TOKEN}",
     "GITHUB_REPO": "ayais12210-hub/Linguamate-ai-tutor"
@@ -18,13 +17,9 @@ Update `.cursor/mcp.json`:
 }
 ```
 
-**Option B: Vendor locally**
+**No installation needed** - `npx` automatically downloads the server when Cursor starts.
 
-```bash
-cd .mcp/github-mcp-server
-npm install @modelcontextprotocol/server-github
-# Server will be available in node_modules
-```
+This directory exists as a placeholder for future local vendoring if needed, but it's not required for normal operation.
 
 ## Required Environment Variables
 

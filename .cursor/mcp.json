@@ -13,8 +13,8 @@
     },
 
     "github": {
-      "command": "node",
-      "args": ["${workspaceFolder}/.mcp/github-mcp-server/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
       "env": {
         "GITHUB_TOKEN": "${env:GITHUB_TOKEN}",
         "GITHUB_REPO": "ayais12210-hub/Linguamate-ai-tutor"

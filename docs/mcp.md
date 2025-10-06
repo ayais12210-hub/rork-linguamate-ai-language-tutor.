@@ -7,12 +7,17 @@ This project uses **Model Context Protocol (MCP)** to let AI coding agents safel
 
 ## Quick start (Cursor)
 
-1. Copy `.env.example` → `.env` and fill in required keys.
-2. Ensure `node` and `pnpm`/`npm` available locally.
-3. Install MCP servers used by this repo:
-   - Filesystem + HTTP servers come from `npx @modelcontextprotocol/...` on demand.
-   - GitHub server: place its built `dist/index.js` in `/.mcp/github-mcp-server/` **or** switch to its published `npx` package in `.cursor/mcp.json`.
-4. Restart Cursor so it picks up `.cursor/mcp.json`.
+1. **Copy `.env.example` → `.env`** and add your GitHub token:
+   ```bash
+   cp .env.example .env
+   # Edit .env and add: GITHUB_TOKEN=your_github_personal_access_token
+   ```
+
+2. **Ensure `node` is available** (version 18+). The MCP servers will be automatically downloaded via `npx` when Cursor starts.
+
+3. **Restart Cursor** so it picks up `.cursor/mcp.json`.
+
+That's it! All MCP servers (filesystem, GitHub, HTTP) use `npx` and require no manual installation.
 
 ## Security model
 
@@ -44,6 +49,16 @@ This project uses **Model Context Protocol (MCP)** to let AI coding agents safel
 - **Permission denied**: you tried writing outside the allowed FS paths — expand `write` scopes only if necessary.
 - **HTTP blocked**: host is not in `MCP_HTTP_ALLOWED_HOSTS`. Add it and restart Cursor.
 
+## How MCP servers are installed
+
+**All active servers use `npx`** - they're automatically downloaded when Cursor starts. No manual installation needed!
+
+- **Filesystem server**: `npx @modelcontextprotocol/server-filesystem`
+- **GitHub server**: `npx -y @modelcontextprotocol/server-github`
+- **HTTP server**: `npx @modelcontextprotocol/server-http`
+
+The `.mcp/` directory structure exists for **optional** servers you may want to vendor locally in the future.
+
 ## Optional servers
 
 The `.cursor/mcp.json` includes commented-out configurations for additional servers:
@@ -55,28 +70,10 @@ The `.cursor/mcp.json` includes commented-out configurations for additional serv
 - **stripe** / **revenuecat**: Monetization analytics (read-only)
 
 To enable any optional server:
-1. Set up the server locally in `/.mcp/<server-name>/`
+1. Find or create an MCP server implementation (check [MCP Server Directory](https://github.com/modelcontextprotocol/servers))
 2. Add the required environment variables to `.env`
-3. Uncomment the relevant block in `.cursor/mcp.json`
+3. Uncomment the relevant block in `.cursor/mcp.json` and update the `command`/`args`
 4. Restart Cursor
-
-## MCP server directory structure
-
-If you vendor MCP servers locally, use this structure:
-
-```
-.mcp/
-  github-mcp-server/
-    dist/
-      index.js
-  postgres-mcp-server/      # optional
-  redis-mcp-server/          # optional
-  sentry-mcp-server/         # optional
-  vercel-mcp-server/         # optional
-  eas-mcp-server/            # optional
-  stripe-mcp-server/         # optional
-  revenuecat-mcp-server/     # optional
-```
 
 ## Resources
 
