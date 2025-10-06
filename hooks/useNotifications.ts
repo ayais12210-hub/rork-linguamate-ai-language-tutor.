@@ -74,12 +74,11 @@ export function useNotifications() {
 
     // Listen for notification interactions
     responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
-      console.log('[Notifications] User interacted:', response);
       // Handle navigation based on notification data
       const data = response.notification.request.content.data;
       if (data?.screen) {
         // Navigate to screen - implement with your router
-        console.log('Navigate to:', data.screen);
+        // Navigation logic would go here
       }
     });
 

@@ -163,7 +163,9 @@ export const useSpeech = () => {
     if (!audioPermission) {
       const granted = await requestAudioPermission();
       if (!granted) {
-        console.error('Audio permission not granted');
+        if (__DEV__) {
+          console.warn('Audio permission not granted');
+        }
         return;
       }
     }

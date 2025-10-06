@@ -9,17 +9,17 @@ export default function NetworkStatusBanner() {
 
   useEffect(() => {
     const unsubscribe = onlineManager.subscribe((isOnline?: boolean) => {
-      console.log('[NetworkStatusBanner] onlineManager change', isOnline);
+      // Network status changed
       setOnline(Boolean(isOnline));
     });
 
     if (Platform.OS === 'web') {
       const handleOnline = () => {
-        console.log('[NetworkStatusBanner] browser online');
+        // Browser came online
         onlineManager.setOnline(true);
       };
       const handleOffline = () => {
-        console.log('[NetworkStatusBanner] browser offline');
+        // Browser went offline
         onlineManager.setOnline(false);
       };
       

@@ -70,16 +70,25 @@ const PhonicsTrainerComponent: React.FC<Props> = ({ items, targetLangCode, onCom
     Speech.stop();
     
     try {
-      console.log('[PhonicsTrainer] speak', t, targetLangCode);
       Speech.speak(t, { 
         language: targetLangCode, 
         rate: 0.95, 
         pitch: 1.0,
-        onDone: () => console.log('[PhonicsTrainer] speech completed'),
-        onError: (e) => console.error('[PhonicsTrainer] speech error', e)
+        onDone: () => {
+          // Speech completed successfully
+        },
+        onError: (e) => {
+          // Handle speech error silently in production
+          if (__DEV__) {
+            console.warn('[PhonicsTrainer] Speech error:', e);
+          }
+        }
       });
     } catch (e) {
-      console.error('Speech error', e);
+      // Handle speech error silently in production
+      if (__DEV__) {
+        console.warn('[PhonicsTrainer] Speech error:', e);
+      }
     }
   }, [targetLangCode]);
 
@@ -109,6 +118,15 @@ const PhonicsTrainerComponent: React.FC<Props> = ({ items, targetLangCode, onCom
       }
     }, 600);
   }, [answered, current, index, items.length, onComplete, score]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   if (!items || items.length === 0) {
     return (

@@ -112,6 +112,9 @@ export class ApiClient {
         },
         signal: controller?.signal,
       }).catch((e) => {
+        if (e.name === 'AbortError') {
+          throw new Error('REQUEST_TIMEOUT');
+        }
         throw new Error('NETWORK_REQUEST_FAILED');
       });
 
@@ -131,7 +134,10 @@ export class ApiClient {
       }
       return data as T;
     } catch (error) {
-      console.error('API request failed:', error);
+      // Log error for debugging but don't expose internal details
+      if (__DEV__) {
+        console.error('API request failed:', error);
+      }
       throw error;
     }
   }

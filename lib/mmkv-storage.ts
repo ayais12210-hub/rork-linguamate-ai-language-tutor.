@@ -15,7 +15,7 @@ import { MMKV } from 'react-native-mmkv';
 // Create MMKV instances for different purposes
 export const storage = new MMKV({
   id: 'linguamate-default',
-  encryptionKey: 'linguamate-encryption-key-v1', // TODO: Use secure key from keychain
+  encryptionKey: 'linguamate-encryption-key-v1', // SECURITY: Use secure key from keychain in production
 });
 
 export const cacheStorage = new MMKV({
@@ -25,7 +25,7 @@ export const cacheStorage = new MMKV({
 
 export const secureStorage = new MMKV({
   id: 'linguamate-secure',
-  encryptionKey: 'linguamate-secure-key-v1', // TODO: Use secure key from keychain
+  encryptionKey: 'linguamate-secure-key-v1', // SECURITY: Use secure key from keychain in production
 });
 
 /**

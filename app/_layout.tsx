@@ -45,14 +45,17 @@ function RootLayoutNav() {
 function MonitoringInitializer() {
   const { user } = useUser();
   useEffect(() => {
-    console.log('[RootLayout] Initializing monitoring with user', user?.id);
     MonitoringUtils.initializeAll(user?.id).catch((e) => {
-      console.log('[RootLayout] Monitoring init error', e);
+      if (__DEV__) {
+        console.warn('[RootLayout] Monitoring init error', e);
+      }
     });
     
     // Initialize RevenueCat
     initializeRevenueCat().catch((e) => {
-      console.log('[RootLayout] RevenueCat init error', e);
+      if (__DEV__) {
+        console.warn('[RootLayout] RevenueCat init error', e);
+      }
     });
     
     return () => {
@@ -64,9 +67,10 @@ function MonitoringInitializer() {
 
 function OfflineInitializer() {
   useEffect(() => {
-    console.log('[RootLayout] Initializing offline queue');
     offlineQueue.initialize().catch((e) => {
-      console.log('[RootLayout] Offline queue init error', e);
+      if (__DEV__) {
+        console.warn('[RootLayout] Offline queue init error', e);
+      }
     });
   }, []);
   return null;
@@ -79,7 +83,9 @@ export default function RootLayout() {
       try {
         await SplashScreen.hideAsync();
       } catch (error) {
-        console.warn('[RootLayout] Failed to hide splash screen:', error);
+        if (__DEV__) {
+          console.warn('[RootLayout] Failed to hide splash screen:', error);
+        }
       }
     };
 
