@@ -124,25 +124,31 @@ const diffChunks = chunkText(diff, limit);
 
 // ---------- AI call wrappers ----------
 async function callOpenAI(prompt) {
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${OPENAI_API_KEY}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      model: AI_MODEL,
-      temperature: 0.2,
-      max_tokens: parseInt(MAX_TOKENS, 10),
-      messages: [
-        { role: "system", content: sysPrompt },
-        { role: "user", content: prompt }
-      ]
-    })
-  });
-  const j = await res.json();
-  if (!res.ok) throw new Error(JSON.stringify(j));
-  return j.choices?.[0]?.message?.content || "";
+  try {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: AI_MODEL,
+        temperature: 0.2,
+        max_tokens: parseInt(MAX_TOKENS, 10),
+        messages: [
+          { role: "system", content: sysPrompt },
+          { role: "user", content: prompt }
+        ]
+      })
+    });
+    const j = await res.json();
+    if (!res.ok) {
+      throw new Error(`[OpenAI] API error: HTTP ${res.status} ${res.statusText} - ${JSON.stringify(j)}`);
+    }
+    return j.choices?.[0]?.message?.content || "";
+  } catch (err) {
+    throw new Error(`[OpenAI] Network or fetch error: ${err && err.message ? err.message : err}`);
+  }
 }
 
 async function callAnthropic(prompt) {
