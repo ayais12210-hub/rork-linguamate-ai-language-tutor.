@@ -1,43 +1,99 @@
+# Minimal but effective rules for TS/React Native
 rules:
-  - id: no-hardcoded-secrets
+  - id: insecure-rn-eval
     patterns:
-      - pattern: |
-          const $VAR = "$SECRET"
-      - metavariable-regex:
-          metavariable: $SECRET
-          regex: (password|secret|token|api[_-]?key|private[_-]?key)
-    message: Potential hardcoded secret detected
+      - pattern: eval($X)
+    message: Avoid eval() – security risk.
     severity: ERROR
-    languages: [typescript, javascript]
-
-  - id: unsafe-eval
-    pattern: eval(...)
-    message: Use of eval() is dangerous and should be avoided
-    severity: ERROR
-    languages: [typescript, javascript]
-
-  - id: sql-injection-risk
-    patterns:
-      - pattern: |
-          db.query($QUERY + ...)
-      - pattern: |
-          db.execute(`... ${$VAR} ...`)
-    message: Potential SQL injection vulnerability
-    severity: ERROR
-    languages: [typescript, javascript]
-
-  - id: xss-dangerouslySetInnerHTML
-    pattern: dangerouslySetInnerHTML={{__html: $VAR}}
-    message: Potential XSS vulnerability with dangerouslySetInnerHTML
+    languages: [javascript, typescript]
+  
+  - id: expo-webview-injectedjs
+    message: "WebView: validate origin/injectedJavaScript to avoid XSS."
     severity: WARNING
     languages: [typescript, javascript]
-
-  - id: insecure-random
-    pattern: Math.random()
-    message: Math.random() is not cryptographically secure. Use crypto.randomBytes() instead
-    severity: WARNING
-    languages: [typescript, javascript]
+    patterns:
+      - pattern-inside: |
+          <WebView ... />
     paths:
       include:
-        - "**/auth/**"
-        - "**/security/**"
+        - "app/**"
+        - "components/**"
+  
+  - id: react-native-dangerous-props
+    message: "Dangerous React Native props detected - validate user input."
+    severity: WARNING
+    languages: [typescript, javascript]
+    patterns:
+      - pattern-inside: |
+          <TextInput
+            ... 
+            $PROPS
+            ...
+          />
+    paths:
+      include:
+        - "app/**"
+        - "components/**"
+  
+  - id: hardcoded-secrets
+    message: "Potential hardcoded secret detected."
+    severity: ERROR
+    languages: [typescript, javascript]
+    patterns:
+      - pattern: |
+          $VAR = $SECRET
+      - metavariable-regex:
+          metavariable: $SECRET
+          regex: "(?i)(password|secret|key|token|api_key|private_key|credential)"
+  
+  - id: unsafe-html-injection
+    message: "Potential HTML injection vulnerability."
+    severity: ERROR
+    languages: [typescript, javascript]
+    patterns:
+      - pattern: |
+          dangerouslySetInnerHTML={{__html: $X}}
+      - metavariable-regex:
+          metavariable: $X
+          regex: ".*\$.*"
+  
+  - id: console-log-production
+    message: "Console.log detected - remove for production."
+    severity: WARNING
+    languages: [typescript, javascript]
+    patterns:
+      - pattern: console.log($X)
+    paths:
+      exclude:
+        - "**/__tests__/**"
+        - "**/tests/**"
+  
+  - id: async-without-await
+    message: "Async function without await - potential bug."
+    severity: WARNING
+    languages: [typescript, javascript]
+    patterns:
+      - pattern: |
+          async function $FUNC(...) {
+            ...
+          }
+      - metavariable-regex:
+          metavariable: $FUNC
+          regex: ".*"
+      - not: pattern: await
+  
+  - id: expo-permissions-check
+    message: "Expo permissions should be checked before use."
+    severity: WARNING
+    languages: [typescript, javascript]
+    patterns:
+      - pattern: |
+          $PERMISSION.requestAsync()
+      - metavariable-regex:
+          metavariable: $PERMISSION
+          regex: "(Camera|Location|Notifications|AudioRecording)"
+    paths:
+      include:
+        - "app/**"
+        - "modules/**"
+        - "components/**"
