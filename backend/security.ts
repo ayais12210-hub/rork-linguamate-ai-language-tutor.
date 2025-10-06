@@ -28,15 +28,20 @@ export const SecurityUtils = {
   },
 
   async hashPassword(password: string): Promise<string> {
-    // Simple PBKDF2 hash to avoid bringing heavy deps
-    const salt = 'static-demo-salt';
+    // Generate a unique, random salt for each password
+    const salt = crypto.randomBytes(16);
     const derived = crypto.pbkdf2Sync(password, salt, 100_000, 32, 'sha256');
-    return derived.toString('hex');
+    // Store salt and hash together, separated by ':'
+    return salt.toString('hex') + ':' + derived.toString('hex');
   },
 
-  async verifyPassword(password: string, hash: string): Promise<boolean> {
-    const derived = await this.hashPassword(password);
-    return crypto.timingSafeEqual(Buffer.from(derived, 'hex'), Buffer.from(hash, 'hex'));
+  async verifyPassword(password: string, stored: string): Promise<boolean> {
+    // Extract salt and hash from stored value
+    const [saltHex, hashHex] = stored.split(':');
+    if (!saltHex || !hashHex) return false;
+    const salt = Buffer.from(saltHex, 'hex');
+    const derived = crypto.pbkdf2Sync(password, salt, 100_000, 32, 'sha256');
+    return crypto.timingSafeEqual(derived, Buffer.from(hashHex, 'hex'));
   },
 
   containsSuspiciousContent(text: string): boolean {
