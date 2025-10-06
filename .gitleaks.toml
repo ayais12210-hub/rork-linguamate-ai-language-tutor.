@@ -26,8 +26,6 @@ regexes = [
   '''-----BEGIN PUBLIC KEY-----[\s\S]*-----END PUBLIC KEY-----''',
   
   # Common hash patterns that aren't secrets
-  '''[0-9a-f]{40}''',  # SHA-1 hashes (often used for commit hashes, not secrets)
-  '''[0-9a-f]{64}''',  # SHA-256 hashes
   
   # Common test database URLs
   '''postgresql://test:test@localhost:5432/test''',
