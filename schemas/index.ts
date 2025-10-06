@@ -6,3 +6,4 @@ export * from './feedback';
 export * from './errors';
 export * from './difficulty.schema';
 export * from './dialogue.schema';
+export * from './stt';

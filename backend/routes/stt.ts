@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import type { Context } from 'hono';
+import { z } from 'zod';
 
 const sttApp = new Hono();
 
@@ -9,6 +10,21 @@ const API_KEY: string = process.env.TOOLKIT_API_KEY ?? '';
 const rateMap = new Map<string, { count: number; windowStart: number }>();
 const WINDOW_MS = Number.parseInt(process.env.RATE_LIMIT_WINDOW_MS ?? '60000', 10);
 const MAX_REQ = Number.parseInt(process.env.RATE_LIMIT_MAX_REQUESTS ?? '60', 10);
+
+/**
+ * Validation schema for language parameter
+ */
+const LanguageSchema = z.string().regex(/^[a-z]{2,3}(-[A-Z]{2})?$/, 'Invalid language code format (expected: en, es, pa-IN, etc.)').optional();
+
+/**
+ * Maximum audio file size (10MB)
+ */
+const MAX_AUDIO_SIZE = 10_000_000;
+
+/**
+ * Allowed audio MIME types
+ */
+const ALLOWED_AUDIO_TYPES = ['audio/webm', 'audio/m4a', 'audio/mp3', 'audio/wav', 'audio/mpeg', 'audio/ogg'];
 
 function rateLimit(ip: string): { allowed: boolean; remaining: number; resetMs: number } {
   const now = Date.now();
@@ -60,15 +76,74 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
       return c.json({ message: 'No audio file provided' });
     }
 
-    console.log('[STT] Audio file received, forwarding to Toolkit API...');
+    // Validate audio file
+    if (!(audioFile instanceof File || audioFile instanceof Blob)) {
+      console.log('[STT] Invalid audio file type');
+      c.status(400 as any);
+      return c.json({ message: 'Invalid audio file format' });
+    }
+
+    // Validate file size
+    if (audioFile.size === 0) {
+      console.log('[STT] Empty audio file');
+      c.status(400 as any);
+      return c.json({ message: 'Audio file is empty' });
+    }
+
+    if (audioFile.size > MAX_AUDIO_SIZE) {
+      console.log('[STT] Audio file too large:', audioFile.size);
+      c.status(413 as any);
+      return c.json({ 
+        message: `Audio file too large. Maximum size is ${MAX_AUDIO_SIZE / 1_000_000}MB`,
+        maxSize: MAX_AUDIO_SIZE,
+        receivedSize: audioFile.size
+      });
+    }
+
+    // Validate MIME type
+    const audioType = (audioFile as File).type || 'audio/unknown';
+    if (!ALLOWED_AUDIO_TYPES.includes(audioType)) {
+      console.log('[STT] Invalid audio MIME type:', audioType);
+      c.status(400 as any);
+      return c.json({ 
+        message: `Invalid audio format. Allowed formats: ${ALLOWED_AUDIO_TYPES.join(', ')}`,
+        receivedType: audioType,
+        allowedTypes: ALLOWED_AUDIO_TYPES
+      });
+    }
+
+    // Validate language parameter if provided
+    const languageParam = formData.get('language');
+    let validatedLanguage: string | undefined;
+    
+    if (languageParam) {
+      try {
+        validatedLanguage = LanguageSchema.parse(String(languageParam));
+      } catch (error) {
+        console.log('[STT] Invalid language parameter:', languageParam);
+        c.status(400 as any);
+        return c.json({ 
+          message: 'Invalid language code format. Expected format: en, es, pa-IN, etc.',
+          receivedLanguage: languageParam
+        });
+      }
+    }
+
+    console.log('[STT] Audio file validated successfully');
+    console.log('[STT] File size:', audioFile.size, 'bytes');
+    console.log('[STT] File type:', audioType);
+    if (validatedLanguage) {
+      console.log('[STT] Language:', validatedLanguage);
+    }
+
+    console.log('[STT] Forwarding to Toolkit API...');
     const url = new URL('/stt/transcribe/', BASE).toString();
     
     const proxyFormData = new FormData();
     proxyFormData.append('audio', audioFile);
 
-    const language = formData.get('language');
-    if (language) {
-      proxyFormData.append('language', language as string);
+    if (validatedLanguage) {
+      proxyFormData.append('language', validatedLanguage);
     }
 
     const headers: Record<string, string> = {};
