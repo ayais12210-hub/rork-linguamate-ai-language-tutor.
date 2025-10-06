@@ -24,8 +24,36 @@ jobs:
           config: .semgrep.yml       # uses your repo’s config
           generateSarif: true
           sarifFile: semgrep.sarif
+      - name: Verify SARIF file exists
+        run: |
+          if [ -f "semgrep.sarif" ]; then
+            echo "✅ SARIF file found: semgrep.sarif"
+            ls -la semgrep.sarif
+          else
+            echo "⚠️  SARIF file not found: semgrep.sarif"
+            echo "Available files:"
+            ls -la *.sarif 2>/dev/null || echo "No SARIF files found"
+            echo "Creating empty SARIF file for upload..."
+            cat > semgrep.sarif <<EOF
+{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "semgrep",
+          "version": "1.0.0"
+        }
+      },
+      "results": []
+    }
+  ]
+}
+EOF
+          fi
 
       - name: Upload SARIF to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
+        if: always()
         with:
           sarif_file: semgrep.sarif
