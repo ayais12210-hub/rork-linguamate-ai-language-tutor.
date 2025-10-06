@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { publicProcedure, protectedProcedure } from "@/backend/trpc/create-context";
+import { publicProcedure, protectedProcedure } from "../../create-context";
 
 // In-memory storage for lessons (replace with database in production)
 const lessons = new Map<string, any>();

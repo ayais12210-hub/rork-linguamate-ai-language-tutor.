@@ -2,7 +2,7 @@ import { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { z } from "zod";
-import { verifyJwt } from "@/backend/validation/jwt";
+import { verifyJwt } from "../validation/jwt";
 
 export const createContext = async (opts: FetchCreateContextFnOptions) => {
   const authHeader = opts.req.headers.get('authorization');

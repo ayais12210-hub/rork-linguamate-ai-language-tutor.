@@ -413,17 +413,18 @@ LOGTAIL_TOKEN=<your-logtail-token>
 
 ## ▶️ Starting the Backend
 
-Option 1 — Using Bun (recommended)
+Option — Using Node.js (recommended here)
 
-bun install
-bun run backend/hono.ts
-
-Option 2 — Using Node.js
-
+```bash
 npm install
-npm run backend:start
+npm run backend:start # starts Hono at PORT (default 8080)
+```
 
-(You can add a "backend:start": "tsx backend/hono.ts" script in package.json.)
+Health endpoints:
+
+```bash
+curl http://localhost:8080/health
+```
 
 ## 📡 API Routes
 

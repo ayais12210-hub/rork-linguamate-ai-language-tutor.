@@ -40,7 +40,8 @@ const config: Config = {
   },
   transformIgnorePatterns: [
     'node_modules/(?!(react-native|@react-native|expo|@expo|@unimodules|@react-navigation|@tanstack)/)'
-  ]
+  ],
+  modulePathIgnorePatterns: ['<rootDir>/backend/security.ts']
 };
 
 export default config;

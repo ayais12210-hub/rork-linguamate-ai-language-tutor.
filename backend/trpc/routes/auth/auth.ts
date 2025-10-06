@@ -1,14 +1,14 @@
 import { z } from 'zod';
 import { publicProcedure, protectedProcedure } from '../../create-context';
 import { TRPCError } from '@trpc/server';
-import { 
-  SecurityUtils, 
-  AdvancedSecurity, 
-  SecurityAudit, 
+import {
+  SecurityUtils,
+  AdvancedSecurity,
+  SecurityAudit,
   InputSanitizer,
   RateLimiter,
-  SECURITY_CONFIG 
-} from '@/lib/security';
+  SECURITY_CONFIG,
+} from '@/backend/security';
 import { signJwt } from '@/backend/validation/jwt';
 import {
   SignInSchema,

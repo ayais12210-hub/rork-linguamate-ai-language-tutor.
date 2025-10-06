@@ -1,15 +1,15 @@
 import { Hono } from "hono";
 import { trpcServer } from "@hono/trpc-server";
 import { cors } from "hono/cors";
-import { appRouter } from "@/backend/trpc/app-router";
-import { createContext } from "@/backend/trpc/create-context";
-import { correlationMiddleware } from "@/backend/middleware/correlation";
-import { requestLoggerMiddleware } from "@/backend/middleware/requestLogger";
-import { securityHeadersMiddleware } from "@/backend/middleware/securityHeaders";
-import ingestLogsApp from "@/backend/routes/ingestLogs";
-import healthApp from "@/backend/routes/health";
-import toolkitProxy from "@/backend/routes/toolkitProxy";
-import sttApp from "@/backend/routes/stt";
+import { appRouter } from "./trpc/app-router";
+import { createContext } from "./trpc/create-context";
+import { correlationMiddleware } from "./middleware/correlation";
+import { requestLoggerMiddleware } from "./middleware/requestLogger";
+import { securityHeadersMiddleware } from "./middleware/securityHeaders";
+import ingestLogsApp from "./routes/ingestLogs";
+import healthApp from "./routes/health";
+import toolkitProxy from "./routes/toolkitProxy";
+import sttApp from "./routes/stt";
 
 // app will be mounted at /api
 const app = new Hono();
