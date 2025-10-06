@@ -28,9 +28,8 @@ const initPostHog = (): PostHog | null => {
   const client = new PostHog(apiKey, {
     host,
     // Automatically capture events
-    captureApplicationLifecycleEvents: true,
+    captureAppLifecycleEvents: true,
   });
-
   console.log('[AnalyticsProvider] PostHog initialized');
   return client;
 };
