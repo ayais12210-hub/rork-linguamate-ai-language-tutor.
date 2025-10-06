@@ -9,7 +9,8 @@ describe('CorrelationIdManager', () => {
   let manager: CorrelationIdManager;
 
   beforeEach(() => {
-    manager = new CorrelationIdManager();
+    manager = CorrelationIdManager.getInstance();
+    manager.clear(); // Reset state between tests
   });
 
   it('should generate a new correlation ID', () => {
