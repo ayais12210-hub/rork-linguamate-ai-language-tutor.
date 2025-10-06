@@ -224,10 +224,8 @@ export class SecureKeyManager {
       // Use Web Crypto API on web
       crypto.getRandomValues(randomBytes);
     } else {
-      // Fallback to Math.random (less secure but better than hardcoded)
-      for (let i = 0; i < randomBytes.length; i++) {
-        randomBytes[i] = Math.floor(Math.random() * 256);
-      }
+      // No secure random source available
+      throw new Error('[SecureKeyManager] No cryptographically secure random number generator available for key generation.');
     }
     
     // Convert to base64 string
