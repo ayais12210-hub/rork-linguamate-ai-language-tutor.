@@ -129,12 +129,24 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
       }
     }
 
+    // Get enhanced options
+    const punctuation = formData.get('punctuation');
+    const formatting = formData.get('formatting');
+    const alternatives = formData.get('alternatives');
+    const autoDetectLanguage = formData.get('autoDetectLanguage');
+
     console.log('[STT] Audio file validated successfully');
     console.log('[STT] File size:', audioFile.size, 'bytes');
     console.log('[STT] File type:', audioType);
     if (validatedLanguage) {
       console.log('[STT] Language:', validatedLanguage);
     }
+    console.log('[STT] Enhanced options:', {
+      punctuation: punctuation ? punctuation.toString() : 'default',
+      formatting: formatting ? formatting.toString() : 'default',
+      alternatives: alternatives ? alternatives.toString() : 'default',
+      autoDetectLanguage: autoDetectLanguage ? autoDetectLanguage.toString() : 'default',
+    });
 
     console.log('[STT] Forwarding to Toolkit API...');
     const url = new URL('/stt/transcribe/', BASE).toString();
@@ -144,6 +156,20 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
 
     if (validatedLanguage) {
       proxyFormData.append('language', validatedLanguage);
+    }
+
+    // Add enhanced options to the request
+    if (punctuation) {
+      proxyFormData.append('punctuation', punctuation.toString());
+    }
+    if (formatting) {
+      proxyFormData.append('formatting', formatting.toString());
+    }
+    if (alternatives) {
+      proxyFormData.append('alternatives', alternatives.toString());
+    }
+    if (autoDetectLanguage) {
+      proxyFormData.append('autoDetectLanguage', autoDetectLanguage.toString());
     }
 
     const headers: Record<string, string> = {};
@@ -187,6 +213,20 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
     try {
       result = JSON.parse(responseText);
       console.log('[STT] Transcription successful:', result.text ? 'text received' : 'no text');
+      
+      // Enhance the result with additional processing if needed
+      if (result.text && formatting === 'enhanced') {
+        result.text = enhanceTranscriptionText(result.text);
+      }
+      
+      // Add language detection if requested
+      if (autoDetectLanguage === 'true' && result.text) {
+        const detectedLang = detectLanguageFromText(result.text);
+        if (detectedLang) {
+          result.detectedLanguage = detectedLang;
+        }
+      }
+      
     } catch (parseError) {
       console.error('[STT] Failed to parse response JSON:', parseError);
       c.status(500 as any);
@@ -205,6 +245,57 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
     });
   }
 });
+
+// Enhanced text processing functions
+function enhanceTranscriptionText(text: string): string {
+  if (!text) return text;
+
+  const formatted = text
+    .replace(/\s+/g, ' ') // Normalize whitespace
+    .replace(/([.!?])\s*([a-z])/g, '$1 $2') // Space after sentence endings
+    .replace(/([a-z])([A-Z])/g, '$1 $2') // Space before capital letters
+    .replace(/\s*,\s*/g, ', ') // Normalize commas
+    .replace(/\s*\.\s*/g, '. ') // Normalize periods
+    .replace(/\s*\?\s*/g, '? ') // Normalize question marks
+    .replace(/\s*!\s*/g, '! ') // Normalize exclamation marks
+    .trim()
+    .replace(/(^|[.!?]\s+)([a-z])/g, (match, prefix, letter) => 
+      prefix + letter.toUpperCase()
+    ); // Capitalize first letter of each sentence
+
+  // Ensure it ends with punctuation
+  if (!/[.!?]$/.test(formatted)) {
+    return formatted + '.';
+  }
+  
+  return formatted;
+}
+
+function detectLanguageFromText(text: string): string | null {
+  if (!text) return null;
+
+  const patterns = {
+    'zh-CN': /[\u4e00-\u9fff]/,
+    'ja-JP': /[\u3040-\u309f\u30a0-\u30ff]/,
+    'ko-KR': /[\uac00-\ud7af]/,
+    'ar-SA': /[\u0600-\u06ff]/,
+    'hi-IN': /[\u0900-\u097f]/,
+    'ru-RU': /[\u0400-\u04ff]/,
+    'es-ES': /[ñáéíóúü]/i,
+    'fr-FR': /[àâäéèêëïîôöùûüÿç]/i,
+    'de-DE': /[äöüß]/i,
+    'it-IT': /[àèéìíîòóù]/i,
+    'pt-BR': /[ãõçáéíóúâêô]/i,
+  };
+
+  for (const [lang, pattern] of Object.entries(patterns)) {
+    if (pattern.test(text)) {
+      return lang;
+    }
+  }
+
+  return 'en-US'; // Default to English
+}
 
 // Simple STT endpoint for mobile fallback (mock-first approach)
 sttApp.post('/stt', async (c: Context) => {

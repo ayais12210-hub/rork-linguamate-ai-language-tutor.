@@ -28,6 +28,15 @@ export const STTTranscribeResponseSchema = z.object({
   text: z.string().min(0).max(10000).describe('Transcribed text'),
   confidence: z.number().min(0).max(1).optional().describe('Confidence score (0-1)'),
   language: z.string().optional().describe('Detected language'),
+  detectedLanguage: z.string().optional().describe('Auto-detected language'),
+  alternatives: z.array(z.string()).optional().describe('Alternative transcriptions'),
+  punctuation: z.boolean().optional().describe('Whether punctuation was applied'),
+  formatting: z.enum(['none', 'basic', 'enhanced']).optional().describe('Text formatting level'),
+  timestamps: z.array(z.object({
+    word: z.string(),
+    start: z.number(),
+    end: z.number(),
+  })).optional().describe('Word-level timestamps'),
   duration: z.number().optional().describe('Audio duration in milliseconds'),
 });
 
