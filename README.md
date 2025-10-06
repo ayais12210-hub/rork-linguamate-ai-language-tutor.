@@ -1,6 +1,11 @@
 # 🌐 Linguamate — AI Language Tutor
 
-[![Tests](https://img.shields.io/github/actions/workflow/status/ayais12210-hub/Linguamate-ai-tutor/ci.yml?label=tests&style=for-the-badge)](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/ci.yml) [![EAS Preview](https://img.shields.io/github/actions/workflow/status/ayais12210-hub/Linguamate-ai-tutor/eas-preview.yml?label=EAS%20Preview&style=for-the-badge)](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/eas-preview.yml) [![Gitleaks](https://img.shields.io/github/actions/workflow/status/ayais12210-hub/Linguamate-ai-tutor/gitleaks.yml?label=gitleaks&style=for-the-badge)](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/gitleaks.yml) [![Semgrep](https://img.shields.io/github/actions/workflow/status/ayais12210-hub/Linguamate-ai-tutor/semgrep.yml?label=semgrep&style=for-the-badge)](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/semgrep.yml) [![Docs](https://img.shields.io/badge/docs-Repository%20Docs-0A66C2?style=for-the-badge&logo=readthedocs&logoColor=white)](docs/index.md) [![License](https://img.shields.io/badge/License-Proprietary-blue?style=for-the-badge)](LICENSE)
+[![Tests](https://img.shields.io/github/actions/workflow/status/ayais12210-hub/Linguamate-ai-tutor/ci.yml?label=tests&style=for-the-badge)](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/ci.yml)
+[![EAS Preview](https://img.shields.io/github/actions/workflow/status/ayais12210-hub/Linguamate-ai-tutor/eas-preview.yml?label=EAS%20Preview&style=for-the-badge)](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/eas-preview.yml)
+[![Gitleaks](https://img.shields.io/github/actions/workflow/status/ayais12210-hub/Linguamate-ai-tutor/gitleaks.yml?label=gitleaks&style=for-the-badge)](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/gitleaks.yml)
+[![Semgrep](https://img.shields.io/github/actions/workflow/status/ayais12210-hub/Linguamate-ai-tutor/semgrep.yml?label=semgrep&style=for-the-badge)](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/semgrep.yml)
+[![Docs](https://img.shields.io/badge/docs-Repository%20Docs-0A66C2?style=for-the-badge&logo=readthedocs&logoColor=white)](docs/index.md)
+[![License](https://img.shields.io/badge/License-Proprietary-blue?style=for-the-badge)](LICENSE)
 
 Cross-Platform AI-Powered Language Learning App  
 *(Expo + React Native + TypeScript + tRPC + Hono backend, with Rork Toolkit integration)*
