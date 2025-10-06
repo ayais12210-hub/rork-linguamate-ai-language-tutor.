@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
+import { FlashList } from '@shopify/flash-list';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   Modal,
-  FlatList,
+  // FlatList, // Replaced with FlashList for better performance
   Pressable,
 } from 'react-native';
 import { ChevronDown } from 'lucide-react-native';
@@ -110,8 +111,9 @@ export function Select<T = string>({
       >
         <Pressable style={styles.modalOverlay} onPress={() => setIsOpen(false)}>
           <View style={styles.modalContent}>
-            <FlatList
+            <FlashList
               data={options}
+              estimatedItemSize={50}
               keyExtractor={(item, index) => `${item.value}-${index}`}
               renderItem={({ item }) => (
                 <TouchableOpacity

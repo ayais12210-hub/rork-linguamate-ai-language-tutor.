@@ -1,0 +1,63 @@
+{
+  "common": {
+    "welcome": "ਲਿੰਗੁਆਮੇਟ ਵਿੱਚ ਤੁਹਾਡਾ ਸੁਆਗਤ ਹੈ",
+    "continue": "ਜਾਰੀ ਰੱਖੋ",
+    "cancel": "ਰੱਦ ਕਰੋ",
+    "save": "ਸੁਰੱਖਿਅਤ ਕਰੋ",
+    "delete": "ਮਿਟਾਓ",
+    "edit": "ਸੋਧੋ",
+    "loading": "ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...",
+    "error": "ਇੱਕ ਗਲਤੀ ਹੋਈ",
+    "success": "ਸਫਲਤਾ",
+    "retry": "ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ"
+  },
+  "auth": {
+    "login": "ਲਾਗਿਨ",
+    "signup": "ਸਾਈਨਅੱਪ",
+    "logout": "ਲਾਗਆਉਟ",
+    "email": "ਈਮੇਲ",
+    "password": "ਪਾਸਵਰਡ",
+    "forgotPassword": "ਪਾਸਵਰਡ ਭੁੱਲ ਗਏ?",
+    "dontHaveAccount": "ਕੋਈ ਖਾਤਾ ਨਹੀਂ ਹੈ?",
+    "alreadyHaveAccount": "ਪਹਿਲਾਂ ਹੀ ਖਾਤਾ ਹੈ?"
+  },
+  "lessons": {
+    "title": "ਪਾਠ",
+    "start": "ਪਾਠ ਸ਼ੁਰੂ ਕਰੋ",
+    "complete": "ਪਾਠ ਪੂਰਾ ਕਰੋ",
+    "progress": "ਤਰੱਕੀ",
+    "score": "ਸਕੋਰ",
+    "difficulty": "ਮੁਸ਼ਕਲ"
+  },
+  "practice": {
+    "title": "ਅਭਿਆਸ",
+    "speak": "ਬੋਲੋ",
+    "listen": "ਸੁਣੋ",
+    "repeat": "ਮੇਰੇ ਬਾਅਦ ਦੁਹਰਾਓ",
+    "excellent": "ਸ਼ਾਨਦਾਰ!",
+    "good": "ਵਧੀਆ ਕੰਮ!",
+    "tryAgain": "ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ"
+  },
+  "settings": {
+    "title": "ਸੈਟਿੰਗਾਂ",
+    "language": "ਭਾਸ਼ਾ",
+    "notifications": "ਸੂਚਨਾਵਾਂ",
+    "sound": "ਆਵਾਜ਼",
+    "privacy": "ਗੋਪਨੀਯਤਾ",
+    "account": "ਖਾਤਾ"
+  },
+  "subscription": {
+    "title": "ਪ੍ਰੀਮੀਅਮ ਲਓ",
+    "features": "ਪ੍ਰੀਮੀਅਮ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ",
+    "unlimited": "ਅਸੀਮਤ ਪਾਠ",
+    "offline": "ਔਫਲਾਈਨ ਮੋਡ",
+    "noAds": "ਕੋਈ ਇਸ਼ਤਿਹਾਰ ਨਹੀਂ",
+    "subscribe": "ਹੁਣੇ ਗਾਹਕੀ ਲਓ"
+  },
+  "errors": {
+    "networkError": "ਨੈੱਟਵਰਕ ਗਲਤੀ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੇ ਕਨੈਕਸ਼ਨ ਦੀ ਜਾਂਚ ਕਰੋ।",
+    "serverError": "ਸਰਵਰ ਗਲਤੀ। ਕਿਰਪਾ ਕਰਕੇ ਬਾਅਦ ਵਿੱਚ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    "invalidInput": "ਗਲਤ ਇਨਪੁੱਟ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੇ ਡੇਟਾ ਦੀ ਜਾਂਚ ਕਰੋ।",
+    "notFound": "ਸਰੋਤ ਨਹੀਂ ਮਿਲਿਆ।"
+  }
+}
