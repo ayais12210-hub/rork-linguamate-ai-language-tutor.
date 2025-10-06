@@ -1,0 +1,93 @@
+name: SuperClaude Quality
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  superclaude:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install pipx
+        run: |
+          python -m pip install --upgrade pip pipx
+          python -m pipx ensurepath
+
+      - name: Install / Upgrade SuperClaude
+        shell: bash
+        run: |
+          pipx install SuperClaude || true
+          pipx upgrade SuperClaude || true
+          SuperClaude install
+
+      - name: Deep Quality Analysis
+        run: |
+          mkdir -p reports
+          /sc:analyze --focus quality --depth deep --format report > reports/superclaude-quality.txt || true
+
+      - name: Upload Analysis Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: superclaude-quality-report
+          path: reports/superclaude-quality.txt
+          if-no-files-found: warn
+
+      - name: Comment Report on PR
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = 'reports/superclaude-quality.txt';
+            let body = 'SuperClaude quality analysis completed. (No report file found)';
+            if (fs.existsSync(path)) {
+              const text = fs.readFileSync(path, 'utf8').slice(0, 60000);
+              body = `### SuperClaude Quality Report\n\n<details><summary>Show report</summary>\n\n\`\`\`\n${text}\n\`\`\`\n\n</details>`;
+            }
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body
+            });
+
+      # Safe improvement pass (will not fail workflow if tool is interactive/makes no changes)
+      - name: Apply Improvements (safe, interactive)
+        id: improve
+        run: |
+          /sc:improve --type quality --safe --interactive || true
+
+      - name: Auto-commit changes (if any)
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: apply SuperClaude quality improvements"
+          branch: superclaude-quality-check
+          create_branch: true
+
+      - name: Open / Update PR for Improvements
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: "SuperClaude: automated quality improvements"
+          body: |
+            This PR was opened automatically after running SuperClaude analysis and improvements.
+            - Deep report uploaded as workflow artifact.
+            - Edits are generated in safe/interactive mode.
+          branch: superclaude-quality-check
+          base: ${{ github.event.pull_request.base.ref || 'main' }}
