@@ -22,7 +22,7 @@ jobs:
         uses: returntocorp/semgrep-action@v1
         with:
           config: .semgrep.yml       # uses your repo’s config
-          generateSarif: true
+          generateSarif: "1"
           sarifFile: semgrep.sarif
 
       - name: Upload SARIF to GitHub Security tab
