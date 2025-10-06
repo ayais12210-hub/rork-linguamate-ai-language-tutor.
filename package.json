@@ -35,7 +35,8 @@
     "backend:typecheck": "tsc --noEmit --project tsconfig.json",
     "backend:lint": "eslint backend/ --ext .ts --max-warnings=0",
     "backend:start": "NODE_ENV=production bun run backend/hono.ts",
-    "web:build": "expo export --platform web"
+    "web:build": "expo export --platform web",
+    "mcp:check": "node -e \"console.log('Validating MCP configuration...'); JSON.parse(require('fs').readFileSync('.cursor/mcp.json', 'utf8')); console.log('✅ MCP configuration is valid JSON');\""
   },
   "dependencies": {
     "@axe-core/playwright": "^4.10.2",
