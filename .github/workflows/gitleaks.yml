@@ -27,9 +27,9 @@ jobs:
       - name: Run Gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
         with:
-          token: ${{ github.token }}
           config-path: .gitleaks.toml
           redact: true
           sarif-file-output: gitleaks.sarif
