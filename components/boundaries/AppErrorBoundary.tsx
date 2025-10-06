@@ -126,7 +126,8 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
       [
         { text: 'Copy Error ID', onPress: () => {
           // Copy to clipboard
-          console.log('Error ID copied:', this.state.errorId);
+          // In a real app, this would copy to clipboard
+          // For now, we'll just acknowledge the action
         }},
         { text: 'Cancel', style: 'cancel' },
       ]

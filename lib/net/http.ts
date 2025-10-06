@@ -73,7 +73,22 @@ export async function getJson<T>(
       return err(error);
     }
 
-    const json = await response.json();
+    let json: unknown;
+    try {
+      const text = await response.text();
+      json = text ? JSON.parse(text) : {};
+    } catch (parseError) {
+      const error = createAppError(
+        'ValidationError',
+        'Invalid JSON response from server',
+        {
+          cause: parseError,
+          context: { url },
+        }
+      );
+      return err(error);
+    }
+    
     const parsed = schema.safeParse(json);
     
     if (!parsed.success) {
@@ -162,7 +177,22 @@ export async function postJson<T, U>(
       return err(error);
     }
 
-    const json = await response.json();
+    let json: unknown;
+    try {
+      const text = await response.text();
+      json = text ? JSON.parse(text) : {};
+    } catch (parseError) {
+      const error = createAppError(
+        'ValidationError',
+        'Invalid JSON response from server',
+        {
+          cause: parseError,
+          context: { url },
+        }
+      );
+      return err(error);
+    }
+    
     const parsed = schema.safeParse(json);
     
     if (!parsed.success) {

@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { PostHogProvider as PostHogProviderBase, PostHog } from 'posthog-react-native';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
@@ -21,7 +21,7 @@ const initPostHog = (): PostHog | null => {
   const host = Constants.expoConfig?.extra?.posthogHost || process.env.EXPO_PUBLIC_POSTHOG_HOST || 'https://app.posthog.com';
   
   if (!apiKey) {
-    console.warn('[AnalyticsProvider] PostHog API key not configured, analytics disabled');
+    console.error('[AnalyticsProvider] PostHog API key not configured, analytics disabled');
     return null;
   }
 
@@ -30,16 +30,13 @@ const initPostHog = (): PostHog | null => {
     // Automatically capture events
     captureAppLifecycleEvents: true,
   });
-  console.log('[AnalyticsProvider] PostHog initialized');
+  console.info('[AnalyticsProvider] PostHog initialized');
   return client;
 };
 
 interface AnalyticsProviderProps {
   children: ReactNode;
 }
-
-import { ReactNode, useEffect, useState } from 'react';
-…
 
 export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
   const [client, setClient] = useState<PostHog | null>(posthogClient);
@@ -62,10 +59,6 @@ export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
       {children}
     </PostHogProviderBase>
   );
-}
-
-// Export PostHog client for direct access
-export const getPostHogClient = () => posthogClient;
 }
 
 // Export PostHog client for direct access

@@ -42,7 +42,7 @@ function rateLimit(ip: string): { allowed: boolean; remaining: number; resetMs: 
 }
 
 sttApp.post('/stt/transcribe', async (c: Context) => {
-  console.log('[STT] Received transcription request');
+  // STT request received
 
   const ipHeader = c.req.header('x-forwarded-for') ?? c.req.header('cf-connecting-ip');
   const ip = (ipHeader ?? 'anon') as string;
@@ -53,45 +53,45 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
   c.header('X-RateLimit-Reset', String(Math.max(0, Math.ceil(rl.resetMs / 1000))));
 
   if (!rl.allowed) {
-    console.log('[STT] Rate limit exceeded for IP:', ip);
+    // Rate limit exceeded
     c.status(429 as any);
     return c.json({ message: 'Rate limit exceeded. Please try again later.' });
   }
 
   const contentType = c.req.header('content-type') ?? '';
   if (!contentType.includes('multipart/form-data')) {
-    console.log('[STT] Invalid content type:', contentType);
+    // Invalid content type
     c.status(400 as any);
     return c.json({ message: 'Expected multipart/form-data' });
   }
 
   try {
-    console.log('[STT] Parsing form data...');
+    // Parsing form data
     const formData = await c.req.formData();
     const audioFile = formData.get('audio');
 
     if (!audioFile) {
-      console.log('[STT] No audio file in request');
+      // No audio file in request
       c.status(400 as any);
       return c.json({ message: 'No audio file provided' });
     }
 
     // Validate audio file
     if (!(audioFile instanceof File || audioFile instanceof Blob)) {
-      console.log('[STT] Invalid audio file type');
+      // Invalid audio file type
       c.status(400 as any);
       return c.json({ message: 'Invalid audio file format' });
     }
 
     // Validate file size
     if (audioFile.size === 0) {
-      console.log('[STT] Empty audio file');
+      // Empty audio file
       c.status(400 as any);
       return c.json({ message: 'Audio file is empty' });
     }
 
     if (audioFile.size > MAX_AUDIO_SIZE) {
-      console.log('[STT] Audio file too large:', audioFile.size);
+      // Audio file too large
       c.status(413 as any);
       return c.json({ 
         message: `Audio file too large. Maximum size is ${MAX_AUDIO_SIZE / 1_000_000}MB`,
@@ -103,7 +103,7 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
     // Validate MIME type
     const audioType = (audioFile as File).type || 'audio/unknown';
     if (!ALLOWED_AUDIO_TYPES.includes(audioType)) {
-      console.log('[STT] Invalid audio MIME type:', audioType);
+      // Invalid audio MIME type
       c.status(400 as any);
       return c.json({ 
         message: `Invalid audio format. Allowed formats: ${ALLOWED_AUDIO_TYPES.join(', ')}`,
@@ -120,7 +120,7 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
       try {
         validatedLanguage = LanguageSchema.parse(String(languageParam));
       } catch (error) {
-        console.log('[STT] Invalid language parameter:', languageParam);
+        // Invalid language parameter
         c.status(400 as any);
         return c.json({ 
           message: 'Invalid language code format. Expected format: en, es, pa-IN, etc.',
@@ -129,14 +129,9 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
       }
     }
 
-    console.log('[STT] Audio file validated successfully');
-    console.log('[STT] File size:', audioFile.size, 'bytes');
-    console.log('[STT] File type:', audioType);
-    if (validatedLanguage) {
-      console.log('[STT] Language:', validatedLanguage);
-    }
+    // Audio file validated successfully
 
-    console.log('[STT] Forwarding to Toolkit API...');
+    // Forwarding to Toolkit API
     const url = new URL('/stt/transcribe/', BASE).toString();
     
     const proxyFormData = new FormData();
@@ -155,7 +150,7 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
       (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
     headers['x-request-id'] = correlationId;
 
-    console.log('[STT] Sending request to:', url);
+    // Sending request to Toolkit API
     const response = await fetch(url, {
       method: 'POST',
       headers,
@@ -163,10 +158,10 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
     });
 
     const responseText = await response.text();
-    console.log('[STT] Toolkit API response status:', response.status);
+    // Received response from Toolkit API
 
     if (!response.ok) {
-      console.error('[STT] Toolkit API error:', responseText);
+      // Toolkit API returned error
       c.status(response.status as any);
       
       let errorMessage = 'Speech-to-text service error';
@@ -174,7 +169,7 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
         const errorJson = JSON.parse(responseText);
         errorMessage = errorJson.message || errorMessage;
       } catch {
-        console.log('[STT] Could not parse error response as JSON');
+        // Could not parse error response as JSON
       }
       
       return c.json({ 
@@ -186,9 +181,9 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
     let result;
     try {
       result = JSON.parse(responseText);
-      console.log('[STT] Transcription successful:', result.text ? 'text received' : 'no text');
+      // Transcription successful
     } catch (parseError) {
-      console.error('[STT] Failed to parse response JSON:', parseError);
+      // Failed to parse response JSON
       c.status(500 as any);
       return c.json({ message: 'Invalid response from speech-to-text service' });
     }
@@ -197,7 +192,7 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
     return c.json(result);
 
   } catch (error: any) {
-    console.error('[STT] Error processing request:', error);
+    // Error processing request
     c.status(503 as any);
     return c.json({ 
       message: 'Service temporarily unavailable', 
@@ -208,7 +203,7 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
 
 // Simple STT endpoint for mobile fallback (mock-first approach)
 sttApp.post('/stt', async (c: Context) => {
-  console.log('[STT] Simple endpoint called');
+  // Simple STT endpoint called
   
   // If real provider keys exist, call them here.
   // For now, return a mock to keep Expo Go compatibility.

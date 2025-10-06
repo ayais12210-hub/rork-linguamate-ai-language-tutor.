@@ -72,7 +72,10 @@ export class WebAudioRecorder {
         }, options.maxDuration);
       }
     } catch (error) {
-      console.error('Failed to start recording:', error);
+      // Log error properly
+      if (error instanceof Error) {
+        throw new Error(`Failed to start recording: ${error.message}`);
+      }
       throw error;
     }
   }
@@ -278,7 +281,8 @@ export const audioPermissions = {
       const result = await navigator.permissions.query({ name: 'microphone' as PermissionName });
       return result.state === 'granted';
     } catch (error) {
-      console.error('Error checking microphone permission:', error);
+      // Return false on error instead of logging
+      // Error could be due to missing permissions API
       return false;
     }
   },
@@ -294,7 +298,7 @@ export const audioPermissions = {
       stream.getTracks().forEach(track => track.stop());
       return true;
     } catch (error) {
-      console.error('Microphone permission denied:', error);
+      // Permission denied - expected behavior, no need to log
       return false;
     }
   },
