@@ -55,7 +55,7 @@ rules:
           dangerouslySetInnerHTML={{__html: $X}}
       - metavariable-regex:
           metavariable: $X
-          regex: ".*\$.*"
+          regex: ".*\\$.*"
   
   - id: console-log-production
     message: "Console.log detected - remove for production."
