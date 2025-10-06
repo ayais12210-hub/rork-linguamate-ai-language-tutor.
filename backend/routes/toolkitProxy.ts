@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import type { Context } from 'hono';
+import { fetchWithTimeout } from '@/backend/lib/http';
 
 const toolkitApp = new Hono();
 
@@ -87,7 +88,7 @@ async function proxyJson(c: Context, path: string, body?: unknown, init?: Reques
   let lastErr: unknown;
   while (attempt <= retries) {
     try {
-      const res = await fetch(url, {
+      const res = await fetchWithTimeout(url, {
         ...init,
         method: init?.method ?? 'POST',
         headers: {
@@ -95,7 +96,7 @@ async function proxyJson(c: Context, path: string, body?: unknown, init?: Reques
           'x-request-id': correlationId,
         },
         body: body !== undefined ? JSON.stringify(body) : undefined,
-      });
+      }, { breakerKey: 'toolkit:json' });
       const text = await res.text();
       const json = text ? JSON.parse(text) : {};
       if (!res.ok) {
@@ -173,11 +174,11 @@ async function proxySttRequest(c: Context, path: string) {
       if (API_KEY) headers['Authorization'] = `Bearer ${API_KEY}`;
       headers['x-request-id'] = correlationId;
 
-      const res = await fetch(url, {
+      const res = await fetchWithTimeout(url, {
         method: 'POST',
         headers,
         body: (c.req as any).raw?.body as unknown as BodyInit,
-      });
+      }, { breakerKey: 'toolkit:stt', timeoutMs: 30000 });
       const text = await res.text();
       const json = text ? JSON.parse(text) : {};
 
@@ -255,11 +256,11 @@ async function proxyImageEditRequest(c: Context, path: string) {
       if (API_KEY) headers['Authorization'] = `Bearer ${API_KEY}`;
       headers['x-request-id'] = correlationId;
 
-      const res = await fetch(url, {
+      const res = await fetchWithTimeout(url, {
         method: 'POST',
         headers,
         body: (c.req as any).raw?.body as unknown as BodyInit,
-      });
+      }, { breakerKey: 'toolkit:image', timeoutMs: 60000 });
       const text = await res.text();
       const json = text ? JSON.parse(text) : {};
 

@@ -1,0 +1,47 @@
+name: 🛠️ Backend CI
+
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - 'schemas/**'
+      - 'lib/**'
+      - 'package.json'
+      - '.github/workflows/backend-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'schemas/**'
+      - 'lib/**'
+      - 'package.json'
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    env:
+      NODE_VERSION: '20'
+      BUN_VERSION: 'latest'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - name: 📥 Install dependencies
+        run: bun install --frozen-lockfile
+      - name: 🔍 Typecheck
+        run: bun run backend:typecheck
+      - name: 🧹 Lint
+        run: bun run backend:lint
+      - name: 🧪 Tests
+        run: bun run backend:test -- --coverage --coverageReporters=json-summary
+      - name: 📊 Upload coverage
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: ./coverage/coverage-final.json
+          flags: backend
+          fail_ci_if_error: false

@@ -28,6 +28,11 @@
     "gitleaks:scan:history": "gitleaks detect --config .gitleaks.toml --log-level info",
     "gitleaks:scan:report": "gitleaks detect --config .gitleaks.toml --report-format json --report-path gitleaks-report.json",
     "dev:server": "bun run backend/hono.ts",
+    "backend:dev": "bun run backend/hono.ts",
+    "backend:build": "echo 'No build step required for Hono (runtime TS via Bun)'",
+    "backend:test": "jest --roots ./backend --config ./jest.config.ts",
+    "backend:typecheck": "tsc --noEmit -p tsconfig.json",
+    "backend:lint": "eslint backend --ext .ts,.tsx --max-warnings=0",
     "dev:full": "concurrently -k -n APP,API \"bun run start\" \"bun run dev:server\"",
     "web:build": "expo export --platform web"
   },

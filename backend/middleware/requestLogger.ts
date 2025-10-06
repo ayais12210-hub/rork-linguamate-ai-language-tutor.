@@ -1,5 +1,6 @@
 import type { Context, Next } from 'hono';
 import { logger } from '../logging/pino';
+import { redactLogData } from '@/modules/logging/redactors';
 
 export async function requestLoggerMiddleware(c: Context, next: Next) {
   const start = Date.now();
@@ -12,7 +13,7 @@ export async function requestLoggerMiddleware(c: Context, next: Next) {
   const duration = Date.now() - start;
   const status = c.res.status;
 
-  const logData = {
+  const logData = redactLogData({
     evt: 'http_request',
     cat: 'api',
     req: {
@@ -25,7 +26,7 @@ export async function requestLoggerMiddleware(c: Context, next: Next) {
       correlationId,
       sessionId: c.get('sessionId'),
     },
-  };
+  });
 
   if (status >= 500) {
     logger.error(logData, `${method} ${path} ${status} ${duration}ms`);

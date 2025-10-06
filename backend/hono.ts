@@ -19,10 +19,26 @@ app.use("*", correlationMiddleware);
 app.use("*", securityHeadersMiddleware);
 app.use("*", requestLoggerMiddleware);
 
-// Enable CORS for all routes (dev-friendly)
+// Enable CORS for all routes
+// In production, restrict to an allow-list specified via ALLOWED_ORIGINS (comma-separated)
+const isProd = process.env.NODE_ENV === "production";
+const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 app.use("*", cors({
-  origin: (origin) => origin ?? "*",
-  allowHeaders: ["Content-Type", "Authorization", "x-correlation-id", "x-session-id"],
+  origin: (origin) => {
+    if (!origin) return isProd ? false : "*";
+    if (!isProd) return origin;
+    return allowedOrigins.includes(origin) ? origin : false;
+  },
+  allowHeaders: [
+    "Content-Type",
+    "Authorization",
+    "x-correlation-id",
+    "x-session-id",
+  ],
   allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   credentials: true,
 }));
@@ -52,6 +68,8 @@ app.get("/info", (c) => {
   return c.json({
     name: "Language Learning Backend",
     version: "1.0.0",
+    environment: process.env.NODE_ENV || "development",
+    buildSha: process.env.GIT_SHA || null,
     endpoints: {
       trpc: "/api/trpc",
       health: "/api",
@@ -66,5 +84,33 @@ app.route("/", ingestLogsApp);
 app.route("/", healthApp);
 app.route("/", toolkitProxy);
 app.route("/", sttApp);
+
+// Centralized error handling and 404 mapping
+app.onError((err, c) => {
+  const correlationId = c.get("correlationId");
+  const status = 500;
+  return c.json(
+    {
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "An unexpected error occurred",
+      },
+      correlationId,
+    },
+    status as any
+  );
+});
+
+app.notFound((c) =>
+  c.json(
+    {
+      error: {
+        code: "NOT_FOUND",
+        message: "Route not found",
+      },
+    },
+    404 as any
+  )
+);
 
 export default app;

@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import type { Context } from 'hono';
 import { z } from 'zod';
+import { fetchWithTimeout } from '@/backend/lib/http';
 
 const sttApp = new Hono();
 
@@ -182,11 +183,11 @@ sttApp.post('/stt/transcribe', async (c: Context) => {
     headers['x-request-id'] = correlationId;
 
     console.log('[STT] Sending request to:', url);
-    const response = await fetch(url, {
+    const response = await fetchWithTimeout(url, {
       method: 'POST',
       headers,
       body: proxyFormData,
-    });
+    }, { breakerKey: 'toolkit:stt', timeoutMs: 30000 });
 
     const responseText = await response.text();
     console.log('[STT] Toolkit API response status:', response.status);
