@@ -21,13 +21,16 @@ export function useAsync<T>() {
     };
   }, []);
 
+  const latestCallIdRef = useRef(0);
+
   const execute = useCallback(async (asyncFunction: () => Promise<T>) => {
+    const callId = ++latestCallIdRef.current;
     setState({ data: null, error: null, loading: true });
 
     try {
       const data = await asyncFunction();
       
-      if (isMountedRef.current) {
+      if (isMountedRef.current && callId === latestCallIdRef.current) {
         setState({ data, error: null, loading: false });
       }
       
@@ -35,7 +38,7 @@ export function useAsync<T>() {
     } catch (error) {
       const errorObj = error instanceof Error ? error : new Error(String(error));
       
-      if (isMountedRef.current) {
+      if (isMountedRef.current && callId === latestCallIdRef.current) {
         setState({ data: null, error: errorObj, loading: false });
       }
       
