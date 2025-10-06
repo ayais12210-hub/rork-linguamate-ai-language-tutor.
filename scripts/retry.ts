@@ -212,51 +212,8 @@ export async function retryWithResult<T>(
   } = options;
 
   let lastError: unknown;
-  
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      const result = await fn();
-      return {
-        success: true,
-        data: result,
-        attempts: attempt + 1,
-        totalDuration: Date.now() - startTime,
-      };
-    } catch (error) {
-      lastError = error;
-      
-      const shouldRetry = attempt < maxRetries && isRetryable(error);
-      if (!shouldRetry) {
-        break;
-      }
-      
-      const delay = calculateDelay(attempt, baseDelayMs, factor, maxDelayMs, useJitter);
-      
-      if (onRetry) {
-        try {
-          onRetry(attempt + 1, delay, error);
-        } catch (callbackError) {
-          console.error('[Retry] onRetry callback error:', callbackError);
-        }
-      }
-      
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-  
-export async function retryWithResult<T>(
-  fn: () => Promise<T>,
-  options: RetryOptions = {}
-): Promise<RetryResult<T>> {
-  const startTime = Date.now();
-  const {
-    maxRetries = DEFAULT_MAX_RETRIES,
-    // ...other options
-  } = options;
-
-  let lastError: unknown;
   let attemptsUsed = 0;
-
+  
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     attemptsUsed = attempt + 1;
     try {
@@ -264,11 +221,12 @@ export async function retryWithResult<T>(
       return {
         success: true,
         data: result,
-        attempts: attempt + 1,
+        attempts: attemptsUsed,
         totalDuration: Date.now() - startTime,
       };
     } catch (error) {
       lastError = error;
+      
       const shouldRetry = attempt < maxRetries && isRetryable(error);
       if (!shouldRetry) {
         return {
@@ -278,16 +236,25 @@ export async function retryWithResult<T>(
           totalDuration: Date.now() - startTime,
         };
       }
+      
+      const delay = calculateDelay(attempt, baseDelayMs, factor, maxDelayMs, useJitter);
+      if (onRetry) {
+        try {
+          onRetry(attemptsUsed, delay, error);
+        } catch (callbackError) {
+          console.error('[Retry] onRetry callback error:', callbackError);
+        }
+      }
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
-
+  
   return {
     success: false,
     error: lastError,
     attempts: attemptsUsed || maxRetries + 1,
     totalDuration: Date.now() - startTime,
   };
-}
 }
 
 /**
