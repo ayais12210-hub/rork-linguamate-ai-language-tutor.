@@ -199,8 +199,16 @@ jobs:
           # Install act if not available
           if ! command -v act &> /dev/null; then
             echo "📦 Installing act..."
-            curl https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
-          fi
+            ACT_VERSION=$(curl --silent "https://api.github.com/repos/nektos/act/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+            ACT_TAR="act_${ACT_VERSION#v}_linux_amd64.tar.gz"
+            ACT_URL="https://github.com/nektos/act/releases/download/${ACT_VERSION}/${ACT_TAR}"
+            ACT_SHA256_URL="${ACT_URL}.sha256"
+            curl -LO "$ACT_URL"
+            curl -LO "$ACT_SHA256_URL"
+            echo "🔑 Verifying checksum..."
+            sha256sum -c "${ACT_TAR}.sha256"
+            sudo tar -xzf "$ACT_TAR" -C /usr/local/bin act
+            rm "$ACT_TAR" "${ACT_TAR}.sha256"
           
           # List all workflows
           echo "📄 Available workflows:"
