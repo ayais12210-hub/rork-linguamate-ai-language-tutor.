@@ -77,13 +77,6 @@ jobs:
         run: |
           /sc:improve --type quality --safe || true
 
-      - name: Auto-commit changes (if any)
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "chore: apply SuperClaude quality improvements"
-          branch: superclaude-quality-check
-          create_branch: true
-
       - name: Open / Update PR for Improvements
         uses: peter-evans/create-pull-request@v6
         with:
