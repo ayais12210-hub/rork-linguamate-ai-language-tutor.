@@ -92,9 +92,9 @@ jobs:
       - name: 🔍 Run security audit
         run: |
           if [ -f bun.lockb ]; then
-            bun run audit:ci || echo "Audit completed with warnings"
+            bun run audit || echo "Audit completed with warnings"
           else
-            npm run audit:ci || echo "Audit completed with warnings"
+            npm audit --audit-level=moderate || echo "Audit completed with warnings"
           fi
 
       - name: 📊 Generate audit report

@@ -2,7 +2,7 @@ name: 📊 Status Badges
 
 on:
   workflow_run:
-    workflows: ["🚀 Main CI Pipeline", "🔒 Enhanced Security Scan"]
+    workflows: ["🚀 Main CI Pipeline", "🔒 Enhanced Security Scan", "🚀 CI Pipeline (Legacy)"]
     types: [completed]
 
 jobs:
