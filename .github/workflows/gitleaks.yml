@@ -2,7 +2,9 @@ name: Gitleaks
 
 on:
   push:
+    branches: [main, develop]
   pull_request:
+    branches: [main, develop]
   schedule:
     - cron: "0 3 * * *" # optional nightly scan
 
