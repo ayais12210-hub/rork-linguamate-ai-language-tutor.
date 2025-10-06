@@ -4,50 +4,59 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+import { AsyncLocalStorage } from 'async_hooks';
 
 const CORRELATION_ID_KEY = 'x-correlation-id';
 
 export class CorrelationIdManager {
-  private static instance: CorrelationIdManager;
-  private currentId: string | null = null;
+  private storage = new AsyncLocalStorage<{ id: string | null }>();
 
-  private constructor() {}
-
-  static getInstance(): CorrelationIdManager {
-    if (!CorrelationIdManager.instance) {
-      CorrelationIdManager.instance = new CorrelationIdManager();
-    }
-    return CorrelationIdManager.instance;
+  runWithId<T>(fn: () => T, id?: string): T {
+    const correlationId = id || uuidv4();
+    return this.storage.run({ id: correlationId }, fn);
   }
 
   generate(): string {
-    this.currentId = uuidv4();
-    return this.currentId;
+    const id = uuidv4();
+    this.set(id);
+    return id;
   }
 
   get(): string | null {
-    return this.currentId;
+    const store = this.storage.getStore();
+    return store ? store.id : null;
   }
 
   set(id: string): void {
-    this.currentId = id;
+    const store = this.storage.getStore();
+    if (store) {
+      store.id = id;
+    } else {
+      // If not in a context, start one
+      this.storage.enterWith({ id });
+    }
   }
 
   clear(): void {
-    this.currentId = null;
+    const store = this.storage.getStore();
+    if (store) {
+      store.id = null;
+    }
   }
 
   getHeader(): Record<string, string> {
-    return this.currentId ? { [CORRELATION_ID_KEY]: this.currentId } : {};
+    const id = this.get();
+    return id ? { [CORRELATION_ID_KEY]: id } : {};
   }
 
   // For logging purposes
   getLogContext(): Record<string, string> {
-    return this.currentId ? { correlationId: this.currentId } : {};
+    const id = this.get();
+    return id ? { correlationId: id } : {};
   }
 }
 
-export const correlationIdManager = CorrelationIdManager.getInstance();
+export const correlationIdManager = new CorrelationIdManager();
 
 // Helper function to wrap tRPC client with correlation IDs
 export function withCorrelationId<T extends Record<string, any>>(
