@@ -31,7 +31,7 @@ jest.mock('expo-speech', () => ({
 }));
 
 // Mock react-native Animated
-jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper');
+// jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper');
 
 // Mock react-native StyleSheet
 jest.mock('react-native', () => {

@@ -68,7 +68,7 @@ function toStringArray(value: unknown): string[] {
   return [JSON.stringify(value)];
 }
 
-function coerceConfidence(value: unknown): number | undefined {
+function _coerceConfidence(value: unknown): number | undefined {
   if (typeof value === 'number') return Math.max(0, Math.min(1, value));
   if (typeof value === 'string') {
     const m = value.match(/([0-9]*\.?[0-9]+)/);

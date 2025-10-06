@@ -162,7 +162,7 @@ export default function LearnScreen() {
 - numbers: map each value to its target string: [{value, target}]
 - words: array of translated strings in same order
 - phrases: array of translated strings in same order`;
-        const res = await fetch('https://toolkit.rork.com/text/llm/', {
+        const _res = await fetch('https://toolkit.rork.com/text/llm/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ messages: [
@@ -170,8 +170,8 @@ export default function LearnScreen() {
             { role: 'user', content: `${prompt}\nSOURCE JSON:\n${JSON.stringify(pack)}` },
           ]}),
         });
-        if (!res.ok) throw new Error('translate_failed');
-        const j = await res.json() as { completion?: string };
+        if (!_res.ok) throw new Error('translate_failed');
+        const j = await _res.json() as { completion?: string };
         let content = String(j.completion ?? '').trim();
         const match = content.match(/\{[\s\S]*\}/);
         if (match) content = match[0];

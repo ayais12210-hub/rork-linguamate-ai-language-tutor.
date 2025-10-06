@@ -4,7 +4,7 @@ import { useMicInput } from '@/hooks/useMicInput';
 // Mock the STT module
 jest.mock('@/lib/stt', () => ({
   getSTT: () => ({
-    start: jest.fn(async (cb: (t: string) => void) => {
+    start: jest.fn(async (cb: (_text: string) => void) => {
       cb('partial');
     }),
     stop: jest.fn(async () => ({ text: 'final text' })),
