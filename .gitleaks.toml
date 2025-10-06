@@ -53,14 +53,16 @@ regexes = [
 
 # Allow specific file patterns that commonly contain test data
 [allowlist.paths]
-  - "**/test/**"
-  - "**/tests/**"
-  - "**/__tests__/**"
-  - "**/fixtures/**"
-  - "**/mocks/**"
-  - "**/stubs/**"
-  - "**/examples/**"
-  - "**/samples/**"
-  - "**/demos/**"
-  - "**/playground/**"
-  - "**/sandbox/**"
+paths = [
+  "**/test/**",
+  "**/tests/**",
+  "**/__tests__/**",
+  "**/fixtures/**",
+  "**/mocks/**",
+  "**/stubs/**",
+  "**/examples/**",
+  "**/samples/**",
+  "**/demos/**",
+  "**/playground/**",
+  "**/sandbox/**"
+]
