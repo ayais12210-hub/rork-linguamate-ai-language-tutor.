@@ -77,7 +77,8 @@ print_status $? "Unit tests passed"
 echo -e "${YELLOW}📊 Checking coverage thresholds...${NC}"
 if [ -f "coverage/coverage-summary.json" ]; then
     COVERAGE=$(node -p "require('./coverage/coverage-summary.json').total.lines.pct")
-    if (( $(echo "$COVERAGE >= $COVERAGE_THRESHOLD" | bc -l) )); then
+    COVERAGE_INT=${COVERAGE%.*}
+    if (( COVERAGE_INT >= COVERAGE_THRESHOLD )); then
         print_status 0 "Coverage threshold met: ${COVERAGE}%"
     else
         echo -e "${RED}❌ Coverage below threshold: ${COVERAGE}% < ${COVERAGE_THRESHOLD}%${NC}"
