@@ -1,9 +1,14 @@
 # 🌐 Linguamate — AI Language Tutor
 
-![Quality](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/quality.yml/badge.svg)
-![Security](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/security.yml/badge.svg)
-![Coverage](https://img.shields.io/badge/coverage-85%25+-brightgreen)
-![License](https://img.shields.io/badge/license-Proprietary-blue)
+<!-- Project Badges -->
+[![CI](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/ci.yml/badge.svg)](https://github.com/ayais12210-hub/Linguamate-ai-tutor/actions/workflows/ci.yml)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Coverage](https://img.shields.io/badge/coverage-85%25+-brightgreen)](https://codecov.io/gh/ayais12210-hub/Linguamate-ai-tutor)
+[![Gitleaks](https://img.shields.io/badge/protected%20by-gitleaks-blue?logo=git&logoColor=white)](https://github.com/gitleaks/gitleaks)
+[![Bun](https://img.shields.io/badge/Bun-F9F1C7?logo=bun&logoColor=black)](https://bun.sh/)
+[![React Native](https://img.shields.io/badge/React_Native-20232A?logo=react&logoColor=61DAFB)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-1C1E24?logo=expo&logoColor=white)](https://expo.dev/)
+[![License: Proprietary](https://img.shields.io/badge/license-Proprietary-blue)](LICENSE)
 
 Cross-Platform AI-Powered Language Learning App  
 *(Expo + React Native + TypeScript + tRPC + Hono backend, with Rork Toolkit integration)*
