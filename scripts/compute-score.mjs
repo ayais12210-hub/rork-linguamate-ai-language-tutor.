@@ -16,8 +16,8 @@ function computeQualityScore() {
   // Check lint results
   try {
     const lintContent = fs.readFileSync('reports/lint.txt', 'utf8');
-    const lintErrors = (lintContent.match(/error/g) || []).length;
-    const lintWarnings = (lintContent.match(/warning/g) || []).length;
+    const lintErrors = (lintContent.match(/\berror\b/gi) || []).length;
+    const lintWarnings = (lintContent.match(/\bwarning\b/gi) || []).length;
     reports.lint.score = Math.max(0, 100 - (lintErrors * 10) - (lintWarnings * 2));
   } catch (e) {
     reports.lint.score = 50; // Default if file doesn't exist
