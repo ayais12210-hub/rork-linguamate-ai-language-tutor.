@@ -25,9 +25,15 @@ jobs:
           fetch-depth: 0  # scan full history when needed
 
       - name: Run Gitleaks
-        uses: zricethezav/gitleaks-action@v2.3.6
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
         with:
-          args: detect --redact --config .gitleaks.toml --report-format sarif --report-path gitleaks.sarif
+          config-path: .gitleaks.toml
+          redact: true
+          sarif-file-output: gitleaks.sarif
+          verbose: true
 
       - name: Upload SARIF to code scanning
         uses: github/codeql-action/upload-sarif@v3

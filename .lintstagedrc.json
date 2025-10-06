@@ -5,5 +5,8 @@
   ],
   "**/*.{json,md,yml,yaml}": [
     "prettier --write"
+  ],
+  "**/*": [
+    "gitleaks protect --staged --config .gitleaks.toml --verbose"
   ]
 }
