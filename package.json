@@ -23,6 +23,10 @@
     "audit:ci": "npm audit --audit-level=high",
     "scan": "npm-run-all -l -s expo:doctor typecheck lint format:check test:ci",
     "scan:full": "npm-run-all -l -s expo:doctor typecheck lint format:check test:ci e2e:ci audit:ci",
+    "gitleaks:scan": "gitleaks detect --config .gitleaks.toml --verbose",
+    "gitleaks:scan:staged": "gitleaks detect --config .gitleaks.toml --staged --verbose",
+    "gitleaks:scan:history": "gitleaks detect --config .gitleaks.toml --log-level info",
+    "gitleaks:scan:report": "gitleaks detect --config .gitleaks.toml --report-format json --report-path gitleaks-report.json",
     "dev:server": "bun run backend/hono.ts",
     "dev:full": "concurrently -k -n APP,API \"bun run start\" \"bun run dev:server\"",
     "web:build": "expo export --platform web"

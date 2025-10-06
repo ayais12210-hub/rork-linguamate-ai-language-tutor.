@@ -282,6 +282,8 @@ Secrets: Never commit; only EXPO_PUBLIC_* client vars
 
 Backend: rate limiting, abuse controls, CORS restricted in prod
 
+Secret Scanning: Gitleaks integrated for automated secret detection ([docs](docs/GITLEAKS_SETUP.md))
+
 AI moderation: server-side filtering for prompts/responses
 
 Permissions: mic only on explicit user action
