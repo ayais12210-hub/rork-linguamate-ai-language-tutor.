@@ -281,7 +281,10 @@ export default function LearnScreen() {
     return [...fromPhonics, ...fromWords].filter(Boolean);
   }, [phonics, data?.commonWords]);
 
-  const progressWidthStyle = useMemo(() => ({ width: `${Math.min(100, achievementProgress).toFixed(0)}%` as any }), [achievementProgress]);
+  const progressWidthStyle = useMemo(() => {
+    const clamped = Math.max(0, Math.min(100, achievementProgress ?? 0));
+    return { width: `${clamped.toFixed(0)}%` };
+  }, [achievementProgress]);
 
   const swipe = useCallback((dir: 'left' | 'right') => {
     Animated.timing(pan, { toValue: { x: dir === 'right' ? 500 : -500, y: 0 }, duration: 200, useNativeDriver: false }).start(() => {
