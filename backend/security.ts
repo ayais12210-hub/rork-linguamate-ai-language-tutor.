@@ -138,8 +138,12 @@ export class AdvancedSecurity {
 
   static async checkPasswordHistory(userId: string, newPassword: string): Promise<boolean> {
     const history = this.passwordHistory.get(userId) || [];
-    const newHash = await SecurityUtils.hashPassword(newPassword);
-    return !history.includes(newHash);
+    for (const storedHash of history) {
+      if (await SecurityUtils.verifyPassword(newPassword, storedHash)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   static async addToPasswordHistory(userId: string, password: string): Promise<void> {
