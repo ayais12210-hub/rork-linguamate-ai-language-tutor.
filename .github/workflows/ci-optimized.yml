@@ -224,19 +224,45 @@ jobs:
       - name: 📊 Performance Budget Check
         run: |
           if [ -f "lighthouse-results.json" ]; then
-            LCP=$(node -p "require('./lighthouse-results.json').lhr.audits['largest-contentful-paint'].numericValue")
-            CLS=$(node -p "require('./lighthouse-results.json').lhr.audits['cumulative-layout-shift'].numericValue")
-            echo "LCP: ${LCP}ms (target: <2500ms)"
-            echo "CLS: ${CLS} (target: <0.1)"
-            if (( $(echo "$LCP > 2500" | bc -l) )); then
-              echo "❌ LCP exceeds budget: ${LCP}ms > 2500ms"
-              exit 1
-            fi
-            if (( $(echo "$CLS > 0.1" | bc -l) )); then
-              echo "❌ CLS exceeds budget: ${CLS} > 0.1"
-              exit 1
-            fi
-            echo "✅ Performance budget met"
+            node <<'EOF'
+const fs = require('fs');
+try {
+  const data = JSON.parse(fs.readFileSync('lighthouse-results.json', 'utf8'));
+  const lhr = data.lhr;
+  if (
+    !lhr ||
+    !lhr.audits ||
+    !lhr.audits['largest-contentful-paint'] ||
+    !lhr.audits['cumulative-layout-shift'] ||
+    typeof lhr.audits['largest-contentful-paint'].numericValue !== 'number' ||
+    typeof lhr.audits['cumulative-layout-shift'].numericValue !== 'number'
+  ) {
+    console.error('❌ lighthouse-results.json does not have the expected structure.');
+    process.exit(1);
+  }
+  const LCP = lhr.audits['largest-contentful-paint'].numericValue;
+  const CLS = lhr.audits['cumulative-layout-shift'].numericValue;
+  console.log(`LCP: ${LCP}ms (target: <2500ms)`);
+  console.log(`CLS: ${CLS} (target: <0.1)`);
+  let failed = false;
+  if (LCP > 2500) {
+    console.error(`❌ LCP exceeds budget: ${LCP}ms > 2500ms`);
+    failed = true;
+  }
+  if (CLS > 0.1) {
+    console.error(`❌ CLS exceeds budget: ${CLS} > 0.1`);
+    failed = true;
+  }
+  if (!failed) {
+    console.log('✅ Performance budget met');
+  } else {
+    process.exit(1);
+  }
+} catch (e) {
+  console.error('❌ Failed to read or parse lighthouse-results.json:', e.message);
+  process.exit(1);
+}
+EOF
           fi
         continue-on-error: true
 
