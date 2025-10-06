@@ -1,0 +1,133 @@
+name: 📱 EAS Mobile Builds
+
+on:
+  push:
+    branches: [main, develop]
+    tags: ['v*.*.*']
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: eas-builds-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Preview builds for PRs and develop branch
+  preview-build:
+    name: 📱 Preview Build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/develop'
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📥 Install dependencies
+        run: npm ci
+
+      - name: 📱 Install EAS CLI
+        run: npm install -g eas-cli
+
+      - name: 🔐 Login to Expo
+        run: eas whoami || eas login --token ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📱 Build Android APK (Preview)
+        run: eas build --platform android --profile preview --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📱 Build iOS Simulator (Development)
+        run: eas build --platform ios --profile development --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📤 Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-builds
+          path: |
+            *.apk
+            *.app
+          retention-days: 7
+
+  # Production builds for main branch and tags
+  production-build:
+    name: 🚀 Production Build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📥 Install dependencies
+        run: npm ci
+
+      - name: 📱 Install EAS CLI
+        run: npm install -g eas-cli
+
+      - name: 🔐 Login to Expo
+        run: eas whoami || eas login --token ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📱 Build Android AAB (Production)
+        run: eas build --platform android --profile production --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📱 Build iOS IPA (Production)
+        run: eas build --platform ios --profile production --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📤 Upload production artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-builds
+          path: |
+            *.aab
+            *.ipa
+          retention-days: 30
+
+      - name: 🏷️ Create Release (for tags)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+
+  # Build status summary
+  build-summary:
+    name: 📊 Build Summary
+    runs-on: ubuntu-latest
+    needs: [preview-build, production-build]
+    if: always()
+    steps:
+      - name: 📊 Generate build summary
+        run: |
+          echo "# 📱 Mobile Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Build Type | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Preview Build | ${{ needs.preview-build.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Production Build | ${{ needs.production-build.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ needs.preview-build.result }}" == "success" || "${{ needs.production-build.result }}" == "success" ]]; then
+            echo "✅ **Mobile builds completed successfully!**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Mobile builds failed!**" >> $GITHUB_STEP_SUMMARY
+          fi

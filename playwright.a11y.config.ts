@@ -19,7 +19,7 @@ export default defineConfig({
     ['json', { outputFile: 'reports/a11y/results.json' }],
   ],
   webServer: {
-    command: 'npm run web',
+    command: 'npm run start-web',
     url: 'http://localhost:8081',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

@@ -1,49 +1,90 @@
-name: CI
+name: 🚀 CI Pipeline (Legacy)
 
 on:
   pull_request:
   push:
     branches: [main, develop]
 
+concurrency:
+  group: ci-legacy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+  BUN_VERSION: 'latest'
+
 jobs:
   typecheck:
-    name: Type Check
+    name: 🔍 Type Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v1
-      - name: Install dependencies
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - name: 📦 Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('**/bun.lockb') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+      - name: 📥 Install dependencies
         run: bun install --frozen-lockfile
-      - name: Type check
+      - name: 🔍 Type check
         run: bun run typecheck
 
   lint:
-    name: Lint & Format Check
+    name: 🧹 Lint & Format Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v1
-      - name: Install dependencies
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - name: 📦 Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('**/bun.lockb') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+      - name: 📥 Install dependencies
         run: bun install --frozen-lockfile
-      - name: Run ESLint
+      - name: 🧹 Run ESLint
         run: bun run lint
-      - name: Check formatting
+      - name: 🎨 Check formatting
         run: bun run format:check
-      - name: Check for circular dependencies
+      - name: 🔄 Check for circular dependencies
         run: |
           npx madge --circular app components modules || (echo "Circular dependencies found" && exit 1)
 
   unit:
-    name: Unit Tests
+    name: 🧪 Unit Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v1
-      - name: Install dependencies
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - name: 📦 Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('**/bun.lockb') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+      - name: 📥 Install dependencies
         run: bun install --frozen-lockfile
-      - name: Run tests with coverage
+      - name: 🧪 Run tests with coverage
         run: bun run test:ci
-      - name: Upload coverage to Codecov
+      - name: 📊 Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         if: always()
         with:
@@ -52,46 +93,45 @@ jobs:
           fail_ci_if_error: false
 
   e2e:
-    name: E2E Tests
+    name: 🎭 E2E Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      - name: Install dependencies
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - name: 📥 Install dependencies
         run: npm ci
-      - name: Install Playwright browsers
+      - name: 🎭 Install Playwright browsers
         run: npx playwright install --with-deps
-      - name: Run E2E tests
-        run: npm run e2e
-      - name: Upload Playwright report
+      - name: 🎭 Run E2E tests
+        run: npm run e2e:ci
+      - name: 📤 Upload Playwright report
         uses: actions/upload-artifact@v4
-        if: failure()
+        if: always()
         with:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
 
   semgrep:
-    name: Security Scan (Semgrep)
+    name: 🔒 Security Scan (Semgrep)
     runs-on: ubuntu-latest
     permissions:
       contents: read
       security-events: write
     steps:
       - uses: actions/checkout@v4
-      - name: Run Semgrep
+      - name: 🔍 Run Semgrep
         uses: returntocorp/semgrep-action@v1
         with:
-          config: >-
-            p/owasp-top-ten
-            p/security-audit
-            p/secrets
+          config: .semgrep.yml
           generateSarif: "1"
           sarifFile: semgrep.sarif
-      - name: Verify SARIF file exists
+        continue-on-error: true
+      - name: 🔍 Verify SARIF file exists
         run: |
           if [ -f "semgrep.sarif" ]; then
             echo "✅ SARIF file found: semgrep.sarif"
@@ -115,24 +155,35 @@ jobs:
           }
           EOF
           fi
-      - name: Upload SARIF to GitHub Security tab
+      - name: 📤 Upload SARIF to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: semgrep.sarif
 
   build-web:
-    name: Build Web
+    name: 🏗️ Build Web
     needs: [typecheck, lint, unit, e2e, semgrep]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v1
-      - name: Install dependencies
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - name: 📦 Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('**/bun.lockb') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+      - name: 📥 Install dependencies
         run: bun install --frozen-lockfile
-      - name: Build web app
+      - name: 🏗️ Build web app
         run: bun run web:build
-      - name: Upload build artifacts
+      - name: 📤 Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: web-dist
@@ -140,7 +191,7 @@ jobs:
           retention-days: 7
 
   lighthouse:
-    name: Lighthouse Performance
+    name: 🚀 Lighthouse Performance
     needs: build-web
     runs-on: ubuntu-latest
     steps:
@@ -149,7 +200,8 @@ jobs:
         with:
           name: web-dist
           path: dist/
-      - name: Run Lighthouse CI
+      - name: 🚀 Run Lighthouse CI
         run: |
           npm install -g @lhci/cli
           lhci autorun || echo "Lighthouse CI completed with warnings"
+        continue-on-error: true

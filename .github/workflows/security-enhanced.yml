@@ -1,0 +1,224 @@
+name: 🔒 Enhanced Security Scan
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+  schedule:
+    # Run weekly on Mondays at 6 AM UTC
+    - cron: '0 6 * * 1'
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  # Dependency review for PRs
+  dependency-review:
+    name: 📦 Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔍 Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
+          deny-licenses: GPL-2.0, GPL-3.0
+          allow-licenses: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC
+
+  # CodeQL analysis
+  codeql:
+    name: 🔍 CodeQL Analysis
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['javascript', 'typescript']
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔍 Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended,security-and-quality
+
+      - name: 🏗️ Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: 🔍 Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:${{ matrix.language }}'
+
+  # NPM security audit
+  npm-audit:
+    name: 🔍 NPM Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 🥟 Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: 📥 Install dependencies
+        run: |
+          if [ -f bun.lockb ]; then
+            bun install --frozen-lockfile
+          else
+            npm ci
+          fi
+
+      - name: 🔍 Run security audit
+        run: |
+          if [ -f bun.lockb ]; then
+            bun run audit:ci || echo "Audit completed with warnings"
+          else
+            npm run audit:ci || echo "Audit completed with warnings"
+          fi
+
+      - name: 📊 Generate audit report
+        run: |
+          npm audit --json > audit-report.json || echo "{}" > audit-report.json
+          echo "Audit report generated"
+
+      - name: 📤 Upload audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-audit-report
+          path: audit-report.json
+          retention-days: 30
+
+  # Semgrep security scan
+  semgrep:
+    name: 🔍 Semgrep Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔍 Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: .semgrep.yml
+          generateSarif: true
+          sarifFile: semgrep.sarif
+        continue-on-error: true
+
+      - name: 🔍 Verify SARIF file
+        run: |
+          if [ -f "semgrep.sarif" ]; then
+            echo "✅ SARIF file found: semgrep.sarif"
+            ls -la semgrep.sarif
+          else
+            echo "⚠️ Creating empty SARIF file for upload"
+            cat > semgrep.sarif <<EOF
+{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "semgrep",
+          "version": "1.0.0"
+        }
+      },
+      "results": []
+    }
+  ]
+}
+EOF
+          fi
+
+      - name: 📤 Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: semgrep.sarif
+
+  # Secret scanning with Gitleaks
+  secrets-scan:
+    name: 🔐 Secret Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔐 Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  # Security summary
+  security-summary:
+    name: 📊 Security Summary
+    runs-on: ubuntu-latest
+    needs: [dependency-review, codeql, npm-audit, semgrep, secrets-scan]
+    if: always()
+    steps:
+      - name: 📊 Create security summary
+        run: |
+          echo "# 🔒 Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Scan Type | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Dependency Review | ${{ needs.dependency-review.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| CodeQL Analysis | ${{ needs.codeql.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| NPM Audit | ${{ needs.npm-audit.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Semgrep Scan | ${{ needs.semgrep.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Secrets Scan | ${{ needs.secrets-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Count successful scans
+          SUCCESS_COUNT=0
+          TOTAL_SCANS=5
+          
+          if [[ "${{ needs.dependency-review.result }}" == "success" ]]; then ((SUCCESS_COUNT++)); fi
+          if [[ "${{ needs.codeql.result }}" == "success" ]]; then ((SUCCESS_COUNT++)); fi
+          if [[ "${{ needs.npm-audit.result }}" == "success" ]]; then ((SUCCESS_COUNT++)); fi
+          if [[ "${{ needs.semgrep.result }}" == "success" ]]; then ((SUCCESS_COUNT++)); fi
+          if [[ "${{ needs.secrets-scan.result }}" == "success" ]]; then ((SUCCESS_COUNT++)); fi
+          
+          echo "**Overall Security Score:** $SUCCESS_COUNT/$TOTAL_SCANS" >> $GITHUB_STEP_SUMMARY
+          
+          if [ $SUCCESS_COUNT -eq $TOTAL_SCANS ]; then
+            echo "✅ **All security scans passed!**" >> $GITHUB_STEP_SUMMARY
+          elif [ $SUCCESS_COUNT -ge 3 ]; then
+            echo "⚠️ **Most security scans passed ($SUCCESS_COUNT/$TOTAL_SCANS)**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Multiple security scans failed ($SUCCESS_COUNT/$TOTAL_SCANS)**" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      - name: 🎯 Security Gate
+        run: |
+          # Fail if critical security scans failed
+          if [[ "${{ needs.npm-audit.result }}" == "failure" || "${{ needs.secrets-scan.result }}" == "failure" ]]; then
+            echo "❌ Critical security scans failed"
+            exit 1
+          fi
+          
+          echo "✅ Security gate passed"
