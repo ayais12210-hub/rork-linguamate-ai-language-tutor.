@@ -20,7 +20,8 @@ export const unwrap = <T, E>(result: Result<T, E>): T => {
   if (result.ok) {
     return result.value;
   }
-  throw new Error(`Called unwrap on error result: ${result.error.message}`);
+  const message = (result as { ok: false; error: unknown }).error as any;
+  throw new Error(`Called unwrap on error result: ${message?.message ?? String(message)}`);
 };
 
 export const unwrapOr = <T, E>(result: Result<T, E>, defaultValue: T): T => {

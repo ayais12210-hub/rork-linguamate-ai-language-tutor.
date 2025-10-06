@@ -1,7 +1,6 @@
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { PostHogProvider as PostHogProviderBase, PostHog } from 'posthog-react-native';
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
 
 /**
  * AnalyticsProvider - Initializes PostHog analytics and feature flags
@@ -25,21 +24,23 @@ const initPostHog = (): PostHog | null => {
     return null;
   }
 
-  const client = new PostHog(apiKey, {
-    host,
-    // Automatically capture events
-    captureAppLifecycleEvents: true,
-  });
-  console.log('[AnalyticsProvider] PostHog initialized');
-  return client;
+  try {
+    const client = new PostHog(apiKey, {
+      host,
+      // Automatically capture events
+      captureAppLifecycleEvents: true,
+    });
+    console.info('[AnalyticsProvider] PostHog initialized');
+    return client;
+  } catch (error) {
+    console.error('[AnalyticsProvider] Failed to initialize PostHog', error);
+    return null;
+  }
 };
 
 interface AnalyticsProviderProps {
   children: ReactNode;
 }
-
-import { ReactNode, useEffect, useState } from 'react';
-…
 
 export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
   const [client, setClient] = useState<PostHog | null>(posthogClient);
@@ -62,10 +63,6 @@ export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
       {children}
     </PostHogProviderBase>
   );
-}
-
-// Export PostHog client for direct access
-export const getPostHogClient = () => posthogClient;
 }
 
 // Export PostHog client for direct access
