@@ -1,11 +1,12 @@
 module.exports = {
   root: true,
   extends: [
-    'eslint-config-expo',
+    '@react-native',
     'plugin:@typescript-eslint/recommended',
     'plugin:react-hooks/recommended',
     'plugin:jest/recommended',
-    'plugin:testing-library/react'
+    'plugin:testing-library/react',
+    'plugin:import/typescript'
   ],
   plugins: ['@typescript-eslint', 'import', 'jest', 'testing-library', 'react-native'],
   parser: '@typescript-eslint/parser',
@@ -13,6 +14,15 @@ module.exports = {
     ecmaVersion: 2022,
     sourceType: 'module',
     project: './tsconfig.json'
+  },
+  settings: {
+    'import/resolver': {
+      typescript: { project: ['tsconfig.json'] },
+      node: { extensions: ['.ts', '.tsx', '.js', '.jsx'] }
+    }
+  },
+  env: {
+    jest: true
   },
   rules: {
     'react/no-unescaped-entities': 'off',

@@ -1,0 +1,24 @@
+rules:
+  - id: dangerous-eval
+    patterns: [pattern: eval(...)]
+    message: Avoid eval
+    severity: WARNING
+    languages: [javascript, typescript]
+  
+  - id: dangerous-innerHTML
+    patterns: [pattern: innerHTML = ...]
+    message: Avoid innerHTML to prevent XSS
+    severity: WARNING
+    languages: [javascript, typescript]
+  
+  - id: console-log
+    patterns: [pattern: console.log(...)]
+    message: Remove console.log in production
+    severity: INFO
+    languages: [javascript, typescript]
+  
+  - id: hardcoded-secrets
+    patterns: [pattern: (password|secret|key|token) = ".*"]
+    message: Avoid hardcoded secrets
+    severity: WARNING
+    languages: [javascript, typescript]

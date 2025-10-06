@@ -1,31 +1,22 @@
 name: Semgrep
-
 on:
-  pull_request: {}
-  push: { branches: [ main, develop ] }
-
-permissions:
-  contents: read
-  security-events: write
-
-concurrency:
-  group: semgrep-${{ github.ref }}
-  cancel-in-progress: true
-
+  pull_request:
+  push:
+    branches: [main]
 jobs:
   semgrep:
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
-
-      - name: Run Semgrep
-        uses: returntocorp/semgrep-action@v1
+      - uses: returntocorp/semgrep-action@v1
         with:
-          config: .semgrep.yml       # uses your repo’s config
+          config: .semgrep/semgrep.yml
           generateSarif: true
           sarifFile: semgrep.sarif
-
-      - name: Upload SARIF to GitHub Security tab
+      - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: semgrep.sarif

@@ -258,10 +258,10 @@ describe('Validation Middleware', () => {
       try {
         CommonSchemas.pagination.parse({ page: -1, limit: 200 });
       } catch (error: any) {
-        expect(error.errors).toBeDefined();
-        expect(error.errors.length).toBeGreaterThan(0);
-        expect(error.errors[0]).toHaveProperty('path');
-        expect(error.errors[0]).toHaveProperty('message');
+        expect(error.issues).toBeDefined();
+        expect(error.issues.length).toBeGreaterThan(0);
+        expect(error.issues[0]).toHaveProperty('path');
+        expect(error.issues[0]).toHaveProperty('message');
       }
     });
   });

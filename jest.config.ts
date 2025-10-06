@@ -19,7 +19,7 @@ const config: Config = {
     '^@backend/(.*)$': '<rootDir>/backend/$1',
     '^react-native$': '<rootDir>/tests/config/react-native-mock.js',
     '\\.(css|less|scss)$': '<rootDir>/tests/config/styleMock.js',
-    '\\.(jpg|jpeg|png|gif|svg)$': '<rootDir>/tests/config/fileMock.js',
+    '\\.(jpg|jpeg|png|gif|svg|mp3)$': '<rootDir>/tests/config/fileMock.js',
   },
   collectCoverageFrom: [
     'app/**/*.{ts,tsx}',
@@ -43,13 +43,18 @@ const config: Config = {
   transformIgnorePatterns: [
     'node_modules/(?!((jest-)?react-native|@react-native|expo(nent)?|@expo(nent)?/.*|@testing-library|react-clone-referenced-element|@react-navigation|@tanstack|msw|@mswjs|until-async|strict-event-emitter)/)'
   ],
-  globals: {
-    'ts-jest': {
+  transform: {
+    '^.+\\.(ts|tsx)$': ['ts-jest', {
       tsconfig: {
-        jsx: 'react',
+        jsx: 'react-jsx',
       },
-    },
+    }],
   },
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/tests/a11y/',
+    '/tests/e2e/'
+  ],
 };
 
 export default config;
