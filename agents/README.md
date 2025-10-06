@@ -1,204 +1,137 @@
 # Cursor Multi-Agent Workforce
 
-This directory contains the configuration and prompts for the Cursor AI multi-agent workforce system tailored for Expo RN + TypeScript + tRPC + Hono stack.
+This directory contains configuration and templates for the Cursor AI multi-agent workforce, tailored for Expo React Native + TypeScript + tRPC + Hono stack.
 
 ## Structure
 
-- **`tasks.yaml`**: Task definitions for features, bugs, maintenance, docs, and security
-- **`prompts/`**: Role-specific prompts for Manager, Engineer, Tester, Docs, and Security agents
-- **`templates/`**: PR template for agent-generated pull requests
-- **`outbox/`**: Generated plans and work artifacts (git-ignored)
+```
+agents/
+├── tasks.yaml              # Task definitions (features, bugs, maintenance, docs, security)
+├── prompts/                # Role-specific prompt files
+│   ├── manager.md
+│   ├── engineer.md
+│   ├── tester.md
+│   ├── docs.md
+│   └── security.md
+├── templates/              # PR and documentation templates
+│   └── PR_TEMPLATE_AGENT.md
+├── outbox/                 # Generated plans (created automatically)
+└── README.md              # This file
+```
 
 ## Quick Start
 
-### 1. Load the Rules
+### 1. Create an AI Task
 
-In Cursor, run:
+Use the GitHub issue template at `.github/ISSUE_TEMPLATE/ai_task.yml`:
+- Go to Issues → New Issue → "AI Task"
+- Fill in title, context, and acceptance criteria
+- Choose autonomy level (`ai:planned` or `ai:autonomous`)
+
+### 2. Run the Manager Agent
+
+In Cursor, paste this prompt:
+
 ```
-Load .cursorrules. Act as Manager. Read /agents/tasks.yaml.
-```
-
-### 2. Create an AI Task
-
-Use the GitHub issue template `.github/ISSUE_TEMPLATE/ai_task.yml` to create a new task, or reference existing tasks from `tasks.yaml`.
-
-### 3. Execute Tasks
-
-**Example: Start STT Implementation**
-```
-Act as Manager. Implement translator-stt feature from tasks.yaml. 
-Create branch ai/engineer/stt-integration. Open PR using template.
+Load .cursorrules. Act as Manager. Read /agents/tasks.yaml. 
+Create plan and spawn first 3 subtasks as PRs ≤300 LOC.
+Use /agents/templates/PR_TEMPLATE_AGENT.md for PRs.
 ```
 
-**Example: Add Tests**
+### 3. Execute Specific Roles
+
+**Engineer:**
 ```
-Act as Tester. Add tests for useMicInput hook with 85%+ coverage. 
-Use MSW mocks for /api/stt endpoint.
-```
-
-## Roles
-
-### Manager
-- Ingests tasks from `tasks.yaml` and GitHub issues
-- Creates execution plans in `agents/outbox/`
-- Spawns subtasks across Engineer, Tester, Docs, Security roles
-- Opens PRs using the agent template
-
-### Engineer
-- Implements minimal viable changes
-- Ensures typed boundaries and error handling
-- No native modules without `allow:native` label
-- Runs lint/typecheck/test before PR
-
-### Tester
-- Uses Jest + @testing-library/react-native
-- MSW for network mocking
-- Target: 85%+ diff coverage on changed lines
-- Reports coverage in PR body
-
-### Docs
-- Updates README/docs with usage examples
-- Documents env variables and configuration
-- Keeps CHANGELOG in sync
-
-### Security
-- Scans diffs for XSS, eval, unsafe storage
-- Adds zod validation where missing
-- Provides security checklist in PR
-
-## Task Definition Format
-
-```yaml
-features:
-  - id: feature-id
-    title: "Feature Title"
-    acceptance:
-      - Criteria 1
-      - Criteria 2
-    tests:
-      - Test requirement 1
-    docs:
-      - Documentation requirement
-
-bugs:
-  - id: bug-id
-    title: "Bug Title"
-    repro: "Reproduction steps"
-    tests:
-      - Regression test requirements
+Act as Engineer. Implement translator-stt feature with hooks/components and types.
+Validate: npm run lint && npm run typecheck && npm run test
 ```
 
-## Validation
+**Tester:**
+```
+Act as Tester. Add RTL tests for translator-stt with MSW mocks. 
+Target 85%+ diff coverage.
+```
+
+**Docs:**
+```
+Act as Docs. Update README with Voice Input usage and env toggles.
+```
+
+**Security:**
+```
+Act as Security. Scan translator-stt for XSS/validation issues.
+Add zod schemas where missing.
+```
+
+## Task Management
+
+Tasks are defined in `tasks.yaml` with categories:
+- **features**: New functionality
+- **bugs**: Bug fixes
+- **maintenance**: Refactoring, dependencies
+- **docs**: Documentation updates
+- **security**: Security hardening
+
+## Autonomy Levels
+
+- **ai:planned** (default): Agent asks before refactors >200 LOC
+- **ai:autonomous**: Agent proceeds within scope + guardrails
+
+## Quality Gates
 
 All PRs must pass:
 ```bash
-npm run lint
-npm run typecheck
-npm run test -- --coverage
+npm run lint          # ESLint
+npm run typecheck     # TypeScript strict
+npm run test          # Jest with 85%+ coverage
 ```
 
-## Configuration
+## Mobile-Specific Guardrails
 
-Autonomy levels (set via GitHub labels):
-- **`ai:planned`**: Agent asks before refactors >200 LOC
-- **`ai:autonomous`**: Agent proceeds within guardrails
+1. **No Native Modules**: No `expo prebuild` without `allow:native` label
+2. **ESLint rule**: `react-native/no-raw-text` enforced (no stray text in `<View>`)
+3. **Accessibility**: All custom touchables need `accessibilityRole`/`Label`
+4. **Testing**: Use `@testing-library/react-native` + MSW for network
 
-Default concurrency: 3 parallel tasks
+## STT Implementation
+
+The Speech-to-Text feature follows a **mobile-first, non-native** approach:
+
+- **Web**: Web Speech API (if available)
+- **Mobile**: Server fallback via `/api/stt` (mock-first, can be upgraded)
+- **Provider abstraction**: `lib/stt/` with pluggable implementations
+
+See `hooks/useMicInput.ts` and `components/MicButton.tsx` for usage.
 
 ## CI/CD
 
-The `.github/workflows/app-ci.yml` workflow runs on all PRs:
+GitHub Actions workflow at `.github/workflows/app-ci.yml` runs on PRs:
 - Type checking
 - Linting
 - Tests with coverage
 
-## Speech-to-Text (STT) Implementation
+## Branch Naming
 
-The multi-agent workforce has scaffolded a complete STT system:
+Format: `ai/<role>/<kebab-slug>`
 
-### Components Created
+Examples:
+- `ai/engineer/translator-stt`
+- `ai/tester/lang-search-tests`
+- `ai/docs/voice-input-readme`
 
-1. **Provider Abstraction** (`lib/stt/`)
-   - `provider.ts`: Interface definition
-   - `webSpeech.ts`: Web Speech API implementation
-   - `serverFallback.ts`: Server-side STT fallback
-   - `index.ts`: Provider selection logic
+## Commit Convention
 
-2. **React Hook** (`hooks/useMicInput.ts`)
-   - State machine: idle → recording → processing
-   - Provider lifecycle management
-   - Partial and final text callbacks
-
-3. **UI Component** (`components/MicButton.tsx`)
-   - Accessible button with proper ARIA labels
-   - Visual recording states
-   - Activity indicator for processing
-
-4. **Backend Route** (`backend/routes/stt.ts`)
-   - Simple `/stt` endpoint for mobile fallback
-   - Mock-first approach (set `STT_MOCK_ENABLED=false` to enable real providers)
-   - Rate limiting and error handling
-
-5. **Tests** (`__tests__/useMicInput.test.ts`)
-   - Hook state machine tests
-   - Mocked provider for deterministic testing
-
-6. **MSW Mocks** (`tests/msw/handlers.ts`)
-   - `/api/stt` endpoint mock
-   - Returns predictable mock response
-
-### Usage
-
-```tsx
-import { MicButton } from '@/components/MicButton';
-
-function TranslatorScreen() {
-  const [text, setText] = useState('');
-  
-  return (
-    <MicButton onInsert={(voiceText) => setText(text + ' ' + voiceText)} />
-  );
-}
-```
-
-### Environment Variables
-
-- `STT_MOCK_ENABLED`: Set to `false` to use real STT providers (default: `true`)
-- `EXPO_PUBLIC_TOOLKIT_URL`: Base URL for STT service
-- `TOOLKIT_API_KEY`: API key for STT service
-
-## E2E Testing
-
-Maestro flows in `.maestro/flows/`:
-- `translator.yml`: Basic happy path test
-
-Run with: `npm run e2e`
-
-## Known Limitations
-
-1. **Test Setup**: The test infrastructure requires full polyfills for MSW v2. Current setup includes:
-   - web-streams-polyfill
-   - whatwg-fetch  
-   - TextEncoder/TextDecoder
-   
-   Some tests may need additional configuration based on your environment.
-
-2. **Native Modules**: The STT implementation deliberately avoids native modules to maintain Expo Go compatibility.
-
-3. **Jest Config**: Uses `ts-jest` preset. Consider migrating to `jest-expo` for better React Native support.
-
-## Contributing
-
-When acting as an agent:
-
-1. **Check guardrails** in `.cursorrules`
-2. **Run validation** commands locally
-3. **Use PR template** from `templates/PR_TEMPLATE_AGENT.md`
-4. **Update this README** if you change agent workflows
+Use Conventional Commits:
+- `feat:` New feature
+- `fix:` Bug fix
+- `docs:` Documentation
+- `test:` Tests only
+- `refactor:` Code restructuring
+- `chore:` Maintenance
+- `perf:` Performance improvement
 
 ## Support
 
-For questions about the multi-agent system:
-- Review `.cursorrules` for global principles
-- Check `prompts/<role>.md` for role-specific guidance
-- Reference `tasks.yaml` for acceptance criteria
+- Review `.cursorrules` for complete workflow
+- Check `tasks.yaml` for active work items
+- See `templates/PR_TEMPLATE_AGENT.md` for PR format
