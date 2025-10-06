@@ -1029,6 +1029,7 @@ export const useSpeech = () => {
         .trim();
 
       // Capitalize first letter of each sentence
+      // The following regex matches the first letter of each sentence (either at the start of the string or after a sentence-ending punctuation and whitespace) for capitalization.
       formatted = formatted.replace(/(^|[.!?]\s+)([a-z])/g, (match, prefix, letter) => 
         prefix + letter.toUpperCase()
       );
