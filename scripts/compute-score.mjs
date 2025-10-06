@@ -34,7 +34,7 @@ function computeQualityScore() {
 
   // Check test coverage
   try {
-    const coveragePath = 'reports/coverage/coverage-summary.json';
+    const coveragePath = 'coverage/coverage-summary.json';
     if (fs.existsSync(coveragePath)) {
       const coverage = JSON.parse(fs.readFileSync(coveragePath, 'utf8'));
       const total = coverage.total;
