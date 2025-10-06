@@ -1,0 +1,28 @@
+# .cursor/tasks/superclaude.yml
+# PR-ready Cursor Prompt for SuperClaude Integration
+
+tasks:
+  - name: Install SuperClaude
+    run: |
+      pipx install SuperClaude
+      pipx upgrade SuperClaude
+      SuperClaude install
+
+  - name: Deep Quality Analysis
+    run: |
+      /sc:analyze --focus quality --depth deep --format report
+    description: |
+      Runs a full SuperClaude analysis with deep inspection,
+      focusing on quality issues and producing a structured report.
+
+  - name: Quality Improvement
+    run: |
+      /sc:improve --type quality --safe --interactive
+    description: |
+      Applies targeted improvements based on the analysis,
+      ensuring changes are safe, high-quality, and interactive.
+
+options:
+  auto_commit: true
+  commit_message: "chore: run SuperClaude install, analysis, and improvements"
+  branch: superclaude-quality-check
