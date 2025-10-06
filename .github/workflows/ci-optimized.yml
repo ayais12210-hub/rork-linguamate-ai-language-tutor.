@@ -10,6 +10,12 @@ concurrency:
   group: ci-optimized-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: write
+  actions: read
+
 env:
   NODE_VERSION: '20'
   BUN_VERSION: 'latest'
