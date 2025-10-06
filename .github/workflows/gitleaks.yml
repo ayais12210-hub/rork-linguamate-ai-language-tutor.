@@ -1,28 +1,35 @@
 name: Gitleaks
 
 on:
-  pull_request: {}
-  push: { branches: [ main, develop ] }
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 3 * * *" # optional nightly scan
 
 permissions:
   contents: read
+  security-events: write
+  actions: read
 
 concurrency:
   group: gitleaks-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  scan:
+  gitleaks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
-      - uses: gitleaks/gitleaks-action@v2
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          args: --redact
+          fetch-depth: 0  # scan full history when needed
 
-- uses: gitleaks/gitleaks-action@v2
-  with:
-    args: --redact
-  env:
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run Gitleaks
+        uses: zricethezav/gitleaks-action@v2
+        with:
+          args: detect --redact --report-format sarif --report-path gitleaks.sarif
+
+      - name: Upload SARIF to code scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: gitleaks.sarif
