@@ -19,11 +19,30 @@ test.describe('Performance Tests', () => {
     // Measure LCP (Largest Contentful Paint)
     const lcp = await page.evaluate(() => {
       return new Promise((resolve) => {
-        new PerformanceObserver((list) => {
+        // Check for existing LCP entries first
+        const existingEntries = performance.getEntriesByType('largest-contentful-paint');
+        if (existingEntries.length > 0) {
+          resolve(existingEntries[existingEntries.length - 1].startTime);
+          return;
+        }
+        // Set up observer and timeout
+        let resolved = false;
+        const observer = new PerformanceObserver((list) => {
           const entries = list.getEntries();
-          const lastEntry = entries[entries.length - 1];
-          resolve(lastEntry.startTime);
-        }).observe({ entryTypes: ['largest-contentful-paint'] });
+          if (entries.length > 0 && !resolved) {
+            resolved = true;
+            observer.disconnect();
+            resolve(entries[entries.length - 1].startTime);
+          }
+        });
+        observer.observe({ entryTypes: ['largest-contentful-paint'] });
+        // Timeout after 3 seconds
+        setTimeout(() => {
+          if (!resolved) {
+            observer.disconnect();
+            resolve(performance.now());
+          }
+        }, 3000);
       });
     });
     
