@@ -126,7 +126,7 @@ test.describe('Accessibility Tests', () => {
     const liveRegionCount = await liveRegions.count();
     
     // Should have at least one live region for dynamic content
-    expect(liveRegionCount).toBeGreaterThanOrEqual(0);
+    expect(liveRegionCount).toBeGreaterThanOrEqual(1);
   });
 
   test('should have proper alt text for images', async ({ page }) => {
