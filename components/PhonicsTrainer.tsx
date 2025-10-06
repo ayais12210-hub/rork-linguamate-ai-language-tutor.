@@ -179,8 +179,6 @@ const PhonicsTrainerComponent: React.FC<Props> = ({ items, targetLangCode, onCom
   );
 };
 
-export default React.memo(PhonicsTrainer);
-
 const styles = StyleSheet.create({
   wrap: { backgroundColor: '#FFF1F2', borderColor: '#FECACA', borderWidth: 1, borderRadius: 12, padding: 12, marginTop: 8 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
@@ -226,4 +224,4 @@ const PhonicsTrainer: React.FC<Props> = (props) => {
   );
 };
 
-export default PhonicsTrainer;
+export default React.memo(PhonicsTrainer);

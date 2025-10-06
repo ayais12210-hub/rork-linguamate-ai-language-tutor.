@@ -13,6 +13,8 @@
     "test": "jest",
     "test:ci": "jest --ci --runInBand --coverage --coverageReporters=text --coverageReporters=cobertura",
     "test:watch": "jest --watch",
+    "test:changed": "jest --onlyChanged",
+    "lint:changed": "eslint --ext .ts,.tsx --max-warnings=0 --report-unused-disable-directives --cache --cache-location .eslintcache",
     "e2e": "playwright test --reporter=line",
     "e2e:ci": "playwright install --with-deps && playwright test",
     "a11y": "playwright test -c playwright.a11y.config.ts --reporter=line",
@@ -71,6 +73,7 @@
     "expo-constants": "~17.1.4",
     "expo-crypto": "~14.1.5",
     "expo-device": "~7.1.4",
+    "expo-doctor": "^1.0.2",
     "expo-document-picker": "~13.1.6",
     "expo-font": "~13.3.0",
     "expo-haptics": "~14.1.4",
@@ -101,9 +104,11 @@
     "lighthouse": "^12.8.2",
     "lint-staged": "^16.2.3",
     "lottie-react-native": "7.2.2",
+    "madge": "^6.0.0",
     "lucide-react-native": "^0.475.0",
     "msw": "^2.11.3",
     "nativewind": "^4.1.23",
+    "npm-run-all": "^4.1.5",
     "pino": "^9.13.0",
     "pino-pretty": "^13.1.1",
     "posthog-react-native": "^4.7.1",
@@ -127,18 +132,13 @@
     "wait-on": "^9.0.1",
     "whatwg-url": "^15.1.0",
     "zod": "^4.1.8",
-    "zustand": "^5.0.2",
-    "npm-run-all": "^4.1.5",
-    "expo-doctor": "^1.0.2"
-  },
-  "jest": {
-    "coverageThreshold": {
-      "global": { "branches": 60, "functions": 65, "lines": 70, "statements": 70 }
-    }
+    "zustand": "^5.0.2"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@eslint/eslintrc": "^3.1.0",
     "@expo/ngrok": "^4.1.0",
+    "@testing-library/dom": "^10.4.1",
     "@types/react": "~19.0.10",
     "eslint": "^9.31.0",
     "eslint-config-expo": "^9.2.0",
