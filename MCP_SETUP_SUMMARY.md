@@ -1,6 +1,6 @@
 # MCP Setup Summary — Linguamate
 
-**Date**: 2025-10-06  
+**Date**: 2024-06-01  
 **Branch**: `cursor/configure-model-context-protocol-servers-bf82`
 
 ---
