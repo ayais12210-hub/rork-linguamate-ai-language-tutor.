@@ -1,0 +1,51 @@
+{
+  "id": "example123",
+  "source_url": "https://example.com/sample-article",
+  "title": "Sample News Article for Language Learning",
+  "language": "en",
+  "created_at": 1704067200,
+  "sections": [
+    {
+      "type": "context",
+      "text": "This is a sample news article that would be used for language learning. The content is cleaned and formatted to provide context for learners. It contains relevant vocabulary and cultural information that can be used in various learning activities."
+    },
+    {
+      "type": "vocab_suggestions",
+      "items": [
+        "sample",
+        "article",
+        "language",
+        "learning",
+        "content",
+        "formatted",
+        "context",
+        "learners",
+        "vocabulary",
+        "cultural",
+        "information",
+        "activities"
+      ]
+    },
+    {
+      "type": "prompts",
+      "items": [
+        {
+          "task": "summarise",
+          "prompt": "Summarise the article in 3 bullet points."
+        },
+        {
+          "task": "translate",
+          "prompt": "Translate the summary into the learner's target language."
+        },
+        {
+          "task": "quiz",
+          "prompt": "Generate 3 comprehension questions (A/B/C answers)."
+        }
+      ]
+    }
+  ],
+  "safety": {
+    "pii_checked": true,
+    "profanity_checked": true
+  }
+}

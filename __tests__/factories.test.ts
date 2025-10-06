@@ -1,4 +1,4 @@
-import { makeLesson, makeExercise, makeUser, makeUserProfile } from '../tests/factories';
+import { makeLesson, makeExercise, makeUser } from '../tests/factories';
 
 describe('Test Factories', () => {
   describe('makeLesson', () => {
@@ -64,13 +64,16 @@ describe('Test Factories', () => {
     });
   });
 
-  describe('makeUserProfile', () => {
-    test('creates valid user profile with preferences and stats', () => {
-      const profile = makeUserProfile();
-      expect(profile).toHaveProperty('preferences');
-      expect(profile).toHaveProperty('stats');
-      expect(profile.preferences).toHaveProperty('dailyGoal', 20);
-      expect(profile.stats).toHaveProperty('lessonsCompleted', 0);
+  describe('makeUser', () => {
+    test('creates valid user with basic properties', () => {
+      const user = makeUser();
+      expect(user).toHaveProperty('id');
+      expect(user).toHaveProperty('email');
+      expect(user).toHaveProperty('name');
+      expect(user).toHaveProperty('nativeLanguage');
+      expect(user).toHaveProperty('targetLanguage');
+      expect(user).toHaveProperty('proficiencyLevel');
+      expect(user).toHaveProperty('createdAt');
     });
   });
 });

@@ -7,6 +7,7 @@ export function makeUser(overrides: Partial<any> = {}) {
     targetLanguage: 'pa',
     proficiencyLevel: 'beginner',
     createdAt: Date.now(),
+    xp: 0,
     ...overrides,
   };
 }

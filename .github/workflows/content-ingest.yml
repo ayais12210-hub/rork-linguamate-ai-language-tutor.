@@ -1,0 +1,75 @@
+name: MCP Content Ingest
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "15 6 * * 1-5" # 06:15 UTC on weekdays
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install MCP servers deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r mcp_servers/requirements.txt
+
+      - name: Configure MCP domains
+        run: |
+          echo "MCP_INGEST_ALLOW_DOMAINS=bbc.co.uk,aljazeera.com,apnews.com,reuters.com" >> $GITHUB_ENV
+
+      - name: Run ingest server via CLI (headless calls)
+        env:
+          MCP_INGEST_ALLOW_DOMAINS: ${{ env.MCP_INGEST_ALLOW_DOMAINS }}
+        run: |
+          # Call ingest_from_index via stdio protocol (one message per line)
+          call() { python mcp_servers/ingest_server.py <<EOF
+{"type":"tools/call","name":"ingest_from_index","arguments":{"index_url":"https://www.bbc.co.uk/news","selector":"a.gs-c-promo-heading","language":"en","max_links":6}}
+EOF
+          }
+          call > bbc.json
+          call_aj() { python mcp_servers/ingest_server.py <<EOF
+{"type":"tools/call","name":"ingest_from_index","arguments":{"index_url":"https://www.aljazeera.com/latest/","selector":"a.u-clickable-card__link","language":"en","max_links":4}}
+EOF
+          }
+          call_aj > aj.json
+
+          mkdir -p content/news
+          python - <<'PY'
+import json, time, os
+for f in ["bbc.json","aj.json"]:
+    d = json.load(open(f))
+    for item in d.get("result",{}).get("lessons",[]):
+        slug = item["id"]
+        p = f"content/news/{int(time.time())}_{slug}.json"
+        with open(p,"w",encoding="utf-8") as w: json.dump(item,w,ensure_ascii=False,indent=2)
+        print("WROTE", p)
+PY
+
+      - name: Create branch, commit, push
+        run: |
+          git checkout -B content-ingest
+          git add content/news || true
+          git diff --cached --quiet || git commit -m "content: ingest news → lesson JSON"
+          git push -u origin content-ingest || true
+
+      - name: Open or update PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: "Content: fresh lessons via MCP ingest"
+          body: "Automated content ingest using MCP ingest server."
+          branch: content-ingest
+          base: main
