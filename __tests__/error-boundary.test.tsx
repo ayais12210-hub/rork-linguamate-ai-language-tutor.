@@ -3,11 +3,14 @@ import { render, screen, fireEvent } from '@testing-library/react-native';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
 // Component that throws an error
+import { View, Text } from 'react-native';
+
+// Component that throws an error
 const ThrowError = ({ shouldThrow }: { shouldThrow: boolean }) => {
   if (shouldThrow) {
     throw new Error('Test error');
   }
-  return <div testID="no-error">No error</div>;
+  return <View testID="no-error"><Text>No error</Text></View>;
 };
 
 describe('ErrorBoundary', () => {
