@@ -1,4 +1,4 @@
-import * as Sentry from '@sentry/react';
+import * as Sentry from '@sentry/react-native';
 
 /**
  * Initialize Sentry for frontend monitoring
@@ -16,22 +16,19 @@ export function initSentry() {
     Sentry.init({
       dsn,
       integrations: [
-        // Add browser tracing for performance monitoring
-        Sentry.browserTracingIntegration(),
-        // Add replay integration for session replay
-        Sentry.replayIntegration({
-          maskAllText: true,
-          blockAllMedia: true,
-        }),
+        // Add React Native tracing for performance monitoring
+        Sentry.reactNativeTracingIntegration(),
       ],
       // Adjust sample rates as needed
       tracesSampleRate: parseFloat(process.env.EXPO_PUBLIC_SENTRY_TRACES_SAMPLE_RATE || '0.2'),
-      replaysSessionSampleRate: parseFloat(process.env.EXPO_PUBLIC_SENTRY_REPLAYS_SESSION_SAMPLE_RATE || '0.1'),
-      replaysOnErrorSampleRate: parseFloat(process.env.EXPO_PUBLIC_SENTRY_REPLAYS_ERROR_SAMPLE_RATE || '1.0'),
       
       // Environment and release tracking
       environment: process.env.EXPO_PUBLIC_ENV || process.env.NODE_ENV || 'development',
       release: process.env.EXPO_PUBLIC_COMMIT_SHA || 'unknown',
+      
+      // Enable native crash reporting for React Native
+      enableNative: true,
+      enableNativeCrashHandling: true,
       
       // Filter out certain errors
       beforeSend(event, hint) {

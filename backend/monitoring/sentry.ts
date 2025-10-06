@@ -69,10 +69,11 @@ export function withSentry<T extends (...args: any[]) => any>(fn: T): T {
 }
 
 /**
- * Create a transaction for performance monitoring
+ * Create a span for performance monitoring
+ * Note: startTransaction is deprecated, use startSpan instead
  */
 export function startTransaction(name: string, op: string) {
-  return Sentry.startTransaction({ name, op });
+  return Sentry.startSpan({ name, op }, (span) => span);
 }
 
 /**
