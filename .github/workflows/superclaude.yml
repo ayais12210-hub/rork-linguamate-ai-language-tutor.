@@ -75,7 +75,7 @@ jobs:
       - name: Apply Improvements (safe, interactive)
         id: improve
         run: |
-          /sc:improve --type quality --safe --interactive || true
+          /sc:improve --type quality --safe || true
 
       - name: Auto-commit changes (if any)
         uses: stefanzweifel/git-auto-commit-action@v5
