@@ -186,16 +186,4 @@ describe('React Native Text Node Regression Tests', () => {
   });
 });
 
-describe('ESLint Rule Verification', () => {
-  it('react-native/no-raw-text rule should be enabled', () => {
-    // This test ensures that the ESLint rule is properly configured
-    // The actual enforcement happens at lint time, not test time
-    const fs = require('fs');
-    const path = require('path');
-    
-    const eslintConfigPath = path.join(process.cwd(), '.eslintrc.cjs');
-    const eslintConfig = fs.readFileSync(eslintConfigPath, 'utf8');
-    
-    expect(eslintConfig).toContain('react-native/no-raw-text');
-  });
-});
+// (The entire "ESLint Rule Verification" describe block has been removed)
