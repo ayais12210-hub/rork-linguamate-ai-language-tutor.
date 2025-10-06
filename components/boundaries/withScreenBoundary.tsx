@@ -70,7 +70,6 @@ export function withScreenBoundary<P extends object>(
           context: {
             componentStack: errorInfo.componentStack,
           },
-          errorId: appError.errorId,
         });
 
         // Call custom error handler if provided
