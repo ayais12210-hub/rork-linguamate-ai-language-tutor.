@@ -44,7 +44,6 @@
     "@expo/vector-icons": "^14.1.0",
     "@faker-js/faker": "^10.0.0",
     "@hono/trpc-server": "^0.4.0",
-    "@lhci/cli": "^0.15.1",
     "@nkzw/create-context-hook": "^1.1.0",
     "@playwright/test": "^1.55.1",
     "@react-native-async-storage/async-storage": "2.1.2",
@@ -114,8 +113,8 @@
     "lighthouse": "^12.8.2",
     "lint-staged": "^16.2.3",
     "lottie-react-native": "7.2.2",
-    "madge": "^6.0.0",
     "lucide-react-native": "^0.475.0",
+    "madge": "^6.0.0",
     "msw": "^2.11.3",
     "nativewind": "^4.1.23",
     "npm-run-all": "^4.1.5",
@@ -157,6 +156,9 @@
     "typescript": "~5.8.3",
     "web-streams-polyfill": "^4.2.0",
     "whatwg-fetch": "^3.6.20"
+  },
+  "overrides": {
+    "tmp": "^0.2.5"
   },
   "private": true
 }

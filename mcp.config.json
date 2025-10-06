@@ -1,0 +1,31 @@
+{
+  "$schema": "https://modelcontextprotocol.io/schemas/2024-10-01/config.schema.json",
+  "clients": [
+    {
+      "name": "linguamate-mcp",
+      "servers": [
+        {
+          "id": "ingest",
+          "transport": {
+            "stdio": {
+              "command": "python3",
+              "args": ["mcp_servers/ingest_server.py"]
+            }
+          },
+          "env": {
+            "MCP_INGEST_ALLOW_DOMAINS": "bbc.co.uk,aljazeera.com,apnews.com,reuters.com"
+          }
+        },
+        {
+          "id": "gitops",
+          "transport": {
+            "stdio": {
+              "command": "python3",
+              "args": ["mcp_servers/gitops_server.py"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

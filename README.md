@@ -40,6 +40,31 @@ It combines **structured lessons**, **conversational AI practice**, and **advanc
 
 ---
 
+## 🧠 MCP Integration
+
+This repo exposes two Model Context Protocol servers:
+
+- `ingest` — scrape trusted news sources and convert to **lesson JSON** (`content/news/*.json`), with domain allow-list and basic safety filters.
+- `gitops` — safe Git operations via MCP (create branch, commit, push, open PR with GitHub CLI).
+
+**Local dev**
+```bash
+pip install -r mcp_servers/requirements.txt
+# List tools
+echo '{"type":"tools/list"}' | python mcp_servers/ingest_server.py
+# Ingest directly
+echo '{"type":"tools/call","name":"ingest_from_index","arguments":{"index_url":"https://www.bbc.co.uk/news","selector":"a.gs-c-promo-heading","language":"en","max_links":4}}' \
+ | python mcp_servers/ingest_server.py
+```
+
+**Cursor / Claude**
+
+Ensure `mcp.config.json` is present; the client will auto-discover ingest and gitops.
+
+Run task: `.cursor/tasks/content-pipeline.yml`.
+
+---
+
 ## 🧩 Core Features
 
 ### 💬 AI Coach Chat
