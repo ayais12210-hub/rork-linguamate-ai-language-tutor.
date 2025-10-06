@@ -33,8 +33,11 @@ jobs:
       - name: Install / Upgrade SuperClaude
         shell: bash
         run: |
-          pipx install SuperClaude || true
-          pipx upgrade SuperClaude || true
+          if ! pipx list | grep -q 'SuperClaude'; then
+            pipx install SuperClaude
+          else
+            pipx upgrade SuperClaude
+          fi
           SuperClaude install
 
       - name: Deep Quality Analysis
