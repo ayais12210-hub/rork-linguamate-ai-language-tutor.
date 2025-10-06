@@ -201,7 +201,7 @@ jobs:
           echo "GitHub event: ${{ github.event_name }}"
           echo "PR number: ${{ github.event.pull_request.number }}"
           echo "Is draft: ${{ github.event.pull_request.draft }}"
-          echo "Available secrets: GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN != '' }}, OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY != '' }}, ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY != '' }}, DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY != '' }}, GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY != '' }}"
+          api_keys_configured=0
 
       - name: Run AI Review
         id: ai_review
