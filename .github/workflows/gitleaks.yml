@@ -29,6 +29,7 @@ jobs:
         env:
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
         with:
+          token: ${{ github.token }}
           config-path: .gitleaks.toml
           redact: true
           sarif-file-output: gitleaks.sarif
