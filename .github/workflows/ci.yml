@@ -84,6 +84,8 @@ jobs:
         run: bun install --frozen-lockfile
       - name: 🧪 Run tests with coverage
         run: bun run test:ci
+      - name: 🧪 Run backend tests
+        run: bun run backend:test
       - name: 📊 Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         if: always()

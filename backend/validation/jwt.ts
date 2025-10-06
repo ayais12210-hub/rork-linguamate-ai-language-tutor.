@@ -23,7 +23,17 @@ function hmacSHA256(key: string, data: string): string {
 }
 
 function getSecret(): string {
-  return process.env.JWT_SECRET || process.env.SECRET || 'dev-secret-change-me';
+  const secret = process.env.JWT_SECRET || process.env.SECRET;
+  
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is required');
+  }
+  
+  if (secret === 'dev-secret-change-me' || secret.length < 32) {
+    throw new Error('JWT_SECRET must be a secure random string of at least 32 characters');
+  }
+  
+  return secret;
 }
 
 export function signJwt(payload: Omit<JwtPayload, 'iat' | 'exp'> & { expInSec: number }, alg: JwtAlgorithm = 'HS256'): string {
