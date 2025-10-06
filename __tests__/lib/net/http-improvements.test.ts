@@ -11,7 +11,7 @@ describe('HTTP client error handling improvements', () => {
   });
 
   const TestSchema = z.object({
-    message: string(),
+    message: z.string(),
   });
 
   describe('getJson', () => {
