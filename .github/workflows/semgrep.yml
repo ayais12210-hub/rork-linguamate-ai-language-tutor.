@@ -24,8 +24,6 @@ jobs:
           config: .semgrep.yml       # uses your repo’s config
           generateSarif: true
           sarifFile: semgrep.sarif
-        continue-on-error: true
-
       - name: Verify SARIF file exists
         run: |
           if [ -f "semgrep.sarif" ]; then
