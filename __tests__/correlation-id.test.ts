@@ -9,7 +9,7 @@ describe('CorrelationIdManager', () => {
   let manager: CorrelationIdManager;
 
   beforeEach(() => {
-    manager = CorrelationIdManager.getInstance();
+    manager = correlationIdManager;
     manager.clear(); // Reset state between tests
   });
 
@@ -60,8 +60,8 @@ describe('CorrelationIdManager', () => {
 
 describe('correlationIdManager singleton', () => {
   it('should be the same instance', () => {
-    const manager1 = CorrelationIdManager.getInstance();
-    const manager2 = CorrelationIdManager.getInstance();
+    const manager1 = correlationIdManager;
+    const manager2 = correlationIdManager;
     expect(manager1).toBe(manager2);
   });
 });
