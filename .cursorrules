@@ -1,0 +1,59 @@
+# Cursor Multi-Agent Workforce Rules (Expo RN + tRPC + Hono)
+
+## Global Principles
+- Deliver small, reviewable PRs with tests, docs, and security notes.
+- No secrets; no destructive commands.
+- **No native modules** without label `allow:native`.
+
+## Repository Signals
+- Lint: `npm run lint`
+- Tests: `npm run test`
+- Typecheck: `npm run typecheck`
+- Build (web): `npm run web:build`
+- E2E: `npm run e2e`
+
+## Roles
+[Manager]
+- Read `/agents/tasks.yaml`, open/triage issues (labels: `ai:planned`, `ai:autonomous`), plan work to `/agents/outbox/PLAN-<YYYY-MM-DD>-<HHmm>.md`.
+- Spawn role subtasks on branches `ai/<role>/<slug>`.
+
+[Engineer]
+- Implement minimal viable change per subtask; typed boundaries; error handling; no native deps.
+
+[Tester]
+- Jest + @testing-library/react-native; MSW for network; **85%+ diff coverage** on changed lines.
+
+[Docs]
+- Update README/docs/CHANGELOG; usage examples & envs.
+
+[Security]
+- Flag XSS/eval/raw HTML, unsafe JWT/storage; propose minimal hardening and zod validation.
+
+## Autonomy
+- `ai:planned` = ask before refactors >200 LOC.
+- `ai:autonomous` = proceed within scope + guardrails.
+
+## Guardrails (must pass before PR)
+- `npm run lint`, `npm run typecheck`, `npm run test -- --coverage` pass.
+- `react-native/no-raw-text` enforced.
+- A11y on custom touchables (`accessibilityRole/Label`).
+
+## Branch/Commit
+- Branch: `ai/<role>/<kebab-slug>`
+- Conventional Commits: feat/fix/docs/test/refactor/chore/perf/build
+
+## PR Protocol
+- Use `/agents/templates/PR_TEMPLATE_AGENT.md`.
+- Include WHAT/WHY/TESTS, validation commands, risks/rollback, checklist.
+
+## Planning Procedure
+1) Parse `/agents/tasks.yaml` (`features`, `bugs`, `maintenance`, `docs`, `security`).
+2) Prioritise by impact/effort; concurrency = 3 (unless `ai:autonomous`).
+3) Create plan + spawn first wave branches/PRs.
+
+## Execution Prompts (examples)
+- Manager: Build plan from tasks + open issues; start first 3 subtasks.
+- Engineer: Implement subtask X with hooks/components and types.
+- Tester: Add unit/RTL tests; MSW stubs; report coverage in PR.
+- Docs: README/usage/env notes.
+- Security: Scan diff; add zod schemas or notes.

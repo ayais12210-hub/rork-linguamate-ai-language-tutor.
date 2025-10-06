@@ -1,0 +1,9 @@
+appId: com.yourapp
+name: Translator happy path
+onFlowStart:
+  - launchApp
+---
+- tapOn: "Enter text"
+- inputText: "Sat sri akal"
+- tapOn: "Translate"
+- assertVisible: "Punjabi"

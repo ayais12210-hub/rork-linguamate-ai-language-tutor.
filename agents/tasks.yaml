@@ -1,0 +1,50 @@
+version: 1
+settings:
+  default_concurrency: 3
+  autonomy_label_partial: "ai:planned"
+  autonomy_label_full: "ai:autonomous"
+
+features:
+  - id: translator-stt
+    title: "Speech-to-Text input (Expo-compatible, no native deps)"
+    acceptance:
+      - Web uses Web Speech API if available; permission prompt handled.
+      - Mobile (Expo Go): fallback to server STT via `/api/stt` if enabled, else show tooltip "Voice input not available".
+      - Mic button states: idle/recording/processing with subtle pulse animation.
+      - Debounced insertion into input; cancel/resume supported; toasts for errors.
+    tests:
+      - Hook state machine tests (idle→recording→processing→idle).
+      - RTL test with mocked providers.
+      - MSW contract test for `/api/stt`.
+    docs:
+      - README section "Voice Input Modes" with env toggles.
+
+  - id: lang-search
+    title: "Language search & ISO filter"
+    acceptance:
+      - Filter by name or ISO code (e.g., en, pa-IN).
+      - Keyboard navigation; ARIA roles/labels.
+    tests:
+      - RTL tests for filtering and selection.
+
+bugs:
+  - id: view-textnode
+    title: "Fix 'Unexpected text node in <View>'"
+    repro: "Stray '.' as child; enforce eslint rule react-native/no-raw-text."
+    tests:
+      - Lint rule enabled; regression test ensures no raw text under <View>.
+
+maintenance:
+  - id: scripts-ci-align
+    title: "Ensure scripts exist: lint/test/typecheck/web:build/e2e"
+    tasks:
+      - Add minimal script shims and configs.
+      - Ensure CI runs on PRs.
+
+docs:
+  - id: contributor-guide
+    title: "RN + Agents Contributor Guide"
+
+security:
+  - id: input-validation
+    title: "Add zod validation for user inputs and tRPC boundaries"

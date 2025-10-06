@@ -18,6 +18,11 @@ export const handlers = [
     });
   }),
 
+  // Simple STT endpoint for mobile fallback
+  http.post('**/api/stt', async () => {
+    return HttpResponse.json({ text: 'hello world (mocked)' });
+  }),
+
   http.post('**/api/trpc/*', async ({ request }) => {
     const url = new URL(request.url);
     const pathname = url.pathname;

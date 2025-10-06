@@ -1,0 +1,30 @@
+name: AI Task
+description: Queue a task for the Cursor AI workforce
+labels: ["ai:planned"]
+body:
+  - type: input
+    id: title
+    attributes:
+      label: Task title
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Background, related code, links
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+    validations:
+      required: true
+  - type: dropdown
+    id: autonomy
+    attributes:
+      label: Autonomy level
+      options:
+        - ai:planned
+        - ai:autonomous
+    validations:
+      required: true
