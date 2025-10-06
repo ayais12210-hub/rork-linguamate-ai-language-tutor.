@@ -6,6 +6,9 @@ import 'whatwg-url';
 // afterEach(() => server.resetHandlers());
 // afterAll(() => server.close());
 
+// Set __DEV__ global for React Native (already declared by React Native types)
+(global as any).__DEV__ = true;
+
 global.crypto = {
   ...global.crypto,
   randomUUID: () => {
@@ -16,3 +19,14 @@ global.crypto = {
     });
   },
 } as Crypto;
+
+// Mock console methods to reduce noise in tests
+const originalConsole = global.console;
+global.console = {
+  ...originalConsole,
+  log: jest.fn(),
+  debug: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+};

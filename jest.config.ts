@@ -18,6 +18,12 @@ const config: Config = {
     '^@constants/(.*)$': '<rootDir>/constants/$1',
     '^@backend/(.*)$': '<rootDir>/backend/$1',
     '^react-native$': '<rootDir>/tests/config/react-native-mock.js',
+    '^react-native-svg$': '<rootDir>/tests/config/react-native-svg-mock.js',
+    '^expo-constants$': '<rootDir>/tests/config/expo-constants-mock.js',
+    '^expo-av$': '<rootDir>/tests/config/expo-av-mock.js',
+    '^expo-speech$': '<rootDir>/tests/config/expo-speech-mock.js',
+    '^expo-speech-recognition$': '<rootDir>/tests/config/expo-speech-recognition-mock.js',
+    '^@lucide/react-native$': '<rootDir>/tests/config/lucide-mock.js',
     '\\.(css|less|scss)$': '<rootDir>/tests/config/styleMock.js',
     '\\.(jpg|jpeg|png|gif|svg)$': '<rootDir>/tests/config/fileMock.js',
   },
@@ -45,13 +51,15 @@ const config: Config = {
   transformIgnorePatterns: [
     'node_modules/(?!((jest-)?react-native|@react-native|expo(nent)?|@expo(nent)?/.*|@testing-library|react-clone-referenced-element|@react-navigation|@tanstack|msw|@mswjs|until-async|strict-event-emitter)/)'
   ],
-  globals: {
-    'ts-jest': {
+  transform: {
+    '^.+\\.(ts|tsx)$': ['ts-jest', {
       tsconfig: {
         jsx: 'react',
       },
-    },
+    }],
   },
+  extensionsToTreatAsEsm: ['.ts', '.tsx'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
 };
 
 export default config;
