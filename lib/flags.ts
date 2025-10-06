@@ -264,12 +264,14 @@ export function withFeatureFlag<P extends object>(
   Component: React.ComponentType<P>,
   FallbackComponent?: React.ComponentType<P>
 ): React.ComponentType<P> {
-  return (props: P) => {
-    const isEnabled = FeatureFlagManager.isEnabled(flag);
+  return function FeatureFlaggedComponent(props: P) {
+    const isEnabled = useFeatureFlag(flag);
     if (isEnabled) {
-      return <Component {...props} />;
+      return React.createElement(Component, props);
     }
-    return FallbackComponent ? <FallbackComponent {...props} /> : null;
+    return FallbackComponent
+      ? React.createElement(FallbackComponent, props)
+      : null;
   };
 }
 
