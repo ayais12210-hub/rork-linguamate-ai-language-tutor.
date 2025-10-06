@@ -86,4 +86,4 @@ jobs:
             - Deep report uploaded as workflow artifact.
             - Edits are generated in safe/interactive mode.
           branch: superclaude-quality-check
-          base: ${{ github.event.pull_request.base.ref || 'main' }}
+          base: ${{ github.event.pull_request.base.ref || github.ref_name }}
