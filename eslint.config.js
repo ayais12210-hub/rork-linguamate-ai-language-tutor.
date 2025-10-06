@@ -59,6 +59,16 @@ export default [
       '@typescript-eslint/prefer-optional-chain': 'error',
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
+      '@typescript-eslint/no-use-before-define': [
+        'error',
+        {
+          functions: false,
+          classes: false,
+          variables: false,
+          enums: true,
+          typedefs: true
+        }
+      ],
 
       // Import rules
       'import/order': [
@@ -69,6 +79,8 @@ export default [
           alphabetize: { order: 'asc', caseInsensitive: true }
         }
       ],
+      'import/no-cycle': 'error',
+      'import/no-self-import': 'error',
 
       // General rules
       'no-console': ['error', { allow: ['warn', 'error', 'info'] }],
