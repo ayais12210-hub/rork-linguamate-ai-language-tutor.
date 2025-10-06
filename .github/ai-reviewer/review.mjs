@@ -57,7 +57,7 @@ else if (DEEPSEEK_API_KEY) provider = "deepseek";
 else if (GEMINI_API_KEY) provider = "gemini";
 if (!provider) {
   console.error("❌ No AI provider key found. Add one secret: OPENAI_API_KEY or ANTHROPIC_API_KEY or DEEPSEEK_API_KEY or GEMINI_API_KEY.");
-  console.error("Current environment keys:", Object.keys(env).filter(k => k.includes('API_KEY')));
+  console.error("No provider API keys found in environment.");
   process.exit(1);
 }
 
