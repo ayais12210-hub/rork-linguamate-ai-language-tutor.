@@ -1,0 +1,87 @@
+title = "Linguamate Gitleaks Configuration"
+# This config helps reduce false positives while maintaining strong secret detection
+
+[allowlist]
+description = "Global allowlist"
+
+# Allow public keys and certificates
+[[allowlist.regexTarget]]
+target = "line"
+regex = '''-----BEGIN (PUBLIC KEY|CERTIFICATE|RSA PUBLIC KEY)-----'''
+
+[[allowlist.regexTarget]]
+target = "line"
+regex = '''-----END (PUBLIC KEY|CERTIFICATE|RSA PUBLIC KEY)-----'''
+
+# Common false positives in package-lock.json or yarn.lock
+[[allowlist.paths]]
+regex = '''(^|/)package-lock\.json$'''
+
+[[allowlist.paths]]
+regex = '''(^|/)yarn\.lock$'''
+
+# Test fixtures and mock data
+[[allowlist.paths]]
+regex = '''(^|/)(tests?|__tests?__|spec)/fixtures/.*'''
+
+[[allowlist.paths]]
+regex = '''(^|/)\.storybook/.*'''
+
+# Documentation examples
+[[allowlist.paths]]
+regex = '''(^|/)docs?/.*\.(md|mdx)$'''
+
+# Common development patterns that trigger false positives
+[[allowlist.regexes]]
+description = "Mock/Example API keys"
+regex = '''(?i)(dummy|fake|test|mock|example|sample)[-_]?(api[-_]?key|token|secret|password)'''
+
+[[allowlist.regexes]]
+description = "Localhost URLs with ports"
+regex = '''https?://localhost:[0-9]{1,5}'''
+
+[[allowlist.regexes]]
+description = "Example environment variables in code"
+regex = '''process\.env\.(REACT_APP_|EXPO_PUBLIC_|NEXT_PUBLIC_)[A-Z_]+'''
+
+# Expo specific patterns
+[[allowlist.regexes]]
+description = "Expo project IDs and slugs"
+regex = '''[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'''
+
+[[allowlist.regexes]]
+description = "Base64 encoded images in code"
+regex = '''data:image/(png|jpg|jpeg|gif|webp|svg\+xml);base64,[A-Za-z0-9+/]+=*'''
+
+# Build artifacts and generated files
+[[allowlist.paths]]
+regex = '''(^|/)(dist|build|\.next|\.expo|out)/.*'''
+
+[[allowlist.paths]]
+regex = '''(^|/)coverage/.*'''
+
+# IDE and OS files
+[[allowlist.paths]]
+regex = '''(^|/)\.vscode/.*'''
+
+[[allowlist.paths]]
+regex = '''(^|/)\.idea/.*'''
+
+[[allowlist.paths]]
+regex = '''\.DS_Store$'''
+
+# Mobile app specific
+[[allowlist.paths]]
+regex = '''(^|/)ios/Pods/.*'''
+
+[[allowlist.paths]]
+regex = '''(^|/)android/\.gradle/.*'''
+
+# Known safe patterns in your stack
+[[allowlist.regexes]]
+description = "JWT structure in tests or examples"
+regex = '''eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+'''
+
+[[allowlist.regexes]]
+description = "Supabase anon keys (safe to expose)"
+regex = '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6'''
