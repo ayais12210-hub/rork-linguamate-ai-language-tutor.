@@ -20,6 +20,10 @@ jobs:
     name: Validate MCP Configuration
     runs-on: ubuntu-latest
     
+    env:
+      # Required for MCP validation
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -28,6 +32,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run MCP validation script
+        run: npm run mcp:check
 
       - name: Validate mcp.json is valid JSON
         run: |
