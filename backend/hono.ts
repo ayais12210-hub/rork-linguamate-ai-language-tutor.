@@ -1,30 +1,47 @@
 import { Hono } from "hono";
 import { trpcServer } from "@hono/trpc-server";
-import { cors } from "hono/cors";
 import { appRouter } from "@/backend/trpc/app-router";
 import { createContext } from "@/backend/trpc/create-context";
 import { correlationMiddleware } from "@/backend/middleware/correlation";
 import { requestLoggerMiddleware } from "@/backend/middleware/requestLogger";
 import { securityHeadersMiddleware } from "@/backend/middleware/securityHeaders";
+import { getCorsMiddleware } from "@/backend/middleware/cors";
+import { timeout } from "@/backend/middleware/timeout";
+import { rateLimit } from "@/backend/middleware/rateLimit";
+import { config, getConfig } from "@/backend/config/env";
+import { initSentry } from "@/backend/monitoring/sentry";
 import ingestLogsApp from "@/backend/routes/ingestLogs";
 import healthApp from "@/backend/routes/health";
 import toolkitProxy from "@/backend/routes/toolkitProxy";
 import sttApp from "@/backend/routes/stt";
 
+// Initialize monitoring
+if (getConfig.isProd() && config.SENTRY_DSN) {
+  initSentry();
+}
+
 // app will be mounted at /api
 const app = new Hono();
 
-// Global middleware
+// Global middleware (order matters!)
 app.use("*", correlationMiddleware);
 app.use("*", securityHeadersMiddleware);
 app.use("*", requestLoggerMiddleware);
+app.use("*", timeout({ ms: 30000 })); // 30s global timeout
 
-// Enable CORS for all routes (dev-friendly)
-app.use("*", cors({
-  origin: (origin) => origin ?? "*",
-  allowHeaders: ["Content-Type", "Authorization", "x-correlation-id", "x-session-id"],
-  allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  credentials: true,
+// Environment-aware CORS
+app.use("*", getCorsMiddleware());
+
+// Global rate limiting
+app.use("*", rateLimit({
+  windowMs: getConfig.rateLimit().windowMs,
+  max: getConfig.rateLimit().maxRequests,
+}));
+
+// Apply stricter rate limiting to auth endpoints
+app.use("/trpc/auth.*", rateLimit({
+  windowMs: 60000, // 1 minute
+  max: getConfig.rateLimit().maxLoginAttempts,
 }));
 
 // Mount tRPC router at /trpc (note: the app itself is mounted under /api by the host)
