@@ -32,6 +32,7 @@ concurrency:
 
 env:
   NODE_VERSION: '20'
+  EAS_PROJECT_ID: 'placeholder-project-id'
 
 jobs:
   # Test EAS configuration without actual builds
@@ -146,7 +147,7 @@ jobs:
           
           # Check Expo doctor
           echo "🏥 Running Expo doctor..."
-          npx expo doctor || echo "⚠️  Expo doctor completed with warnings"
+          npx expo-doctor || echo "⚠️  Expo doctor completed with warnings"
           
           # Check if we can read the app configuration
           echo "📱 Reading app configuration..."

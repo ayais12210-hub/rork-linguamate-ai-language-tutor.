@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.rork.linguamate-ai-language-tutor-1yzk6my-76pccekj-lg0fppmq",
+      "bundleIdentifier": "com.rork.linguamateai",
       "infoPlist": {
         "UIBackgroundModes": [
           "audio"
@@ -45,7 +45,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "app.rork.linguamate-ai-language-tutor-1yzk6my-76pccekj-lg0fppmq",
+      "package": "com.rork.linguamateai",
       "permissions": [
         "android.permission.VIBRATE",
         "android.permission.RECEIVE_BOOT_COMPLETED",

@@ -14,7 +14,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
-      - run: npm i -g eas-cli
+      - run: npm install -g eas-cli
       - name: Login to Expo
         run: eas whoami || eas login --token ${{ secrets.EXPO_TOKEN }}
       - name: Android AAB (production)
