@@ -38,23 +38,34 @@ interface AnalyticsProviderProps {
   children: ReactNode;
 }
 
-export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
-  useEffect(() => {
-    if (!posthogClient) {
-      posthogClient = initPostHog();
-    }
-  }, []);
+import { ReactNode, useEffect, useState } from 'react';
+…
 
-  if (!posthogClient) {
+export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
+  const [client, setClient] = useState<PostHog | null>(posthogClient);
+
+  useEffect(() => {
+    if (!client) {
+      const initialized = initPostHog();
+      posthogClient = initialized;
+      setClient(initialized);
+    }
+  }, [client]);
+
+  if (!client) {
     // If PostHog is not configured, just render children without provider
     return <>{children}</>;
   }
 
   return (
-    <PostHogProviderBase client={posthogClient}>
+    <PostHogProviderBase client={client}>
       {children}
     </PostHogProviderBase>
   );
+}
+
+// Export PostHog client for direct access
+export const getPostHogClient = () => posthogClient;
 }
 
 // Export PostHog client for direct access
