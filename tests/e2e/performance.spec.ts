@@ -57,14 +57,29 @@ test.describe('Performance Tests', () => {
     const cls = await page.evaluate(() => {
       return new Promise((resolve) => {
         let clsValue = 0;
-        new PerformanceObserver((list) => {
+        let resolved = false;
+        const observer = new PerformanceObserver((list) => {
           for (const entry of list.getEntries()) {
             if (!entry.hadRecentInput) {
               clsValue += entry.value;
             }
           }
-          resolve(clsValue);
-        }).observe({ entryTypes: ['layout-shift'] });
+          if (!resolved) {
+            resolved = true;
+            observer.disconnect();
+            clearTimeout(timeoutId);
+            resolve(clsValue);
+          }
+        });
+        observer.observe({ entryTypes: ['layout-shift'] });
+        // Timeout: resolve after 3 seconds if no layout-shift events occur
+        const timeoutId = setTimeout(() => {
+          if (!resolved) {
+            resolved = true;
+            observer.disconnect();
+            resolve(clsValue);
+          }
+        }, 3000);
       });
     });
     
