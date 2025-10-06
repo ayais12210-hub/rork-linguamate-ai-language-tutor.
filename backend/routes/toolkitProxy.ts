@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import type { Context } from 'hono';
+import { httpClient, HttpError } from '../utils/http-client';
 
 const toolkitApp = new Hono();
 

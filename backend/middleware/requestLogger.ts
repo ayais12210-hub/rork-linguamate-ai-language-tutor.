@@ -1,5 +1,6 @@
 import type { Context, Next } from 'hono';
 import { logger } from '../logging/pino';
+import { redactHeaders, redactUrl } from '../utils/log-redactor';
 
 export async function requestLoggerMiddleware(c: Context, next: Next) {
   const start = Date.now();
@@ -17,9 +18,11 @@ export async function requestLoggerMiddleware(c: Context, next: Next) {
     cat: 'api',
     req: {
       method,
-      path,
+      path: redactUrl(`${c.req.url}`).replace(c.req.url.split('?')[0], path), // Only redact query params
       status,
       duration,
+      userAgent: c.req.header('user-agent')?.substring(0, 200), // Limit length
+      ip: c.req.header('x-forwarded-for') || c.req.header('x-real-ip') || 'unknown',
     },
     corr: {
       correlationId,

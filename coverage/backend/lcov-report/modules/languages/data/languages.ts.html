@@ -1,0 +1,424 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for modules/languages/data/languages.ts</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../../prettify.css" />
+    <link rel="stylesheet" href="../../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../../../index.html">All files</a> / <a href="index.html">modules/languages/data</a> languages.ts</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>0/2</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">100% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>0/0</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">100% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>0/0</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>0/2</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line low'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">export type Lang = {
+  code: string;
+  name: string;
+  endonym?: string;
+  aliases?: string[];
+  flag?: string;
+};
+&nbsp;
+export const <span class="cstat-no" title="statement not covered" >LANGUAGES: Lang[] = [</span>
+  { code: 'en', name: 'English', endonym: 'English', flag: '🇬🇧', aliases: ['English (UK)', 'British English'] },
+  { code: 'en-US', name: 'English (US)', endonym: 'English (US)', flag: '🇺🇸', aliases: ['American English', 'US English'] },
+  { code: 'en-GB', name: 'English (UK)', endonym: 'English (UK)', flag: '🇬🇧', aliases: ['British English', 'UK English'] },
+  { code: 'es', name: 'Spanish', endonym: 'Español', flag: '🇪🇸', aliases: ['Castilian', 'Castellano'] },
+  { code: 'fr', name: 'French', endonym: 'Français', flag: '🇫🇷', aliases: ['Francais'] },
+  { code: 'pt', name: 'Portuguese', endonym: 'Português', flag: '🇵🇹', aliases: ['Portugues'] },
+  { code: 'it', name: 'Italian', endonym: 'Italiano', flag: '🇮🇹' },
+  { code: 'de', name: 'German', endonym: 'Deutsch', flag: '🇩🇪' },
+  { code: 'nl', name: 'Dutch', endonym: 'Nederlands', flag: '🇳🇱' },
+  { code: 'ru', name: 'Russian', endonym: 'Русский', flag: '🇷🇺' },
+  { code: 'uk', name: 'Ukrainian', endonym: 'Українська', flag: '🇺🇦' },
+  { code: 'pl', name: 'Polish', endonym: 'Polski', flag: '🇵🇱' },
+  { code: 'cs', name: 'Czech', endonym: 'Čeština', flag: '🇨🇿', aliases: ['Cestina'] },
+  { code: 'sk', name: 'Slovak', endonym: 'Slovenčina', flag: '🇸🇰', aliases: ['Slovencina'] },
+  { code: 'bg', name: 'Bulgarian', endonym: 'Български', flag: '🇧🇬' },
+  { code: 'sr', name: 'Serbian', endonym: 'Српски', flag: '🇷🇸' },
+  { code: 'hr', name: 'Croatian', endonym: 'Hrvatski', flag: '🇭🇷' },
+  { code: 'ro', name: 'Romanian', endonym: 'Română', flag: '🇷🇴', aliases: ['Romana'] },
+  { code: 'el', name: 'Greek', endonym: 'Ελληνικά', flag: '🇬🇷' },
+  { code: 'sv', name: 'Swedish', endonym: 'Svenska', flag: '🇸🇪' },
+  { code: 'no', name: 'Norwegian', endonym: 'Norsk', flag: '🇳🇴' },
+  { code: 'da', name: 'Danish', endonym: 'Dansk', flag: '🇩🇰' },
+  { code: 'is', name: 'Icelandic', endonym: 'Íslenska', flag: '🇮🇸', aliases: ['Islenska'] },
+  { code: 'ga', name: 'Irish', endonym: 'Gaeilge', flag: '🇮🇪' },
+  { code: 'cy', name: 'Welsh', endonym: 'Cymraeg', flag: '🏴󠁧󠁢󠁷󠁬󠁳󠁿' },
+  { code: 'eu', name: 'Basque', endonym: 'Euskera', flag: '🇪🇸' },
+  { code: 'ca', name: 'Catalan', endonym: 'Català', flag: '🇪🇸', aliases: ['Catala'] },
+  { code: 'gl', name: 'Galician', endonym: 'Galego', flag: '🇪🇸' },
+  { code: 'lb', name: 'Luxembourgish', endonym: 'Lëtzebuergesch', flag: '🇱🇺', aliases: ['Letzeburgesch'] },
+  { code: 'be', name: 'Belarusian', endonym: 'Беларуская', flag: '🇧🇾' },
+  { code: 'mt', name: 'Maltese', endonym: 'Malti', flag: '🇲🇹' },
+  { code: 'fi', name: 'Finnish', endonym: 'Suomi', flag: '🇫🇮' },
+  { code: 'hu', name: 'Hungarian', endonym: 'Magyar', flag: '🇭🇺' },
+  { code: 'et', name: 'Estonian', endonym: 'Eesti', flag: '🇪🇪' },
+  { code: 'lt', name: 'Lithuanian', endonym: 'Lietuvių', flag: '🇱🇹', aliases: ['Lietuviu'] },
+  { code: 'lv', name: 'Latvian', endonym: 'Latviešu', flag: '🇱🇻', aliases: ['Latviesu'] },
+  { code: 'hi', name: 'Hindi', endonym: 'हिन्दी', flag: '🇮🇳' },
+  { code: 'pa', name: 'Punjabi', endonym: 'ਪੰਜਾਬੀ', flag: '🇮🇳' },
+  { code: 'ur', name: 'Urdu', endonym: 'اردو', flag: '🇵🇰' },
+  { code: 'bn', name: 'Bengali', endonym: 'বাংলা', flag: '🇧🇩' },
+  { code: 'mr', name: 'Marathi', endonym: 'मराठी', flag: '🇮🇳' },
+  { code: 'gu', name: 'Gujarati', endonym: 'ગુજરાતી', flag: '🇮🇳' },
+  { code: 'fa', name: 'Persian', endonym: 'فارسی', flag: '🇮🇷', aliases: ['Farsi'] },
+  { code: 'ps', name: 'Pashto', endonym: 'پښتو', flag: '🇦🇫' },
+  { code: 'ku', name: 'Kurdish', endonym: 'Kurdî', flag: '🏳️', aliases: ['Kurdi'] },
+  { code: 'ta', name: 'Tamil', endonym: 'தமிழ்', flag: '🇮🇳' },
+  { code: 'te', name: 'Telugu', endonym: 'తెలుగు', flag: '🇮🇳' },
+  { code: 'kn', name: 'Kannada', endonym: 'ಕನ್ನಡ', flag: '🇮🇳' },
+  { code: 'ml', name: 'Malayalam', endonym: 'മലയാളം', flag: '🇮🇳' },
+  { code: 'zh', name: 'Chinese (Mandarin)', endonym: '中文', flag: '🇨🇳', aliases: ['Mandarin', 'Chinese'] },
+  { code: 'zh-Hans', name: 'Chinese (Simplified)', endonym: '简体中文', flag: '🇨🇳', aliases: ['Simplified Chinese'] },
+  { code: 'zh-Hant', name: 'Chinese (Traditional)', endonym: '繁體中文', flag: '🇹🇼', aliases: ['Traditional Chinese'] },
+  { code: 'yue', name: 'Cantonese', endonym: '廣東話', flag: '🇭🇰' },
+  { code: 'bo', name: 'Tibetan', endonym: 'བོད་ཡིག', flag: '🏔️' },
+  { code: 'ar', name: 'Arabic (MSA)', endonym: 'العربية الفصحى', flag: '🇸🇦', aliases: ['Arabic', 'Modern Standard Arabic'] },
+  { code: 'ar-EG', name: 'Arabic (Egyptian)', endonym: 'العربية المصرية', flag: '🇪🇬', aliases: ['Egyptian Arabic'] },
+  { code: 'ar-LEV', name: 'Arabic (Levantine)', endonym: 'العربية الشامية', flag: '🇱🇧', aliases: ['Levantine Arabic'] },
+  { code: 'ar-GULF', name: 'Arabic (Gulf)', endonym: 'العربية الخليجية', flag: '🇶🇦', aliases: ['Gulf Arabic'] },
+  { code: 'ar-MAG', name: 'Arabic (Maghrebi)', endonym: 'العربية المغاربية', flag: '🇲🇦', aliases: ['Maghrebi Arabic'] },
+  { code: 'he', name: 'Hebrew', endonym: 'עברית', flag: '🇮🇱' },
+  { code: 'am', name: 'Amharic', endonym: 'አማርኛ', flag: '🇪🇹' },
+  { code: 'az', name: 'Azerbaijani', endonym: 'Azərbaycan', flag: '🇦🇿', aliases: ['Azerbaycan'] },
+  { code: 'tr', name: 'Turkish', endonym: 'Türkçe', flag: '🇹🇷', aliases: ['Turkce'] },
+  { code: 'uz', name: 'Uzbek', endonym: 'Oʻzbek', flag: '🇺🇿', aliases: ['O\'zbek'] },
+  { code: 'kk', name: 'Kazakh', endonym: 'Қазақ', flag: '🇰🇿' },
+  { code: 'ja', name: 'Japanese', endonym: '日本語', flag: '🇯🇵' },
+  { code: 'ko', name: 'Korean', endonym: '한국어', flag: '🇰🇷' },
+  { code: 'vi', name: 'Vietnamese', endonym: 'Tiếng Việt', flag: '🇻🇳', aliases: ['Tieng Viet'] },
+  { code: 'th', name: 'Thai', endonym: 'ไทย', flag: '🇹🇭' },
+  { code: 'tl', name: 'Tagalog', endonym: 'Filipino', flag: '🇵🇭', aliases: ['Filipino'] },
+  { code: 'km', name: 'Khmer', endonym: 'ខ្មែរ', flag: '🇰🇭' },
+  { code: 'my', name: 'Burmese', endonym: 'မြန်မာ', flag: '🇲🇲' },
+  { code: 'id', name: 'Indonesian', endonym: 'Bahasa Indonesia', flag: '🇮🇩' },
+  { code: 'ms', name: 'Malay', endonym: 'Bahasa Melayu', flag: '🇲🇾' },
+  { code: 'sw', name: 'Swahili', endonym: 'Kiswahili', flag: '🇰🇪' },
+  { code: 'yo', name: 'Yoruba', endonym: 'Yorùbá', flag: '🇳🇬', aliases: ['Yoruba'] },
+  { code: 'ig', name: 'Igbo', endonym: 'Igbo', flag: '🇳🇬' },
+  { code: 'zu', name: 'Zulu', endonym: 'isiZulu', flag: '🇿🇦' },
+  { code: 'ha', name: 'Hausa', endonym: 'Hausa', flag: '🇳🇬' },
+  { code: 'so', name: 'Somali', endonym: 'Soomaali', flag: '🇸🇴' },
+  { code: 'xh', name: 'Xhosa', endonym: 'isiXhosa', flag: '🇿🇦' },
+  { code: 'af', name: 'Afrikaans', endonym: 'Afrikaans', flag: '🇿🇦' },
+  { code: 'ne', name: 'Nepali', endonym: 'नेपाली', flag: '🇳🇵' },
+  { code: 'si', name: 'Sinhala', endonym: 'සිංහල', flag: '🇱🇰' },
+  { code: 'ka', name: 'Georgian', endonym: 'ქართული', flag: '🇬🇪' },
+  { code: 'hy', name: 'Armenian', endonym: 'Հայերեն', flag: '🇦🇲' },
+  { code: 'ky', name: 'Kyrgyz', endonym: 'Кыргыз', flag: '🇰🇬' },
+  { code: 'tg', name: 'Tajik', endonym: 'Тоҷикӣ', flag: '🇹🇯' },
+  { code: 'mn', name: 'Mongolian', endonym: 'Монгол', flag: '🇲🇳' },
+  { code: 'qu', name: 'Quechua', endonym: 'Runa Simi', flag: '🇵🇪' },
+  { code: 'gn', name: 'Guarani', endonym: "Avañe'ẽ", flag: '🇵🇾', aliases: ['Avane\'e'] },
+  { code: 'mi', name: 'Māori', endonym: 'Te Reo Māori', flag: '🇳🇿', aliases: ['Maori', 'Te Reo Maori'] },
+  { code: 'haw', name: 'Hawaiian', endonym: 'ʻŌlelo Hawaiʻi', flag: '🇺🇸', aliases: ['Olelo Hawai\'i'] },
+  { code: 'nah', name: 'Nahuatl', endonym: 'Nāhuatl', flag: '🇲🇽', aliases: ['Nahuatl'] },
+  { code: 'iu', name: 'Inuktitut', endonym: 'ᐃᓄᒃᑎᑐᑦ', flag: '🇨🇦' },
+  { code: 'eo', name: 'Esperanto', endonym: 'Esperanto', flag: '🟩' },
+  { code: 'tlh', name: 'Klingon', endonym: 'tlhIngan Hol', flag: '🛸' },
+  { code: 'doth', name: 'Dothraki', endonym: 'Dothraki', flag: '🐎' },
+  { code: 'val', name: 'High Valyrian', endonym: 'Valyrio', flag: '🐉' },
+];
+&nbsp;
+export const <span class="cstat-no" title="statement not covered" >TOP_LANGUAGES = new Set([</span>
+  'en', 'en-GB', 'en-US', 'es', 'fr', 'de', 'it', 'pt', 'pa', 'hi', 'zh', 'ja', 'ko'
+]);
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2025-10-06T21:39:21.946Z
+            </div>
+        <script src="../../../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../../../sorter.js"></script>
+        <script src="../../../block-navigation.js"></script>
+    </body>
+</html>
+    

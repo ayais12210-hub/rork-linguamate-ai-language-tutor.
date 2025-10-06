@@ -1,0 +1,197 @@
+name: 🔧 Backend CI
+
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - 'schemas/**'
+      - 'lib/server/**'
+      - '.github/workflows/backend-ci.yml'
+      - 'package.json'
+      - 'tsconfig.json'
+  push:
+    branches: [main, develop]
+    paths:
+      - 'backend/**'
+      - 'schemas/**'
+      - 'lib/server/**'
+
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  backend-typecheck:
+    name: 🔍 Backend Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - name: 📥 Install dependencies
+        run: npm ci --legacy-peer-deps
+      - name: 🔍 Type check backend
+        run: npm run backend:typecheck
+
+  backend-lint:
+    name: 🧹 Backend Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - name: 📥 Install dependencies
+        run: npm ci --legacy-peer-deps
+      - name: 🧹 Lint backend code
+        run: npm run backend:lint
+
+  backend-test:
+    name: 🧪 Backend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - name: 📥 Install dependencies
+        run: npm ci --legacy-peer-deps
+      - name: 🧪 Run backend tests with coverage
+        run: npm run backend:test
+        env:
+          NODE_ENV: test
+          JWT_SECRET: test-secret-for-ci-only
+          TOOLKIT_API_KEY: test-api-key
+      - name: 📊 Upload backend coverage
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: ./coverage/backend/coverage-final.json
+          flags: backend
+          fail_ci_if_error: false
+
+  backend-security:
+    name: 🔒 Backend Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: 🔍 Run Semgrep on backend
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: |
+            p/security-audit
+            p/nodejs
+            p/typescript
+          generateSarif: "1"
+          sarifFile: backend-semgrep.sarif
+        continue-on-error: true
+        env:
+          SEMGREP_RULES: |
+            rules:
+              - id: hardcoded-secret
+                pattern: |
+                  $SECRET = "..."
+                message: Hardcoded secret detected
+                languages: [typescript, javascript]
+                severity: ERROR
+              - id: sql-injection
+                pattern: |
+                  $QUERY = "SELECT * FROM " + $INPUT
+                message: Potential SQL injection
+                languages: [typescript, javascript]
+                severity: ERROR
+      - name: 📤 Upload backend SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: backend-semgrep.sarif
+          category: backend-security
+
+  backend-build:
+    name: 🏗️ Backend Build Test
+    needs: [backend-typecheck, backend-lint, backend-test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - name: 📥 Install dependencies
+        run: npm ci --legacy-peer-deps
+      - name: 🏗️ Build backend
+        run: npm run backend:build
+      - name: 📤 Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-dist
+          path: dist/backend/
+          retention-days: 7
+
+  backend-integration:
+    name: 🔗 Backend Integration Tests
+    needs: [backend-typecheck, backend-lint, backend-test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - name: 📥 Install dependencies
+        run: npm ci --legacy-peer-deps
+      - name: 🚀 Start backend server
+        run: |
+          npm run backend:dev &
+          sleep 10
+        env:
+          NODE_ENV: test
+          PORT: 3001
+          JWT_SECRET: test-secret-for-integration
+      - name: 🔗 Test health endpoints
+        run: |
+          curl -f http://localhost:3001/api/health || exit 1
+          curl -f http://localhost:3001/api/info || exit 1
+          curl -f http://localhost:3001/api/ready || exit 1
+          curl -f http://localhost:3001/api/live || exit 1
+      - name: 🔗 Test CORS headers
+        run: |
+          response=$(curl -s -I -X OPTIONS http://localhost:3001/api/health \
+            -H "Origin: http://localhost:3000" \
+            -H "Access-Control-Request-Method: GET")
+          echo "$response" | grep -i "access-control-allow-origin" || exit 1
+      - name: 🔗 Test rate limiting
+        run: |
+          # Make multiple requests to test rate limiting
+          for i in {1..5}; do
+            curl -s http://localhost:3001/api/health > /dev/null
+          done
+          # Should still work for health endpoint (high limit)
+          curl -f http://localhost:3001/api/health || exit 1
+
+  backend-audit:
+    name: 🔍 Backend Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - name: 📥 Install dependencies
+        run: npm ci --legacy-peer-deps
+      - name: 🔍 Run npm audit
+        run: npm audit --audit-level=high
+        continue-on-error: true
+      - name: 🔍 Check for outdated packages
+        run: npm outdated || true
