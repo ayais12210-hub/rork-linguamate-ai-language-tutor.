@@ -44,8 +44,8 @@ describe('React Native Text Node Regression Tests', () => {
       <View testID="empty-view" />
     );
 
-    const { getByTestID } = render(<EmptyView />);
-    expect(getByTestID('empty-view')).toBeTruthy();
+    const { getByTestId } = render(<EmptyView />);
+    expect(getByTestId('empty-view')).toBeTruthy();
   });
 
   it('should allow multiple Text children', () => {
@@ -57,8 +57,8 @@ describe('React Native Text Node Regression Tests', () => {
       </View>
     );
 
-    const { getByTestID } = render(<MultipleTexts />);
-    expect(getByTestID('multiple-texts')).toBeTruthy();
+    const { getByTestId } = render(<MultipleTexts />);
+    expect(getByTestId('multiple-texts')).toBeTruthy();
   });
 
   it('should allow conditional Text rendering', () => {
@@ -69,8 +69,8 @@ describe('React Native Text Node Regression Tests', () => {
       </View>
     );
 
-    const { getByTestID } = render(<ConditionalText show={true} />);
-    expect(getByTestID('conditional-text')).toBeTruthy();
+    const { getByTestId } = render(<ConditionalText show={true} />);
+    expect(getByTestId('conditional-text')).toBeTruthy();
   });
 
   it('should allow nested Views with Text', () => {
@@ -82,8 +82,8 @@ describe('React Native Text Node Regression Tests', () => {
       </View>
     );
 
-    const { getByTestID } = render(<NestedComponent />);
-    expect(getByTestID('outer-view')).toBeTruthy();
+    const { getByTestId } = render(<NestedComponent />);
+    expect(getByTestId('outer-view')).toBeTruthy();
   });
 
   it('should allow array of Text components', () => {
@@ -95,8 +95,8 @@ describe('React Native Text Node Regression Tests', () => {
       </View>
     );
 
-    const { getByTestID } = render(<ArrayOfTexts />);
-    expect(getByTestID('array-texts')).toBeTruthy();
+    const { getByTestId } = render(<ArrayOfTexts />);
+    expect(getByTestId('array-texts')).toBeTruthy();
   });
 
   it('should allow Text with template literals', () => {
@@ -106,8 +106,8 @@ describe('React Native Text Node Regression Tests', () => {
       </View>
     );
 
-    const { getByTestID } = render(<TemplateText count={5} />);
-    expect(getByTestID('template-text')).toBeTruthy();
+    const { getByTestId } = render(<TemplateText count={5} />);
+    expect(getByTestId('template-text')).toBeTruthy();
   });
 
   it('should allow fragments with Text', () => {
@@ -120,8 +120,8 @@ describe('React Native Text Node Regression Tests', () => {
       </View>
     );
 
-    const { getByTestID } = render(<FragmentComponent />);
-    expect(getByTestID('fragment-view')).toBeTruthy();
+    const { getByTestId } = render(<FragmentComponent />);
+    expect(getByTestId('fragment-view')).toBeTruthy();
   });
 
   // Error scenario tests (these should NOT render without errors in production)
@@ -162,10 +162,10 @@ describe('React Native Text Node Regression Tests', () => {
         </View>
       );
 
-      const { getByTestID } = render(
+      const { getByTestId } = render(
         <ErrorFallback error={new Error('Test error')} />
       );
-      expect(getByTestID('error-fallback')).toBeTruthy();
+      expect(getByTestId('error-fallback')).toBeTruthy();
     });
 
     it('ErrorView should render without text node errors', () => {
@@ -179,10 +179,10 @@ describe('React Native Text Node Regression Tests', () => {
         </View>
       );
 
-      const { getByTestID } = render(
+      const { getByTestId } = render(
         <ErrorView message="Something went wrong" />
       );
-      expect(getByTestID('error-view')).toBeTruthy();
+      expect(getByTestId('error-view')).toBeTruthy();
     });
 
     it('NetworkBoundary should render without text node errors', () => {
@@ -193,10 +193,10 @@ describe('React Native Text Node Regression Tests', () => {
         </View>
       );
 
-      const { getByTestID } = render(
+      const { getByTestId } = render(
         <NetworkBanner message="No connection" />
       );
-      expect(getByTestID('network-banner')).toBeTruthy();
+      expect(getByTestId('network-banner')).toBeTruthy();
     });
   });
 });
