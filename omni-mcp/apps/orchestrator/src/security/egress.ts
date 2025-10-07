@@ -8,31 +8,9 @@ export class EgressController {
   private allowlist: string[];
   private logger: ReturnType<typeof createLogger>;
 
-  constructor(config: EgressConfig) {
+  constructor(config: EgressConfig, logger: ReturnType<typeof createLogger>) {
     this.allowlist = config.outboundAllowlist;
-    this.logger = createLogger({ 
-      features: {},
-      servers: {},
-      runtime: {
-        maxConcurrency: 10,
-        defaultTimeoutMs: 30000,
-        retry: {
-          attempts: 3,
-          backoffMs: 1000,
-        },
-      },
-      network: {
-        outboundAllowlist: [],
-      },
-      observability: { 
-        otelEnabled: false,
-        sampling: 0.1,
-      },
-      security: {
-        auditLog: true,
-        redactSecrets: true,
-      },
-    });
+    this.logger = logger;
   }
 
   // Check if hostname is allowed for outbound connections
