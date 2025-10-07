@@ -130,7 +130,7 @@ export function getRequiredEnvKeys(serverName: string): string[] {
   const required: string[] = [];
   
   for (const [key, field] of Object.entries(shape)) {
-    if (field instanceof z.ZodString && !field.isOptional()) {
+    if (field instanceof z.ZodString) {
       required.push(key);
     }
   }
