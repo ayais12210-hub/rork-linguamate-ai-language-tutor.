@@ -46,6 +46,7 @@ pnpm add expo-secure-store expo-asset @react-navigation/native-stack
 - **Changes**: 
   - Switched from Bun to pnpm
   - Added proper Node.js 18 setup
+  - Implemented exact script name matching (prevents false positives)
   - Made scripts more resilient with fallbacks
 
 #### SuperClaude Quality Workflow  

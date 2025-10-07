@@ -39,6 +39,7 @@ Successfully diagnosed and fixed three failing CI jobs in the Backend Hardening 
 ```yaml
 - Uses pnpm instead of Bun
 - Node.js 18 with proper caching
+- Exact script name matching (prevents false positives)
 - Resilient script execution with fallbacks
 - Focused on core quality metrics
 ```

@@ -32,14 +32,14 @@ jobs:
 
       - name: Typecheck
         run: |
-          if pnpm run | grep -q "typecheck"; then pnpm run typecheck; else echo "No typecheck script"; fi
+          if grep -q '"typecheck":' package.json; then pnpm run typecheck; else echo "No typecheck script"; fi
 
       - name: Lint
         run: |
-          if pnpm run | grep -q "lint"; then pnpm run lint; else echo "No lint script"; fi
+          if grep -q '"lint":' package.json; then pnpm run lint; else echo "No lint script"; fi
 
       - name: Test
         env:
           CI: "true"
         run: |
-          if pnpm run | grep -q "test"; then pnpm run test -- --reporter=verbose || pnpm run test; else echo "No test script"; fi
+          if grep -q '"test":' package.json; then pnpm run test -- --reporter=verbose || pnpm run test; else echo "No test script"; fi
