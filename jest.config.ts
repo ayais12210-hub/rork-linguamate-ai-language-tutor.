@@ -50,14 +50,10 @@ const config: Config = {
       tsconfig: {
         jsx: 'react',
       },
+      useESM: true,
     }],
   },
-  // extensionsToTreatAsEsm: ['.ts', '.tsx'],
-  globals: {
-    'ts-jest': {
-      useESM: true,
-    },
-  },
+  extensionsToTreatAsEsm: ['.ts', '.tsx'],
 };
 
 export default config;

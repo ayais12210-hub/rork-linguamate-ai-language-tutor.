@@ -25,7 +25,8 @@ pnpm add expo-secure-store expo-asset @react-navigation/native-stack
 **Problem**: Jest was failing due to ES modules and deprecated ts-jest configuration
 **Solution**: Updated `jest.config.ts`
 - Fixed deprecated `globals` configuration
-- Added proper ES module support
+- Moved `useESM: true` into transform options (modern approach)
+- Added proper ES module support with `extensionsToTreatAsEsm`
 - Updated transform configuration
 
 #### 3. TypeScript Configuration
