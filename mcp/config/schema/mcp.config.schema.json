@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MCP Configuration Schema",
+  "description": "Schema for validating MCP server configurations",
+  "type": "object",
+  "required": ["version", "servers"],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "description": "Configuration version",
+      "minimum": 1
+    },
+    "servers": {
+      "type": "object",
+      "description": "Map of server configurations",
+      "patternProperties": {
+        "^[a-zA-Z][a-zA-Z0-9_-]*$": {
+          "type": "object",
+          "required": ["command", "args"],
+          "properties": {
+            "command": {
+              "type": "string",
+              "description": "Command to execute the server"
+            },
+            "args": {
+              "type": "array",
+              "description": "Command line arguments",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": {
+              "type": "string",
+              "description": "Human-readable description of the server"
+            },
+            "env": {
+              "type": "object",
+              "description": "Environment variables for the server",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

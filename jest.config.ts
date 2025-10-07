@@ -36,6 +36,7 @@ const config: Config = {
     'schemas/**/*.{ts,tsx}',
     'backend/**/*.{ts,tsx}',
     'hooks/**/*.{ts,tsx}',
+    'mcp/**/*.{ts,tsx,js}',
     '!**/*.d.ts',
     '!**/node_modules/**',
     '!**/__tests__/**',

@@ -36,7 +36,13 @@
     "backend:lint": "eslint backend/ --ext .ts --max-warnings=0",
     "backend:start": "NODE_ENV=production bun run backend/hono.ts",
     "web:build": "expo export --platform web",
-    "mcp:check": "node -e \"console.log('Validating MCP configuration...'); JSON.parse(require('fs').readFileSync('.cursor/mcp.json', 'utf8')); console.log('✅ MCP configuration is valid JSON');\""
+    "mcp:check": "node -e \"console.log('Validating MCP configuration...'); JSON.parse(require('fs').readFileSync('.cursor/mcp.json', 'utf8')); console.log('✅ MCP configuration is valid JSON');\"",
+    "mcp:files": "node ./mcp/servers/filesystem/server.js",
+    "mcp:term": "node ./mcp/servers/terminal/server.js",
+    "mcp:sqlite": "node ./mcp/servers/sqlite/server.js",
+    "mcp:docs": "node ./mcp/servers/docs/server.js",
+    "mcp:dev": "node ./mcp/dev-runner.js",
+    "prepare": "husky"
   },
   "dependencies": {
     "@axe-core/playwright": "^4.10.2",
@@ -136,6 +142,7 @@
     "react-native-svg": "15.11.2",
     "react-native-web": "^0.20.0",
     "semgrep": "^0.0.1",
+    "sqlite3": "^5.1.7",
     "superjson": "^2.2.2",
     "ts-jest": "^29.4.4",
     "uuid": "^13.0.0",
@@ -161,6 +168,12 @@
   },
   "overrides": {
     "tmp": "^0.2.5"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json,md}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
   },
   "private": true
 }

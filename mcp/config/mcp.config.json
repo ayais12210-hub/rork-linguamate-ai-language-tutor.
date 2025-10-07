@@ -1,0 +1,26 @@
+{
+  "$schema": "./schema/mcp.config.schema.json",
+  "version": 1,
+  "servers": {
+    "filesystem": {
+      "command": "node",
+      "args": ["./mcp/servers/filesystem/server.js"],
+      "description": "Safe filesystem operations within project boundaries"
+    },
+    "terminal": {
+      "command": "node", 
+      "args": ["./mcp/servers/terminal/server.js"],
+      "description": "Controlled terminal command execution with allowlist"
+    },
+    "sqlite": {
+      "command": "node",
+      "args": ["./mcp/servers/sqlite/server.js"],
+      "description": "Local SQLite database operations with safety restrictions"
+    },
+    "docs": {
+      "command": "node",
+      "args": ["./mcp/servers/docs/server.js"],
+      "description": "Automated documentation generation and maintenance"
+    }
+  }
+}
