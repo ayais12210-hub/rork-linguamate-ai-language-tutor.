@@ -4,7 +4,7 @@ import { globby } from "globby";
 import { readFileSync } from "node:fs";
 import YAML from "yaml";
 import assert from "node:assert";
-import { loadConfig } from '../apps/orchestrator/src/config/schema.js';
+import { loadConfig } from '../../apps/orchestrator/src/config/schema.js';
 
 type Health = { type: "stdio" | "http"; url?: string; timeoutMs: number };
 
