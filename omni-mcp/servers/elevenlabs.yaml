@@ -2,7 +2,7 @@ name: elevenlabs
 enabled: false
 command: npx
 args:
-  - elevenlabs-mcp
+  - "elevenlabs-mcp"
   - start
 env:
   ELEVENLABS_API_KEY: "${ELEVENLABS_API_KEY}"

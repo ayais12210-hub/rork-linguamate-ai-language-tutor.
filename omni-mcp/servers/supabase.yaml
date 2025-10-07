@@ -2,7 +2,7 @@ name: supabase
 enabled: false
 command: npx
 args:
-  - supabase-mcp
+  - "supabase-mcp"
   - start
 env:
   SUPABASE_URL: "${SUPABASE_URL}"
@@ -13,7 +13,6 @@ healthCheck:
   timeoutMs: 10000
 scopes:
   - database:read
-  - database:write
 limits:
   rps: 5
   burst: 10

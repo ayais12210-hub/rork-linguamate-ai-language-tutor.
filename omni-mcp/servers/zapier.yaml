@@ -2,7 +2,7 @@ name: zapier
 enabled: false
 command: npx
 args:
-  - zapier-mcp
+  - "zapier-mcp"
   - start
 env:
   ZAPIER_NLA_API_KEY: "${ZAPIER_NLA_API_KEY}"
