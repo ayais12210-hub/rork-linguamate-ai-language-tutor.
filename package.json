@@ -7,7 +7,9 @@
     "start-web": "bunx rork start -p vep9anbk6huqelg0fppmq --web --tunnel",
     "start-web-dev": "DEBUG=expo* bunx rork start -p vep9anbk6huqelg0fppmq --web --tunnel",
     "typecheck": "tsc --noEmit --skipLibCheck",
+    // TODO: Reduce --max-warnings threshold over time to avoid technical debt accumulation.
     "lint": "eslint . --ext .ts,.tsx --max-warnings=100 --report-unused-disable-directives",
+    "lint:max-warnings-todo": "TODO: Gradually reduce --max-warnings from 100 to 0 to avoid technical debt accumulation.",
     "format:check": "prettier . --check",
     "format:fix": "prettier . --write",
     "test": "jest",
