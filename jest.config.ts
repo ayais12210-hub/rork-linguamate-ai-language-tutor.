@@ -52,7 +52,7 @@ const config: Config = {
       },
     }],
   },
-  extensionsToTreatAsEsm: ['.ts', '.tsx'],
+  // extensionsToTreatAsEsm: ['.ts', '.tsx'],
   globals: {
     'ts-jest': {
       useESM: true,
