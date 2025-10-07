@@ -8,11 +8,14 @@ import { TimeoutGuard } from './guards/timeouts.js';
 import { AuthScopesGuard } from './guards/authScopes.js';
 import { createLogger, logServerEvent, logServerError } from './observability/logger.js';
 import { initializeOpenTelemetry, shutdownOpenTelemetry, type NodeSDK } from './observability/otel.js';
+import { logServerSpawn, logServerExit, logServerRestart } from './observability/audit.js';
+import { EgressController } from './security/egress.js';
+import { validateEnv } from './config/envSchemas.js';
 
 export interface ServerProcess {
   name: string;
   process: ChildProcess;
-  config: any;
+  config: ServerConfig;
   startTime: Date;
   restartCount: number;
   lastRestart: Date;
@@ -26,6 +29,7 @@ export class MCPOrchestrator {
   private circuitBreaker: CircuitBreakerGuard;
   private timeoutGuard: TimeoutGuard;
   private authScopes: AuthScopesGuard;
+  private egressController: EgressController;
   private logger: ReturnType<typeof createLogger>;
   private servers: Map<string, ServerProcess> = new Map();
   private otelSdk: NodeSDK | null = null;
@@ -39,6 +43,7 @@ export class MCPOrchestrator {
     this.circuitBreaker = new CircuitBreakerGuard();
     this.timeoutGuard = new TimeoutGuard();
     this.authScopes = new AuthScopesGuard();
+    this.egressController = new EgressController(this.config.network);
     this.logger = createLogger(this.config);
     
     // Create shutdown signal
@@ -74,6 +79,20 @@ export class MCPOrchestrator {
     const enabledServers = this.registry.getEnabledServers();
     
     for (const [name, serverConfig] of enabledServers) {
+      // Validate environment schema
+      const envValidation = validateEnv(name, serverConfig.env);
+      
+      if (!envValidation.ok) {
+        this.logger.warn({
+          server: name,
+          event: 'skipped',
+          reason: 'env_validation_failed',
+          missing: envValidation.missing,
+          errors: envValidation.errors,
+        });
+        continue;
+      }
+      
       if (hasRequiredEnvs(serverConfig.env)) {
         await this.startServer(name, serverConfig);
       } else {
@@ -135,13 +154,21 @@ export class MCPOrchestrator {
       const serverProcess: ServerProcess = {
         name,
         process: child,
-        config: config as any, // Type assertion for compatibility
+        config,
         startTime: new Date(),
         restartCount: 0,
         lastRestart: new Date(),
       };
 
       this.servers.set(name, serverProcess);
+      
+      // Record metrics and audit events
+      this.healthChecker.recordServerSpawn(name);
+      logServerSpawn(name, {
+        pid: child.pid,
+        command: config.command,
+        args: config.args,
+      });
       
       logServerEvent(this.logger, name, 'started', {
         pid: child.pid,
@@ -158,6 +185,14 @@ export class MCPOrchestrator {
   private handleServerExit(name: string, code: number | null, signal: string | null): void {
     const serverProcess = this.servers.get(name);
     if (!serverProcess) return;
+
+    // Record exit metrics and audit
+    this.healthChecker.recordServerExit(name, code);
+    logServerExit(name, {
+      code,
+      signal,
+      uptime: Date.now() - serverProcess.startTime.getTime(),
+    });
 
     // Check if this is a graceful shutdown
     if (this.shutdownSignal.aborted) {
@@ -180,10 +215,21 @@ export class MCPOrchestrator {
     }
 
     if (serverProcess.restartCount < 5) {
+      serverProcess.restartCount++;
+      serverProcess.lastRestart = now;
+      
+      // Record restart metrics and audit
+      this.healthChecker.recordServerRestart(name);
+      logServerRestart(name, {
+        restartCount: serverProcess.restartCount,
+        exitCode: code,
+        signal,
+      });
+      
       this.logger.warn({
         server: name,
         event: 'restarting',
-        restartCount: serverProcess.restartCount + 1,
+        restartCount: serverProcess.restartCount,
         exitCode: code,
         signal,
       });
@@ -290,5 +336,15 @@ export class MCPOrchestrator {
 
   getHealthChecker(): HealthChecker {
     return this.healthChecker;
+  }
+
+  // Get readiness status for /readyz endpoint
+  getReadinessStatus(): { ready: boolean; status: 'ok' | 'degraded' | 'down'; details: Record<string, unknown> } {
+    return this.healthChecker.getReadinessStatus();
+  }
+
+  // Get egress controller for security validation
+  getEgressController(): EgressController {
+    return this.egressController;
   }
 }

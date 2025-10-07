@@ -20,7 +20,9 @@
     "health:ci": "pnpm tsx scripts/health.ts --ci",
     "fmt": "prettier --write .",
     "fmt:check": "prettier --check .",
-    "clean": "rm -rf node_modules apps/*/node_modules dist coverage"
+    "clean": "rm -rf node_modules apps/*/node_modules dist coverage",
+    "prepare": "husky install",
+    "pre-commit": "lint-staged"
   },
   "devDependencies": {
     "@eslint/js": "^9.37.0",
@@ -32,7 +34,9 @@
     "@vitest/coverage-v8": "^1.0.0",
     "eslint": "^8.54.0",
     "globby": "^15.0.0",
+    "husky": "^9.1.7",
     "limiter": "^3.0.0",
+    "lint-staged": "^16.2.3",
     "prettier": "^3.1.0",
     "tsx": "^4.6.0",
     "typescript": "^5.3.0",
@@ -57,5 +61,17 @@
     "pino-pretty": "^10.2.0",
     "prom-client": "^15.0.0",
     "zod": "^3.22.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{js,jsx,json,yaml,yml}": [
+      "prettier --write"
+    ],
+    "servers/*.yaml": [
+      "pnpm tsx scripts/generate-dotenv.ts --check"
+    ]
   }
 }

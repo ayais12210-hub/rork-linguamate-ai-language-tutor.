@@ -6,7 +6,7 @@ export class RateLimiterGuard {
 
   createLimiter(serverName: string, config: ServerConfig): RateLimiter {
     const limiter = new RateLimiter({
-      tokensPerInterval: config.limits.rps,
+      tokensPerInterval: config.limits?.rps || 3,
       interval: 'second',
       fireImmediately: true,
     });

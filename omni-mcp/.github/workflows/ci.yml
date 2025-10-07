@@ -44,6 +44,9 @@ jobs:
         flags: unittests
         name: codecov-umbrella
         
+    - name: Check .env.example is up to date
+      run: pnpm tsx scripts/generate-dotenv.ts --check
+        
     - name: Health check (conditional)
       env:
         DOTENV_CI: ${{ secrets.DOTENV_CI }}
@@ -65,7 +68,72 @@ jobs:
         path: |
           apps/orchestrator/dist/
           coverage/
+          audit.log
         retention-days: 7
+
+  health-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - server: github
+            secrets: GITHUB_TOKEN
+          - server: stripe
+            secrets: STRIPE_SECRET_KEY
+          - server: notion
+            secrets: NOTION_API_KEY
+          - server: firecrawl
+            secrets: FIRECRAWL_API_KEY
+          - server: supabase
+            secrets: SUPABASE_URL,SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY
+          - server: playwright
+            secrets: PLAYWRIGHT_BROWSERS_PATH
+          - server: elevenlabs
+            secrets: ELEVENLABS_API_KEY
+          - server: sentry
+            secrets: SENTRY_DSN
+          - server: openrouter
+            secrets: OPENROUTER_API_KEY
+          - server: qwen-max
+            secrets: QWEN_API_KEY
+          - server: grok
+            secrets: GROK_API_KEY
+          - server: gemini-cloud-assist
+            secrets: GOOGLE_PROJECT_ID,GOOGLE_APPLICATION_CREDENTIALS,GEMINI_API_KEY
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 9
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'pnpm'
+        
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+      
+    - name: Build application
+      run: pnpm build
+      
+    - name: Health check for ${{ matrix.server }}
+      env:
+        DOTENV_CI: ${{ secrets.DOTENV_CI }}
+      run: |
+        if [ -n "${DOTENV_CI}" ]; then
+          echo "$DOTENV_CI" > .env
+          echo "Testing ${{ matrix.server }} server health..."
+          pnpm health:ci --server=${{ matrix.server }}
+        else
+          echo "Skipping ${{ matrix.server }} health check - no CI secrets provided"
+        fi
+      continue-on-error: true
 
   security:
     runs-on: ubuntu-latest

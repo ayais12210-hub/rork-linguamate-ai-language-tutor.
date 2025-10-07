@@ -10,5 +10,19 @@ healthCheck:
   type: http
   url: "http://localhost:3002/health"
   timeoutMs: 10000
+  intervalMs: 10000
 scopes: ["db:read","db:write"]
-limits: { rps: 10, burst: 20, timeoutMs: 30000 }
+limits: 
+  rps: 10
+  burst: 20
+timeouts:
+  opMs: 30000
+  startMs: 30000
+retry:
+  attempts: 3
+  backoffMs: 1000
+probe:
+  type: http
+  url: "http://localhost:3002/health"
+  timeoutMs: 10000
+  intervalMs: 10000

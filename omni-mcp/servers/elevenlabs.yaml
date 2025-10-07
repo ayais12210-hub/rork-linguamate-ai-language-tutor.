@@ -8,5 +8,19 @@ healthCheck:
   type: http
   url: "http://localhost:3004/health"
   timeoutMs: 10000
+  intervalMs: 10000
 scopes: ["audio:generate"]
-limits: { rps: 5, burst: 10, timeoutMs: 45000 }
+limits: 
+  rps: 5
+  burst: 10
+timeouts:
+  opMs: 45000
+  startMs: 30000
+retry:
+  attempts: 3
+  backoffMs: 1000
+probe:
+  type: http
+  url: "http://localhost:3004/health"
+  timeoutMs: 10000
+  intervalMs: 10000

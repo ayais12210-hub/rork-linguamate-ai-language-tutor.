@@ -8,5 +8,19 @@ healthCheck:
   type: http
   url: "http://localhost:3003/health"
   timeoutMs: 10000
+  intervalMs: 10000
 scopes: ["browser:launch"]
-limits: { rps: 2, burst: 4, timeoutMs: 60000 }
+limits: 
+  rps: 2
+  burst: 4
+timeouts:
+  opMs: 60000
+  startMs: 30000
+retry:
+  attempts: 3
+  backoffMs: 1000
+probe:
+  type: http
+  url: "http://localhost:3003/health"
+  timeoutMs: 10000
+  intervalMs: 10000

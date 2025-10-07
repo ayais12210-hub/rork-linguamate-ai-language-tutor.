@@ -9,13 +9,34 @@ const HealthCheckSchema = z.object({
   command: z.string().optional(),
   url: z.string().optional(),
   timeoutMs: z.number().positive().default(10000),
+  intervalMs: z.number().positive().default(10000),
 });
 
 // Server limits schema
 const ServerLimitsSchema = z.object({
   rps: z.number().positive().default(3),
   burst: z.number().positive().default(6),
-  timeoutMs: z.number().positive().default(30000),
+});
+
+// Server timeouts schema
+const ServerTimeoutsSchema = z.object({
+  opMs: z.number().positive().default(30000),
+  startMs: z.number().positive().default(30000),
+});
+
+// Server retry schema
+const ServerRetrySchema = z.object({
+  attempts: z.number().positive().default(3),
+  backoffMs: z.number().positive().default(1000),
+});
+
+// Server probe schema
+const ServerProbeSchema = z.object({
+  type: z.enum(['stdio', 'http']),
+  url: z.string().optional(),
+  command: z.string().optional(),
+  timeoutMs: z.number().positive().default(10000),
+  intervalMs: z.number().positive().default(10000),
 });
 
 // Server configuration schema
@@ -27,7 +48,10 @@ const ServerConfigSchema = z.object({
   env: z.record(z.string()),
   healthCheck: HealthCheckSchema,
   scopes: z.array(z.string()).default([]),
-  limits: ServerLimitsSchema.default({}),
+  limits: ServerLimitsSchema.optional(),
+  timeouts: ServerTimeoutsSchema.optional(),
+  retry: ServerRetrySchema.optional(),
+  probe: ServerProbeSchema.optional(),
 });
 
 // Feature flags schema
@@ -79,6 +103,10 @@ export const ConfigSchema = z.object({
 export type Config = z.infer<typeof ConfigSchema>;
 export type ServerConfig = z.infer<typeof ServerConfigSchema>;
 export type HealthCheck = z.infer<typeof HealthCheckSchema>;
+export type ServerLimits = z.infer<typeof ServerLimitsSchema>;
+export type ServerTimeouts = z.infer<typeof ServerTimeoutsSchema>;
+export type ServerRetry = z.infer<typeof ServerRetrySchema>;
+export type ServerProbe = z.infer<typeof ServerProbeSchema>;
 
 // Environment variable interpolation
 function interpolateEnvVars(template: string): string {
@@ -89,17 +117,29 @@ function interpolateEnvVars(template: string): string {
   });
 }
 
+// Normalize configuration (convert comma-separated strings to arrays)
+function normalizeConfig(config: Record<string, unknown>): Record<string, unknown> {
+  const network = config.network as Record<string, unknown>;
+  if (network?.outboundAllowlist && typeof network.outboundAllowlist === 'string') {
+    network.outboundAllowlist = (network.outboundAllowlist as string)
+      .split(',')
+      .map((item: string) => item.trim())
+      .filter((item: string) => item.length > 0);
+  }
+  return config;
+}
+
 // Load and merge configuration files
 export function loadConfig(): Config {
   const configDir = join(process.cwd(), 'config');
   
   // Load default configuration
   const defaultPath = join(configDir, 'default.yaml');
-  let config: any = {};
+  let config: Record<string, unknown> = {};
   
   if (existsSync(defaultPath)) {
     const defaultContent = readFileSync(defaultPath, 'utf8');
-    config = yaml.load(defaultContent) || {};
+    config = (yaml.load(defaultContent) as Record<string, unknown>) || {};
   }
   
   // Load environment-specific configuration
@@ -119,12 +159,15 @@ export function loadConfig(): Config {
     config = { ...config, ...localConfig };
   }
   
+  // Normalize configuration
+  config = normalizeConfig(config);
+  
   // Interpolate environment variables in server configurations
   if (config.servers) {
-    for (const [, serverConfig] of Object.entries(config.servers as Record<string, any>)) {
+    for (const [, serverConfig] of Object.entries(config.servers as Record<string, Record<string, unknown>>)) {
       if (serverConfig.env) {
-        for (const [key, value] of Object.entries(serverConfig.env)) {
-          serverConfig.env[key] = interpolateEnvVars(value as string);
+        for (const [key, value] of Object.entries(serverConfig.env as Record<string, string>)) {
+          (serverConfig.env as Record<string, string>)[key] = interpolateEnvVars(value);
         }
       }
     }
@@ -150,4 +193,53 @@ export function resolveEnv(envConfig: Record<string, string>): Record<string, st
     resolved[key] = interpolateEnvVars(value);
   }
   return resolved;
+}
+
+// Environment schema validation
+export function validateEnv(name: string, env: Record<string, string>): { ok: boolean; missing: string[] } {
+  const missing: string[] = [];
+  
+  for (const [key, value] of Object.entries(env)) {
+    if (value && !process.env[key]) {
+      missing.push(key);
+    }
+  }
+  
+  return {
+    ok: missing.length === 0,
+    missing,
+  };
+}
+
+// Collect required environment keys from configuration
+export function collectRequiredEnvKeys(cfg: Config): string[] {
+  const keys = new Set<string>();
+  
+  for (const [, serverConfig] of Object.entries(cfg.servers)) {
+    for (const [key, value] of Object.entries(serverConfig.env)) {
+      if (value) {
+        keys.add(key);
+      }
+    }
+  }
+  
+  return Array.from(keys).sort();
+}
+
+// Resolve environment map with interpolation
+export function resolveEnvMap(envMap: Record<string, string>): { resolved: Record<string, string>; missing: string[] } {
+  const resolved: Record<string, string> = {};
+  const missing: string[] = [];
+  
+  for (const [key, value] of Object.entries(envMap)) {
+    const interpolated = interpolateEnvVars(value);
+    resolved[key] = interpolated;
+    
+    // Check if required env var is missing
+    if (value && !interpolated) {
+      missing.push(key);
+    }
+  }
+  
+  return { resolved, missing };
 }
