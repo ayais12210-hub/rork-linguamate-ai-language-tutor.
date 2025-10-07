@@ -3,7 +3,7 @@
  * This provides compatibility for libraries that use React 19's `use` hook
  */
 
-import { useContext, use } from 'react';
+import { useContext } from 'react';
 
 // For React 18, we'll create a polyfill that uses useContext
 // The `use` hook in React 19 can read from contexts and promises
