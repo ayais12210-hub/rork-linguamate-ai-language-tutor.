@@ -1,261 +1,44 @@
-name: 🧪 Test EAS Builds (Dry Run)
+name: Test EAS Configuration
 
 on:
-  workflow_dispatch:
-    inputs:
-      platform:
-        description: 'Platform to test'
-        required: true
-        default: 'android'
-        type: choice
-        options:
-          - android
-          - ios
-          - both
-      profile:
-        description: 'Build profile to test'
-        required: true
-        default: 'preview'
-        type: choice
-        options:
-          - preview
-          - development
-          - production
-  push:
-    branches: [main, develop]
   pull_request:
-    branches: [main, develop]
+  push:
+    branches: [ main ]
 
-concurrency:
-  group: test-eas-dry-run-${{ github.ref }}
-  cancel-in-progress: true
-
-env:
-  NODE_VERSION: '20'
+permissions:
+  contents: read
 
 jobs:
-  # Test EAS configuration without actual builds
-  test-eas-config:
-    name: 🔧 Test EAS Configuration
+  eas-config:
     runs-on: ubuntu-latest
+    env:
+      # Optional. Add in repo secrets if available; job still passes without them.
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 🏗️ Setup Node.js
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          node-version: 18
+          cache: pnpm
 
-      - name: 📥 Install dependencies
-        run: npm ci
+      - name: Install
+        run: pnpm install --frozen-lockfile
 
-      - name: 📱 Install EAS CLI
-        run: npm install -g eas-cli
+      - name: Expo Doctor
+        run: npx expo doctor || npx expo-cli doctor
 
-      - name: 🔍 Validate EAS configuration
+      - name: EAS CLI version
+        run: npx eas-cli --version
+
+      - name: Validate EAS config (non-interactive, no creds)
         run: |
-          echo "🔍 Validating EAS configuration..."
-          
-          # Check if eas.json exists
-          if [ -f "eas.json" ]; then
-            echo "✅ eas.json found"
-            cat eas.json
-          else
-            echo "❌ eas.json not found"
-            exit 1
-          fi
-          
-          # Check if app.json/app.config.js exists
-          if [ -f "app.json" ]; then
-            echo "✅ app.json found"
-          elif [ -f "app.config.js" ]; then
-            echo "✅ app.config.js found"
-          else
-            echo "❌ Neither app.json nor app.config.js found"
-            exit 1
-          fi
-
-      - name: 🧪 Test EAS commands (dry run)
-        run: |
-          echo "🧪 Testing EAS commands without API calls..."
-          
-          # Test EAS whoami (this will fail without token, but that's expected)
-          echo "🔍 Testing EAS authentication check..."
-          eas whoami || echo "✅ EAS whoami failed as expected (no token provided)"
-          
-          # Test EAS build --help (this should work)
-          echo "🔍 Testing EAS build help..."
-          eas build --help || echo "⚠️  EAS build help failed"
-          
-          # Test EAS build --platform with --dry-run if available
-          echo "🔍 Testing EAS build dry run..."
-          if eas build --help | grep -q "dry-run"; then
-            echo "✅ EAS supports --dry-run flag"
-            eas build --platform ${{ github.event.inputs.platform || 'android' }} --profile ${{ github.event.inputs.profile || 'preview' }} --dry-run || echo "⚠️  Dry run failed (may not be supported)"
-          else
-            echo "ℹ️  EAS doesn't support --dry-run flag"
-          fi
-
-      - name: 🔍 Validate build profiles
-        run: |
-          echo "🔍 Validating build profiles in eas.json..."
-          
-          # Extract and validate build profiles
-          if command -v jq >/dev/null 2>&1; then
-            echo "📋 Available build profiles:"
-            jq -r '.build | keys[]' eas.json 2>/dev/null || echo "No build profiles found"
-            
-            echo "📋 Preview profile configuration:"
-            jq '.build.preview' eas.json 2>/dev/null || echo "Preview profile not found"
-            
-            echo "📋 Development profile configuration:"
-            jq '.build.development' eas.json 2>/dev/null || echo "Development profile not found"
-            
-            echo "📋 Production profile configuration:"
-            jq '.build.production' eas.json 2>/dev/null || echo "Production profile not found"
-          else
-            echo "ℹ️  jq not available, showing raw eas.json:"
-            cat eas.json
-          fi
-
-  # Test Expo configuration
-  test-expo-config:
-    name: 📱 Test Expo Configuration
-    runs-on: ubuntu-latest
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🏗️ Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: 📥 Install dependencies
-        run: npm ci
-
-      - name: 📱 Install Expo CLI
-        run: npm install -g @expo/cli
-
-      - name: 🔍 Validate Expo configuration
-        run: |
-          echo "🔍 Validating Expo configuration..."
-          
-          # Check Expo doctor
-          echo "🏥 Running Expo doctor..."
-          npx expo doctor || echo "⚠️  Expo doctor completed with warnings"
-          
-          # Check if we can read the app configuration
-          echo "📱 Reading app configuration..."
-          npx expo config --type public || echo "⚠️  Could not read public config"
-          
-          # Check for required environment variables
-          echo "🔍 Checking for required environment variables..."
-          if [ -f ".env.example" ]; then
-            echo "✅ .env.example found"
-            echo "Required environment variables:"
-            cat .env.example
-          else
-            echo "ℹ️  No .env.example found"
-          fi
-
-  # Test build simulation
-  test-build-simulation:
-    name: 🏗️ Test Build Simulation
-    runs-on: ubuntu-latest
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🏗️ Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: 📥 Install dependencies
-        run: npm ci
-
-      - name: 🏗️ Simulate build process
-        run: |
-          echo "🏗️ Simulating build process without actual compilation..."
-          
-          # Check if we can install dependencies
-          echo "📦 Checking dependency installation..."
-          npm ci --dry-run || echo "⚠️  Dry run not supported, checking package.json"
-          
-          # Check for build scripts
-          echo "🔍 Checking available build scripts..."
-          if [ -f "package.json" ]; then
-            echo "Available scripts:"
-            npm run || echo "No scripts available"
-          fi
-          
-          # Check for TypeScript configuration
-          if [ -f "tsconfig.json" ]; then
-            echo "✅ TypeScript configuration found"
-          fi
-          
-          # Check for Babel configuration
-          if [ -f "babel.config.js" ]; then
-            echo "✅ Babel configuration found"
-          fi
-          
-          # Check for Metro configuration
-          if [ -f "metro.config.js" ]; then
-            echo "✅ Metro configuration found"
-          fi
-
-  # Generate EAS test report
-  eas-test-report:
-    name: 📊 EAS Test Report
-    runs-on: ubuntu-latest
-    needs: [test-eas-config, test-expo-config, test-build-simulation]
-    if: always()
-    steps:
-      - name: 📊 Generate EAS test report
-        run: |
-          echo "# 🧪 EAS Build Testing Report" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Test | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| EAS Configuration | ${{ needs.test-eas-config.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Expo Configuration | ${{ needs.test-expo-config.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Build Simulation | ${{ needs.test-build-simulation.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          # Determine overall status
-          if [[ "${{ needs.test-eas-config.result }}" == "success" && "${{ needs.test-expo-config.result }}" == "success" ]]; then
-            echo "✅ **EAS configuration is valid!**" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "## Key Findings" >> $GITHUB_STEP_SUMMARY
-            echo "- ✅ EAS configuration files are present and valid" >> $GITHUB_STEP_SUMMARY
-            echo "- ✅ Expo configuration is properly set up" >> $GITHUB_STEP_SUMMARY
-            echo "- ✅ Build profiles are configured correctly" >> $GITHUB_STEP_SUMMARY
-            echo "- ✅ No hardcoded API keys detected" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ **EAS configuration issues found!**" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "## Issues Found" >> $GITHUB_STEP_SUMMARY
-            if [[ "${{ needs.test-eas-config.result }}" != "success" ]]; then
-              echo "- ❌ EAS configuration test failed" >> $GITHUB_STEP_SUMMARY
-            fi
-            if [[ "${{ needs.test-expo-config.result }}" != "success" ]]; then
-              echo "- ❌ Expo configuration test failed" >> $GITHUB_STEP_SUMMARY
-            fi
-            if [[ "${{ needs.test-build-simulation.result }}" != "success" ]]; then
-              echo "- ❌ Build simulation test failed" >> $GITHUB_STEP_SUMMARY
-            fi
-          fi
-          
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Recommendations" >> $GITHUB_STEP_SUMMARY
-          echo "- Use GitHub secrets for EXPO_TOKEN" >> $GITHUB_STEP_SUMMARY
-          echo "- Test EAS builds in preview mode first" >> $GITHUB_STEP_SUMMARY
-          echo "- Validate configuration before production builds" >> $GITHUB_STEP_SUMMARY
-          echo "- Use dry-run modes when available" >> $GITHUB_STEP_SUMMARY
+          npx eas-cli build:configure --non-interactive --platform all --skip-credentials-check

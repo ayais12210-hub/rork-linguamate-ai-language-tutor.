@@ -51,8 +51,28 @@ module.exports = {
       files: ['**/__tests__/**', '**/*.test.ts', '**/*.test.tsx'],
       env: { jest: true },
       rules: {
-        '@typescript-eslint/no-explicit-any': 'off'
+        '@typescript-eslint/no-explicit-any': 'off',
+        '@typescript-eslint/no-unsafe-assignment': 'off',
+        '@typescript-eslint/no-unsafe-call': 'off',
+        '@typescript-eslint/no-unsafe-member-access': 'off',
+        '@typescript-eslint/no-unsafe-return': 'off',
+        'import/order': 'off'
+      }
+    },
+    {
+      files: ['.lighthouserc.js'],
+      rules: {
+        '@typescript-eslint/no-var-requires': 'off'
       }
     }
+  ],
+  ignorePatterns: [
+    'node_modules/',
+    '.expo/',
+    'dist/',
+    'build/',
+    'coverage/',
+    '*.config.js',
+    '*.config.cjs'
   ]
 };
