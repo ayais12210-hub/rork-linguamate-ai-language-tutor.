@@ -10,9 +10,6 @@ import { useContext } from 'react';
 // For contexts, it's essentially the same as useContext
 export function usePolyfill<T>(context: React.Context<T>): T {
   const value = useContext(context);
-  if (value === null || value === undefined) {
-    throw new Error('usePolyfill: context value is null or undefined');
-  }
   return value;
 }
 
