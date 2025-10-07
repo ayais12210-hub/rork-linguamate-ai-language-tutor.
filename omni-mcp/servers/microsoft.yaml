@@ -1,0 +1,19 @@
+name: microsoft
+enabled: false
+command: npx
+args:
+  - microsoft-mcp
+  - start
+env:
+  AZURE_TENANT_ID: ${AZURE_TENANT_ID}
+  AZURE_CLIENT_ID: ${AZURE_CLIENT_ID}
+  AZURE_CLIENT_SECRET: ${AZURE_CLIENT_SECRET}
+healthCheck:
+  type: stdio
+  timeoutMs: 12000
+scopes:
+  - scope:action
+limits:
+  rps: 3
+  burst: 6
+  timeoutMs: 30000

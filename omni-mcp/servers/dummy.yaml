@@ -1,0 +1,14 @@
+name: dummy
+enabled: false
+command: node
+args:
+  - "tests/e2e/dummy-mcp.ts"
+env: {}
+healthCheck:
+  type: stdio
+  timeoutMs: 3000
+scopes: []
+limits:
+  rps: 10
+  burst: 20
+  timeoutMs: 5000

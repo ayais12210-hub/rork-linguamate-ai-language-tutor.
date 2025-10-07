@@ -1,0 +1,17 @@
+name: startup-framework
+enabled: false
+command: npx
+args:
+  - mcp-startup-framework
+  - start
+env:
+  STARTUP_FRAMEWORK_TOKEN: ${STARTUP_FRAMEWORK_TOKEN}
+healthCheck:
+  type: stdio
+  timeoutMs: 12000
+scopes:
+  - scope:action
+limits:
+  rps: 3
+  burst: 6
+  timeoutMs: 30000

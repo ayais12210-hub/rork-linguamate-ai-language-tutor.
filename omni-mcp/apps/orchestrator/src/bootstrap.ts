@@ -228,7 +228,11 @@ export class MCPOrchestrator {
     await shutdownOpenTelemetry(this.otelSdk);
     
     this.logger.info('Graceful shutdown completed');
-    process.exit(0);
+    
+    // Only exit in production, not in test environment
+    if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'test-e2e') {
+      process.exit(0);
+    }
   }
 
   private async stopServer(name: string, serverProcess: ServerProcess): Promise<void> {

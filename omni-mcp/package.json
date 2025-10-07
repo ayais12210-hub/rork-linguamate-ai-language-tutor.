@@ -18,6 +18,7 @@
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "health": "pnpm tsx scripts/health.ts",
     "health:ci": "pnpm tsx scripts/health.ts --ci",
+    "scaffold": "pnpm tsx scripts/scaffold-servers.ts",
     "fmt": "prettier --write .",
     "fmt:check": "prettier --check .",
     "clean": "rm -rf node_modules apps/*/node_modules dist coverage"

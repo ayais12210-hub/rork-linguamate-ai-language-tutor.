@@ -1,0 +1,18 @@
+name: backlog-alt
+enabled: false
+command: npx
+args:
+  - MCP-server-backlog-alt
+  - start
+env:
+  BACKLOG_SPACE_ID: ${BACKLOG_SPACE_ID}
+  BACKLOG_API_KEY: ${BACKLOG_API_KEY}
+healthCheck:
+  type: stdio
+  timeoutMs: 12000
+scopes:
+  - scope:action
+limits:
+  rps: 3
+  burst: 6
+  timeoutMs: 30000

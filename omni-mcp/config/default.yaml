@@ -1,7 +1,3 @@
-# Default configuration for Omni-MCP
-# This file is committed and provides the base configuration
-
-# Feature flags - all servers disabled by default
 features:
   firecrawl:
     enabled: false
@@ -95,25 +91,815 @@ features:
     enabled: false
   asana:
     enabled: false
-
-# Runtime configuration
 runtime:
   maxConcurrency: 10
   defaultTimeoutMs: 30000
   retry:
     attempts: 3
     backoffMs: 1000
-
-# Network configuration
 network:
   outboundAllowlist: []
-
-# Observability configuration
 observability:
   otelEnabled: true
   sampling: 0.1
-
-# Security configuration
 security:
   auditLog: true
   redactSecrets: true
+servers:
+  github:
+    name: github
+    enabled: false
+    command: npx
+    args:
+      - github-mcp-server
+      - start
+    env:
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  notion:
+    name: notion
+    enabled: false
+    command: npx
+    args:
+      - notion-mcp-server
+      - start
+    env:
+      NOTION_TOKEN: ${NOTION_TOKEN}
+      NOTION_DATABASE_ID: ${NOTION_DATABASE_ID}
+    healthCheck:
+      type: stdio
+      timeoutMs: 10000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  firecrawl:
+    name: firecrawl
+    enabled: false
+    command: npx
+    args:
+      - firecrawl-mcp
+      - start
+    env:
+      FIRECRAWL_API_KEY: ${FIRECRAWL_API_KEY}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  supabase:
+    name: supabase
+    enabled: false
+    command: npx
+    args:
+      - supabase-mcp
+      - start
+    env:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  playwright:
+    name: playwright
+    enabled: false
+    command: npx
+    args:
+      - playwright-mcp
+      - start
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: ${PLAYWRIGHT_BROWSERS_PATH}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  elevenlabs:
+    name: elevenlabs
+    enabled: false
+    command: npx
+    args:
+      - elevenlabs-mcp
+      - start
+    env:
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  sentry:
+    name: sentry
+    enabled: false
+    command: npx
+    args:
+      - sentry-mcp
+      - start
+    env:
+      SENTRY_DSN: ${SENTRY_DSN}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  openrouter:
+    name: openrouter
+    enabled: false
+    command: npx
+    args:
+      - openrouter-mcp
+      - start
+    env:
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  qwen-max:
+    name: qwen-max
+    enabled: false
+    command: npx
+    args:
+      - qwen-max-mcp
+      - start
+    env:
+      QWEN_API_KEY: ${QWEN_API_KEY}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  grok:
+    name: grok
+    enabled: false
+    command: npx
+    args:
+      - grok-mcp
+      - start
+    env:
+      GROK_API_KEY: ${GROK_API_KEY}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  gemini-cloud-assist:
+    name: gemini-cloud-assist
+    enabled: false
+    command: npx
+    args:
+      - gemini-cloud-assist-mcp
+      - start
+    env:
+      GOOGLE_PROJECT_ID: ${GOOGLE_PROJECT_ID}
+      GOOGLE_APPLICATIONS_CREDENTIALS: ${GOOGLE_APPLICATIONS_CREDENTIALS}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  chrome-devtools:
+    name: chrome-devtools
+    enabled: false
+    command: npx
+    args:
+      - chrome-devtools-mcp
+      - start
+    env:
+      CHROME_BIN: ${CHROME_BIN}
+      CHROME_REMOTE_DEBUGGING_PORT: ${CHROME_REMOTE_DEBUGGING_PORT}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  context7:
+    name: context7
+    enabled: false
+    command: npx
+    args:
+      - '@upstash/context7-mcp'
+      - start
+    env:
+      UPSTASH_REDIS_REST_URL: ${UPSTASH_REDIS_REST_URL}
+      UPSTASH_REDIS_REST_TOKEN: ${UPSTASH_REDIS_REST_TOKEN}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  perplexity:
+    name: perplexity
+    enabled: false
+    command: npx
+    args:
+      - perplexity-mcp
+      - start
+    env:
+      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  ppl-modelcontext:
+    name: ppl-modelcontext
+    enabled: false
+    command: npx
+    args:
+      - ppl-modelcontext-mcp
+      - start
+    env:
+      PPL_API_KEY: ${PPL_API_KEY}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  microsoft:
+    name: microsoft
+    enabled: false
+    command: npx
+    args:
+      - microsoft-mcp
+      - start
+    env:
+      AZURE_TENANT_ID: ${AZURE_TENANT_ID}
+      AZURE_CLIENT_ID: ${AZURE_CLIENT_ID}
+      AZURE_CLIENT_SECRET: ${AZURE_CLIENT_SECRET}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  stripe:
+    name: stripe
+    enabled: false
+    command: npx
+    args:
+      - '@stripe/agent-toolkit'
+      - start
+    env:
+      STRIPE_API_KEY: ${STRIPE_API_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  zapier:
+    name: zapier
+    enabled: false
+    command: npx
+    args:
+      - zapier-mcp
+      - start
+    env:
+      ZAPIER_NLA_API_KEY: ${ZAPIER_NLA_API_KEY}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  windsor:
+    name: windsor
+    enabled: false
+    command: npx
+    args:
+      - windsormcp
+      - start
+    env:
+      WINDSOR_API_KEY: ${WINDSOR_API_KEY}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  adobe-express:
+    name: adobe-express
+    enabled: false
+    command: npx
+    args:
+      - adobe-express-mcp-server
+      - start
+    env:
+      ADOBE_EXPRESS_API_KEY: ${ADOBE_EXPRESS_API_KEY}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  backlog:
+    name: backlog
+    enabled: false
+    command: npx
+    args:
+      - backlog-mcp-server
+      - start
+    env:
+      BACKLOG_SPACE_ID: ${BACKLOG_SPACE_ID}
+      BACKLOG_API_KEY: ${BACKLOG_API_KEY}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  backlog-alt:
+    name: backlog-alt
+    enabled: false
+    command: npx
+    args:
+      - MCP-server-backlog-alt
+      - start
+    env:
+      BACKLOG_SPACE_ID: ${BACKLOG_SPACE_ID}
+      BACKLOG_API_KEY: ${BACKLOG_API_KEY}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  backlog-manager:
+    name: backlog-manager
+    enabled: false
+    command: npx
+    args:
+      - backlog-manager-mcp
+      - start
+    env:
+      BACKLOG_SPACE_ID: ${BACKLOG_SPACE_ID}
+      BACKLOG_API_KEY: ${BACKLOG_API_KEY}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  backup:
+    name: backup
+    enabled: false
+    command: npx
+    args:
+      - mcp-backup-server
+      - start
+    env:
+      BACKUP_DIR: ${BACKUP_DIR}
+      BACKUP_BUCKET: ${BACKUP_BUCKET}
+      BACKUP_CREDENTIALS_JSON_PATH: ${BACKUP_CREDENTIALS_JSON_PATH}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  berry-rag:
+    name: berry-rag
+    enabled: false
+    command: npx
+    args:
+      - berry-rag
+      - start
+    env:
+      BERRY_VECTOR_DB_URL: ${BERRY_VECTOR_DB_URL}
+      BERRY_VECTOR_DB_TOKEN: ${BERRY_VECTOR_DB_TOKEN}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  hfspace:
+    name: hfspace
+    enabled: false
+    command: npx
+    args:
+      - mcp-hfspace
+      - start
+    env:
+      HUGGINGFACE_TOKEN: ${HUGGINGFACE_TOKEN}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  v0:
+    name: v0
+    enabled: false
+    command: npx
+    args:
+      - v0-mcp
+      - start
+    env:
+      V0_API_KEY: ${V0_API_KEY}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  startup-framework:
+    name: startup-framework
+    enabled: false
+    command: npx
+    args:
+      - mcp-startup-framework
+      - start
+    env:
+      STARTUP_FRAMEWORK_TOKEN: ${STARTUP_FRAMEWORK_TOKEN}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  allvoicelab:
+    name: allvoicelab
+    enabled: false
+    command: npx
+    args:
+      - allvoicelab-mcp
+      - start
+    env: {}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  audio-mcp:
+    name: audio-mcp
+    enabled: false
+    command: npx
+    args:
+      - audio-mcp
+      - start
+    env:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  audio-transcriber:
+    name: audio-transcriber
+    enabled: false
+    command: npx
+    args:
+      - audio-transcriber-mcp
+      - start
+    env:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  deepseek-r1:
+    name: deepseek-r1
+    enabled: false
+    command: npx
+    args:
+      - MCP-server-Deepseek_R1
+      - start
+    env:
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  integration-app:
+    name: integration-app
+    enabled: false
+    command: npx
+    args:
+      - integration-app-mcp
+      - start
+    env: {}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  lara:
+    name: lara
+    enabled: false
+    command: npx
+    args:
+      - lara-mcp
+      - start
+    env:
+      LARA_API_KEY: ${LARA_API_KEY}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  youtube-translate:
+    name: youtube-translate
+    enabled: false
+    command: npx
+    args:
+      - youtube-translate-mcp
+      - start
+    env:
+      GOOGLE_YOUTUBE_API_KEY: ${GOOGLE_YOUTUBE_API_KEY}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  translator-ai:
+    name: translator-ai
+    enabled: false
+    command: npx
+    args:
+      - translator-ai
+      - start
+    env: {}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  a2a-gateway:
+    name: a2a-gateway
+    enabled: false
+    command: npx
+    args:
+      - mcp_a2a_gateway
+      - start
+    env:
+      A2A_GATEWAY_TOKEN: ${A2A_GATEWAY_TOKEN}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  agentrpc:
+    name: agentrpc
+    enabled: false
+    command: npx
+    args:
+      - agentrpc
+      - start
+    env:
+      AGENTRPC_TOKEN: ${AGENTRPC_TOKEN}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  aivis-speech:
+    name: aivis-speech
+    enabled: false
+    command: npx
+    args:
+      - mcp-simple-aivisspeech
+      - start
+    env:
+      AIVIS_API_KEY: ${AIVIS_API_KEY}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  minimax:
+    name: minimax
+    enabled: false
+    command: npx
+    args:
+      - minimax-mcp
+      - start
+    env:
+      MINIMAX_API_KEY: ${MINIMAX_API_KEY}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  daisys:
+    name: daisys
+    enabled: false
+    command: npx
+    args:
+      - daisys-mcp
+      - start
+    env:
+      DAISYS_API_KEY: ${DAISYS_API_KEY}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  adobe-commerce:
+    name: adobe-commerce
+    enabled: false
+    command: npx
+    args:
+      - adobe-commerce-mcp-server-by-cdata
+      - start
+    env:
+      ADOBE_COMMERCE_URL: ${ADOBE_COMMERCE_URL}
+      ADOBE_COMMERCE_USERNAME: ${ADOBE_COMMERCE_USERNAME}
+      ADOBE_COMMERCE_PASSWORD: ${ADOBE_COMMERCE_PASSWORD}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  globalping:
+    name: globalping
+    enabled: false
+    command: npx
+    args:
+      - globalping-mcp-server
+      - start
+    env:
+      GLOBALPING_API_KEY: ${GLOBALPING_API_KEY}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  fast-intercom:
+    name: fast-intercom
+    enabled: false
+    command: npx
+    args:
+      - fast-intercom-mcp
+      - start
+    env:
+      INTERCOM_ACCESS_TOKEN: ${INTERCOM_ACCESS_TOKEN}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  neon:
+    name: neon
+    enabled: false
+    command: npx
+    args:
+      - mcp-server-neon
+      - start
+    env:
+      NEON_DATABASE_URL: ${NEON_DATABASE_URL}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000
+  asana:
+    name: asana
+    enabled: false
+    command: npx
+    args:
+      - mcp-server-asana
+      - start
+    env:
+      ASANA_ACCESS_TOKEN: ${ASANA_ACCESS_TOKEN}
+    healthCheck:
+      type: stdio
+      timeoutMs: 12000
+    scopes: []
+    limits:
+      rps: 3
+      burst: 6
+      timeoutMs: 30000

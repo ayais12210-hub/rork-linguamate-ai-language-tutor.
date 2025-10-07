@@ -1,0 +1,16 @@
+name: translator-ai
+enabled: false
+command: npx
+args:
+  - translator-ai
+  - start
+env: {}
+healthCheck:
+  type: stdio
+  timeoutMs: 12000
+scopes:
+  - scope:action
+limits:
+  rps: 3
+  burst: 6
+  timeoutMs: 30000

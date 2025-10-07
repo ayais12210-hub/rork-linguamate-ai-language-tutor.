@@ -1,0 +1,17 @@
+name: audio-transcriber
+enabled: false
+command: npx
+args:
+  - audio-transcriber-mcp
+  - start
+env:
+  OPENAI_API_KEY: ${OPENAI_API_KEY}
+healthCheck:
+  type: stdio
+  timeoutMs: 12000
+scopes:
+  - scope:action
+limits:
+  rps: 3
+  burst: 6
+  timeoutMs: 30000

@@ -1,0 +1,17 @@
+name: aivis-speech
+enabled: false
+command: npx
+args:
+  - mcp-simple-aivisspeech
+  - start
+env:
+  AIVIS_API_KEY: ${AIVIS_API_KEY}
+healthCheck:
+  type: stdio
+  timeoutMs: 12000
+scopes:
+  - scope:action
+limits:
+  rps: 3
+  burst: 6
+  timeoutMs: 30000

@@ -50,7 +50,7 @@ export class HealthChecker {
   private async checkStdioHealth(config: ServerConfig): Promise<boolean> {
     return new Promise((resolve) => {
       const command = config.healthCheck.command || config.command;
-      const args = config.healthCheck.command ? [] : [...config.args, '--health-check'];
+      const args = config.healthCheck.command ? [] : [...config.args, '--health'];
       
       const child = spawn(command, args, {
         env: { ...process.env, ...config.env },

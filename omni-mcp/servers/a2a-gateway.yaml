@@ -1,0 +1,17 @@
+name: a2a-gateway
+enabled: false
+command: npx
+args:
+  - mcp_a2a_gateway
+  - start
+env:
+  A2A_GATEWAY_TOKEN: ${A2A_GATEWAY_TOKEN}
+healthCheck:
+  type: stdio
+  timeoutMs: 12000
+scopes:
+  - scope:action
+limits:
+  rps: 3
+  burst: 6
+  timeoutMs: 30000

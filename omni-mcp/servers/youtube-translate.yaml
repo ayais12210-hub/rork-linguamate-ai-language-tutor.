@@ -1,0 +1,17 @@
+name: youtube-translate
+enabled: false
+command: npx
+args:
+  - youtube-translate-mcp
+  - start
+env:
+  GOOGLE_YOUTUBE_API_KEY: ${GOOGLE_YOUTUBE_API_KEY}
+healthCheck:
+  type: stdio
+  timeoutMs: 12000
+scopes:
+  - scope:action
+limits:
+  rps: 3
+  burst: 6
+  timeoutMs: 30000

@@ -232,11 +232,54 @@ make clean           # Clean build artifacts
 make enable-server SERVER=github  # Show how to enable a server
 ```
 
-### Adding a New Server
+### Registry Manifest & Generator
 
-1. Create a new YAML file in `servers/`:
+Omni-MCP uses a manifest-driven approach for server management. The `servers/servers.manifest.json` file contains metadata for all supported MCP servers, and the scaffolder generates configuration files automatically.
+
+#### Adding a New Server
+
+1. Add entry to `servers/servers.manifest.json`:
+
+```json
+{
+  "name": "my-server",
+  "pkg": "my-mcp-server",
+  "envKeys": ["MY_API_KEY"],
+  "probe": {
+    "type": "stdio",
+    "timeoutMs": 10000
+  }
+}
+```
+
+2. Run the scaffolder to generate files:
+
+```bash
+pnpm tsx scripts/scaffold-servers.ts
+```
+
+3. Copy `.env.example` to `.env` and add your API keys
+
+4. Enable the server in `config/default.yaml`:
 
 ```yaml
+features:
+  my-server:
+    enabled: true
+```
+
+5. Restart the orchestrator:
+
+```bash
+pnpm dev
+```
+
+#### Manual Server Configuration
+
+For servers not in the manifest, create YAML files manually:
+
+```yaml
+# servers/my-server.yaml
 name: my-server
 enabled: false
 command: npx
@@ -254,26 +297,55 @@ limits:
   timeoutMs: 30000
 ```
 
-2. Add the server to `.env.example`:
+### E2E Dummy MCP
+
+For testing and development, Omni-MCP includes a dummy MCP server that simulates server behavior without requiring external dependencies.
+
+#### Running E2E Tests Locally
 
 ```bash
-# My Server MCP
-MY_API_KEY=
+# Run E2E tests
+pnpm vitest -t "orchestrator e2e"
+
+# Run with coverage
+pnpm test -- --coverage=false -t "orchestrator e2e"
 ```
 
-3. Add feature flag to `config/default.yaml`:
+#### Dummy Server Features
+
+- **Health Check**: Responds to `--health` with configurable success/failure
+- **Continuous Operation**: Prints status messages every 500ms
+- **Environment Control**: Use `DUMMY_HEALTH_FAIL=1` to simulate failures
+- **Graceful Shutdown**: Handles SIGTERM/SIGINT signals
+
+#### Using Dummy Server for Testing
+
+1. Enable dummy server in config:
 
 ```yaml
 features:
-  my-server:
-    enabled: false
+  dummy:
+    enabled: true
 ```
 
-4. Test the server:
+2. Test health transitions:
 
 ```bash
-make health
+# Start with healthy dummy
+pnpm dev
+
+# Simulate failure
+DUMMY_HEALTH_FAIL=1 pnpm dev
+
+# Check orchestrator health endpoint
+curl http://localhost:3000/readyz
 ```
+
+The E2E tests automatically verify:
+- Orchestrator startup and health checks
+- Server failure detection and recovery
+- Metrics collection and audit logging
+- Configuration management
 
 ## Security
 
