@@ -1,0 +1,12 @@
+name: perplexity
+enabled: false
+command: npx
+args: ["perplexity-mcp", "start"]
+env:
+  PERPLEXITY_API_KEY: "${PERPLEXITY_API_KEY}"
+healthCheck:
+  type: http
+  url: "http://localhost:3024/health"
+  timeoutMs: 10000
+scopes: ["search:read"]
+limits: { rps: 2, burst: 4, timeoutMs: 40000 }

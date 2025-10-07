@@ -50,27 +50,103 @@ features:
 
 3. Restart the orchestrator: `make up`
 
-## Server Matrix
+## Omni-MCP Capability Matrix
 
-| Server | Purpose | Required Env | Default Limits | Status |
-|--------|---------|--------------|----------------|--------|
-| **Core Services** |
-| github | Git repository management | `GITHUB_TOKEN` | 5 RPS, 10 burst | ✅ |
-| stripe | Payment processing | `STRIPE_API_KEY` | 2 RPS, 4 burst | ✅ |
-| notion | Note-taking and databases | `NOTION_TOKEN` | 3 RPS, 6 burst | ✅ |
-| supabase | Database and auth | `SUPABASE_URL`, `SUPABASE_ANON_KEY` | 5 RPS, 10 burst | ✅ |
-| **AI & ML** |
-| firecrawl | Web scraping | `FIRECRAWL_API_KEY` | 3 RPS, 6 burst | ✅ |
-| elevenlabs | Text-to-speech | `ELEVENLABS_API_KEY` | 2 RPS, 4 burst | ✅ |
-| perplexity | AI search | `PERPLEXITY_API_KEY` | 3 RPS, 6 burst | ✅ |
-| **Browser Automation** |
-| chrome-devtools | Chrome debugging | `CHROME_BIN` (optional) | 2 RPS, 4 burst | ✅ |
-| playwright | Browser automation | `PLAYWRIGHT_BROWSERS_PATH` (optional) | 2 RPS, 4 burst | ✅ |
-| **Integrations** |
-| zapier | Workflow automation | `ZAPIER_NLA_API_KEY` | 3 RPS, 6 burst | ✅ |
-| backup | Data backup | `BACKUP_DIR` | 1 RPS, 2 burst | ✅ |
+> **Legend**: HC = HealthCheck type; Limits = rps/burst/timeoutMs; Scopes are indicative least-privilege intents to document/enforce.
 
-*See [Server Configurations](#server-configurations) for the complete list.*
+### Core & LLMs
+
+| Server (name) | Purpose | Key env vars | Limits | HC | Scopes / Notes |
+|---------------|---------|--------------|--------|----|----------------|
+| **GitHub MCP** (github) | Repo read/ops | `GITHUB_TOKEN` | 5 / 10 / 30000 | stdio | `repo:read` |
+| **Gemini Cloud Assist** (gemini-cloud-assist) | Google Gemini on GCP | `GOOGLE_PROJECT_ID`, `GOOGLE_APPLICATION_CREDENTIALS`, `GEMINI_API_KEY` | 3 / 6 / 45000 | http | `ml:invoke` |
+| **Stesm Gemini MCP** (gemini) | Gemini alt | `GEMINI_API_KEY` | 3 / 6 / 45000 | http | `llm:query` |
+| **DeepSeek R1** (deepseek-r1) | DeepSeek inference | `DEEPSEEK_API_KEY` | 3 / 6 / 45000 | http | `llm:query` |
+| **Qwen Max** (qwen-max) | Qwen inference | `QWEN_API_KEY` | 3 / 6 / 45000 | http | `llm:query` |
+| **Grok** (grok) | xAI Grok inference | `GROK_API_KEY` | 3 / 6 / 45000 | http | `llm:query` |
+| **OpenRouter** (openrouter) | Multi-LLM router | `OPENROUTER_API_KEY` | 3 / 6 / 45000 | http | `llm:route` |
+| **MiniMax** (minimax) | MiniMax LLMs | `MINIMAX_API_KEY` | 3 / 6 / 45000 | http | `llm:query` |
+| **PPL / Perplexity MCP** (ppl-modelcontext / perplexity) | Web Q&A | `PPL_API_KEY` / `PERPLEXITY_API_KEY` | 2 / 4 / 40000 | http | `search:read` |
+| **Berry RAG** (berry-rag) | Vector RAG | `BERRY_VECTOR_DB_URL`, `BERRY_VECTOR_DB_TOKEN` | 5 / 10 / 30000 | http | `rag:query` |
+| **HF Space MCP** (hfspace) | HuggingFace Spaces | `HUGGINGFACE_TOKEN` | 2 / 4 / 45000 | http | `ml:invoke` |
+
+### Data, Storage, and Backends
+
+| Server | Purpose | Key env vars | Limits | HC | Scopes / Notes |
+|--------|---------|--------------|--------|----|----------------|
+| **Supabase** (supabase) | DB/Storage/Auth | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | 10 / 20 / 30000 | http | `db:read`, `db:write` (SRK use sparingly) |
+| **Neon** (neon) | Postgres serverless | `NEON_DATABASE_URL` | 10 / 20 / 30000 | http | `db:read`, `db:write` |
+| **Context7 / Upstash** (context7) | KV / Redis REST | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | 5 / 10 / 25000 | http | `cache:read`, `cache:write` |
+| **MCP Backup Server** (backup) | FS / cloud backup | `BACKUP_DIR` or `BACKUP_BUCKET`, `BACKUP_CREDENTIALS_JSON_PATH` | 1 / 2 / 60000 | stdio | `backup:write` |
+
+### Automation, Browsers & Crawlers
+
+| Server | Purpose | Key env vars | Limits | HC | Scopes / Notes |
+|--------|---------|--------------|--------|----|----------------|
+| **Playwright MCP** (playwright) | Headless browser | `PLAYWRIGHT_BROWSERS_PATH` | 2 / 4 / 60000 | http | `browser:launch` |
+| **Chrome DevTools MCP** (chrome-devtools) | Chrome CDP control | `CHROME_BIN`, `CHROME_REMOTE_DEBUGGING_PORT` | 2 / 4 / 60000 | http | `browser:debug` |
+| **Firecrawl MCP** (firecrawl) | Crawling & scrape | `FIRECRAWL_API_KEY` | 2 / 5 / 30000 | http | `crawl:read` |
+| **Globalping MCP** (globalping) | Latency/diagnostics | `GLOBALPING_API_KEY` (opt) | 2 / 4 / 30000 | http | `net:probe` |
+
+### Product & Work Management
+
+| Server | Purpose | Key env vars | Limits | HC | Scopes / Notes |
+|--------|---------|--------------|--------|----|----------------|
+| **Notion MCP** (notion) | Docs/DB ops | `NOTION_TOKEN`, `NOTION_DATABASE_ID` | 3 / 6 / 30000 | http | `notion:read`, `notion:write` |
+| **Asana MCP** (asana) | Tasks/PM | `ASANA_ACCESS_TOKEN` | 5 / 10 / 30000 | http | `tasks:read`, `tasks:write` |
+| **Backlog MCP** (backlog, backlog-alt, backlog-manager) | Nulab Backlog | `BACKLOG_SPACE_ID`, `BACKLOG_API_KEY` | 3 / 6 / 30000 | http | `issues:*` |
+| **Fast Intercom** (fast-intercom) | Intercom ops | `INTERCOM_ACCESS_TOKEN` | 3 / 6 / 30000 | http | `crm:*` |
+
+### Payments, Ops & Integrations
+
+| Server | Purpose | Key env vars | Limits | HC | Scopes / Notes |
+|--------|---------|--------------|--------|----|----------------|
+| **Stripe Agent Toolkit** (stripe) | Stripe ops | `STRIPE_API_KEY`, `STRIPE_WEBHOOK_SECRET` | 2 / 4 / 45000 | stdio | `stripe:read`, `stripe:write` |
+| **alt Stripe** (atharvagupta2003/mcp-stripe) | Stripe alt | `STRIPE_API_KEY` | 2 / 4 / 45000 | stdio | Same scopes, pin version |
+| **Zapier MCP** (zapier) | NLA workflows | `ZAPIER_NLA_API_KEY` | 3 / 5 / 25000 | http | `workflow:execute` |
+| **Sentry MCP** (sentry) | Error ingestion | `SENTRY_DSN` | 3 / 6 / 30000 | http | `sentry:report` |
+| **Windsor.ai** (windsor) | Marketing attrib | `WINDSOR_API_KEY` | 2 / 4 / 30000 | http | `analytics:read` |
+| **Adobe Commerce** (CData) (adobe-commerce) | Commerce API | `ADOBE_COMMERCE_URL`, `ADOBE_COMMERCE_USERNAME`, `ADOBE_COMMERCE_PASSWORD` | 2 / 4 / 30000 | http | `commerce:*` |
+| **Zapier/Integrations** (integration-app) | Generic hub | (per connector) | 2 / 4 / 30000 | http | Wrap cautiously |
+
+### Media, Audio & Translation
+
+| Server | Purpose | Key env vars | Limits | HC | Scopes / Notes |
+|--------|---------|--------------|--------|----|----------------|
+| **ElevenLabs** (elevenlabs) | TTS/voice gen | `ELEVENLABS_API_KEY` | 5 / 10 / 45000 | http | `audio:generate` |
+| **Aivis Speech** (aivis-speech) | Speech I/O | `AIVIS_API_KEY` | 5 / 10 / 45000 | http | `audio:*` |
+| **Audio MCP Server** (audio-mcp) | Audio tools | may use `OPENAI_API_KEY` | 3 / 6 / 45000 | http | Check model deps |
+| **Audio Transcriber** (audio-transcriber) | STT | provider API key(s) | 3 / 6 / 45000 | http | `audio:transcribe` |
+| **YouTube Translate MCP** (youtube-translate) | YT translate | `GOOGLE_YOUTUBE_API_KEY` | 2 / 4 / 40000 | http | `yt:read` |
+| **LARA MCP** (lara) | Translation engine | `LARA_API_KEY` | 3 / 6 / 35000 | http | `translate:*` |
+| **Translator-AI** (translator-ai) | Translation hub | provider keys | 3 / 6 / 35000 | http | `translate:*` |
+| **AllVoiceLab** (allvoicelab) | Voice tools | provider keys | 3 / 6 / 45000 | http | `audio:*` |
+| **GongRzhe Audio MCP** (audio-mcp-server) | Audio utils | provider keys | 3 / 6 / 45000 | http | `audio:*` |
+
+### Design & Content
+
+| Server | Purpose | Key env vars | Limits | HC | Scopes / Notes |
+|--------|---------|--------------|--------|----|----------------|
+| **Adobe Express MCP** (adobe-express) | Design gen | `ADOBE_EXPRESS_API_KEY` | 2 / 4 / 30000 | http | `adobe:express` |
+| **v0 MCP** (v0) | App/UI gen | `V0_API_KEY` | 2 / 4 / 30000 | http | `gen:app` |
+| **Startup Framework** (startup-framework) | Startup scaffolds | `STARTUP_FRAMEWORK_TOKEN` | 2 / 4 / 30000 | http | `scaffold:*` |
+
+### Meta/Agent Infra
+
+| Server | Purpose | Key env vars | Limits | HC | Scopes / Notes |
+|--------|---------|--------------|--------|----|----------------|
+| **AgentRPC** (agentrpc) | Agent bus/RPC | `AGENTRPC_TOKEN` | 5 / 10 / 30000 | http | `agent:invoke` |
+| **A2A Gateway** (a2a-gateway) | Agent-to-agent | `A2A_GATEWAY_TOKEN` | 5 / 10 / 30000 | http | `agent:exchange` |
+| **Microsoft MCP** (microsoft) | MS services | `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET` | 3 / 6 / 40000 | http | `msgraph:*` |
+
+### Notes & Guidance
+
+- **Enablement rule**: A server is considered for boot only if `features.<name>.enabled = true` and required envs resolve non-empty.
+- **Health policy**: Prefer http HC when the server exposes a `/health` or `/healthz`; otherwise default to stdio and rely on orchestrator process liveness.
+- **Scopes**: Document exact vendor scopes per token in each server's YAML comment and in README (least-privilege only).
+- **Rate limiting**: Defaults shown here are safe starting points; tune per vendor quotas.
+- **Version pinning**: Prefer npx with pinned versions in package.json (no floating latest).
+- **Outbound allow-list**: Set per server in config to restrict egress domains (especially for crawlers/browsers).
 
 ## Configuration
 

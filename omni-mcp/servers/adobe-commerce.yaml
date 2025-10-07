@@ -1,0 +1,14 @@
+name: adobe-commerce
+enabled: false
+command: npx
+args: ["adobe-commerce-mcp", "start"]
+env:
+  ADOBE_COMMERCE_URL: "${ADOBE_COMMERCE_URL}"
+  ADOBE_COMMERCE_USERNAME: "${ADOBE_COMMERCE_USERNAME}"
+  ADOBE_COMMERCE_PASSWORD: "${ADOBE_COMMERCE_PASSWORD}"
+healthCheck:
+  type: http
+  url: "http://localhost:3031/health"
+  timeoutMs: 10000
+scopes: ["commerce:read", "commerce:write"]
+limits: { rps: 2, burst: 4, timeoutMs: 30000 }

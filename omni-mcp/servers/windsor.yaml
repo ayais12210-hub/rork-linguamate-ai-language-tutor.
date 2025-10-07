@@ -1,0 +1,12 @@
+name: windsor
+enabled: false
+command: npx
+args: ["windsor-mcp", "start"]
+env:
+  WINDSOR_API_KEY: "${WINDSOR_API_KEY}"
+healthCheck:
+  type: http
+  url: "http://localhost:3030/health"
+  timeoutMs: 10000
+scopes: ["analytics:read"]
+limits: { rps: 2, burst: 4, timeoutMs: 30000 }
