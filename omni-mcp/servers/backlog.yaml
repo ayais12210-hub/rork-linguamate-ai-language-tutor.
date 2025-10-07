@@ -1,0 +1,13 @@
+name: backlog
+enabled: false
+command: npx
+args: ["backlog-mcp", "start"]
+env:
+  BACKLOG_SPACE_ID: "${BACKLOG_SPACE_ID}"
+  BACKLOG_API_KEY: "${BACKLOG_API_KEY}"
+healthCheck:
+  type: http
+  url: "http://localhost:3028/health"
+  timeoutMs: 10000
+scopes: ["issues:read", "issues:write"]
+limits: { rps: 3, burst: 6, timeoutMs: 30000 }

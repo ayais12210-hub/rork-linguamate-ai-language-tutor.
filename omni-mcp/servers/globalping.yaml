@@ -1,0 +1,12 @@
+name: globalping
+enabled: false
+command: npx
+args: ["globalping-mcp", "start"]
+env:
+  GLOBALPING_API_KEY: "${GLOBALPING_API_KEY:-}"
+healthCheck:
+  type: http
+  url: "http://localhost:3027/health"
+  timeoutMs: 10000
+scopes: ["net:probe"]
+limits: { rps: 2, burst: 4, timeoutMs: 30000 }

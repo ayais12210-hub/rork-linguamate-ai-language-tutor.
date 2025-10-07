@@ -1,0 +1,63 @@
+name: Nightly Health Check
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Run at 2 AM UTC daily
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        server-group:
+          - 'core'
+          - 'ai-models'
+          - 'integrations'
+          - 'utilities'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 9
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'pnpm'
+        
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+      
+    - name: Load test secrets
+      env:
+        DOTENV_NIGHTLY: ${{ secrets.DOTENV_NIGHTLY }}
+      run: |
+        if [ -n "${DOTENV_NIGHTLY}" ]; then
+          echo "$DOTENV_NIGHTLY" > .env
+        else
+          echo "No nightly secrets provided, using minimal config"
+        fi
+        
+    - name: Run health checks
+      run: pnpm health:ci
+      
+    - name: Generate health report
+      run: |
+        echo "# Nightly Health Report - $(date)" > health-report.md
+        echo "" >> health-report.md
+        echo "## Server Group: ${{ matrix.server-group }}" >> health-report.md
+        echo "" >> health-report.md
+        echo "Health check completed at $(date)" >> health-report.md
+        
+    - name: Upload health report
+      uses: actions/upload-artifact@v3
+      with:
+        name: health-report-${{ matrix.server-group }}
+        path: health-report.md
+        retention-days: 30

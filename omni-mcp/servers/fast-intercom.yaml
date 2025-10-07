@@ -1,0 +1,12 @@
+name: fast-intercom
+enabled: false
+command: npx
+args: ["fast-intercom-mcp", "start"]
+env:
+  INTERCOM_ACCESS_TOKEN: "${INTERCOM_ACCESS_TOKEN}"
+healthCheck:
+  type: http
+  url: "http://localhost:3029/health"
+  timeoutMs: 10000
+scopes: ["crm:read", "crm:write"]
+limits: { rps: 3, burst: 6, timeoutMs: 30000 }

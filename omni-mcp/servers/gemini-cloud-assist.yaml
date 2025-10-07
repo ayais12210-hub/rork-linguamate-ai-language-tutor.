@@ -1,0 +1,14 @@
+name: gemini-cloud-assist
+enabled: false
+command: npx
+args: ["gemini-cloud-assist-mcp", "start"]
+env:
+  GOOGLE_PROJECT_ID: "${GOOGLE_PROJECT_ID}"
+  GOOGLE_APPLICATION_CREDENTIALS: "${GOOGLE_APPLICATION_CREDENTIALS}"
+  GEMINI_API_KEY: "${GEMINI_API_KEY}"
+healthCheck:
+  type: http
+  url: "http://localhost:3019/health"
+  timeoutMs: 10000
+scopes: ["ml:invoke"]
+limits: { rps: 3, burst: 6, timeoutMs: 45000 }

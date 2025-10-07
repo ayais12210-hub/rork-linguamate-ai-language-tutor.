@@ -1,0 +1,12 @@
+name: minimax
+enabled: false
+command: npx
+args: ["minimax-mcp", "start"]
+env:
+  MINIMAX_API_KEY: "${MINIMAX_API_KEY}"
+healthCheck:
+  type: http
+  url: "http://localhost:3022/health"
+  timeoutMs: 10000
+scopes: ["llm:query"]
+limits: { rps: 3, burst: 6, timeoutMs: 45000 }

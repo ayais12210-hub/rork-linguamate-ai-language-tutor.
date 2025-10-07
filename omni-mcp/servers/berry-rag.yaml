@@ -1,0 +1,13 @@
+name: berry-rag
+enabled: false
+command: npx
+args: ["berry-rag", "start"]
+env:
+  BERRY_VECTOR_DB_URL: "${BERRY_VECTOR_DB_URL}"
+  BERRY_VECTOR_DB_TOKEN: "${BERRY_VECTOR_DB_TOKEN}"
+healthCheck:
+  type: http
+  url: "http://localhost:3009/health"
+  timeoutMs: 10000
+scopes: ["rag:query"]
+limits: { rps: 5, burst: 10, timeoutMs: 30000 }

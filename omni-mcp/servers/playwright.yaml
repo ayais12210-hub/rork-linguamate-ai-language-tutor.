@@ -1,0 +1,12 @@
+name: playwright
+enabled: false
+command: npx
+args: ["playwright-mcp", "start"]
+env:
+  PLAYWRIGHT_BROWSERS_PATH: "${PLAYWRIGHT_BROWSERS_PATH:-}"
+healthCheck:
+  type: http
+  url: "http://localhost:3003/health"
+  timeoutMs: 10000
+scopes: ["browser:launch"]
+limits: { rps: 2, burst: 4, timeoutMs: 60000 }

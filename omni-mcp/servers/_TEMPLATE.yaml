@@ -1,0 +1,26 @@
+# Server Configuration Template
+
+# Copy this template to create new server configurations
+# Replace <server-name> with the actual server name
+
+name: <server-name>
+enabled: false
+command: npx
+args:
+  - "<package-name>"
+  - start
+env:
+  # Add required environment variables here
+  # Use format: VARIABLE_NAME: "${VARIABLE_NAME}"
+  # Optional variables: VARIABLE_NAME: "${VARIABLE_NAME:-default_value}"
+healthCheck:
+  type: stdio  # or "http" if server exposes health endpoint
+  timeoutMs: 10000
+  # For HTTP health checks, add:
+  # url: "http://localhost:PORT/health"
+scopes:
+  - "scope:action"  # Define required scopes
+limits:
+  rps: 3           # Requests per second
+  burst: 6         # Burst limit
+  timeoutMs: 30000 # Request timeout

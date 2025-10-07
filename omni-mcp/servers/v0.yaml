@@ -1,0 +1,12 @@
+name: v0
+enabled: false
+command: npx
+args: ["v0-mcp", "start"]
+env:
+  V0_API_KEY: "${V0_API_KEY}"
+healthCheck:
+  type: http
+  url: "http://localhost:3010/health"
+  timeoutMs: 10000
+scopes: ["gen:app"]
+limits: { rps: 2, burst: 4, timeoutMs: 30000 }

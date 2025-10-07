@@ -1,0 +1,12 @@
+name: sentry
+enabled: false
+command: npx
+args: ["sentry-mcp", "start"]
+env:
+  SENTRY_DSN: "${SENTRY_DSN}"
+healthCheck:
+  type: http
+  url: "http://localhost:3005/health"
+  timeoutMs: 10000
+scopes: ["sentry:report"]
+limits: { rps: 3, burst: 6, timeoutMs: 30000 }
