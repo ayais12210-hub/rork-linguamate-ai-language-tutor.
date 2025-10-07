@@ -1,19 +1,14 @@
 name: supabase
 enabled: false
 command: npx
-args:
-  - "supabase-mcp"
-  - start
+args: ["supabase-mcp", "start"]
 env:
   SUPABASE_URL: "${SUPABASE_URL}"
   SUPABASE_ANON_KEY: "${SUPABASE_ANON_KEY}"
-  SUPABASE_SERVICE_ROLE_KEY: "${SUPABASE_SERVICE_ROLE_KEY:-}"
+  SUPABASE_SERVICE_ROLE_KEY: "${SUPABASE_SERVICE_ROLE_KEY}"
 healthCheck:
-  type: stdio
+  type: http
+  url: "http://localhost:3002/health"
   timeoutMs: 10000
-scopes:
-  - database:read
-limits:
-  rps: 5
-  burst: 10
-  timeoutMs: 30000
+scopes: ["db:read","db:write"]
+limits: { rps: 10, burst: 20, timeoutMs: 30000 }

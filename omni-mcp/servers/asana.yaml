@@ -1,0 +1,12 @@
+name: asana
+enabled: false
+command: npx
+args: ["mcp-server-asana", "start"]
+env:
+  ASANA_ACCESS_TOKEN: "${ASANA_ACCESS_TOKEN}"
+healthCheck:
+  type: http
+  url: "http://localhost:3014/health"
+  timeoutMs: 10000
+scopes: ["tasks:read","tasks:write"]
+limits: { rps: 5, burst: 10, timeoutMs: 30000 }

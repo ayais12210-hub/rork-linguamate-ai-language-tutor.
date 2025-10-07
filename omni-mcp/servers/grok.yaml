@@ -1,0 +1,12 @@
+name: grok
+enabled: false
+command: npx
+args: ["grok-mcp", "start"]
+env:
+  GROK_API_KEY: "${GROK_API_KEY}"
+healthCheck:
+  type: http
+  url: "http://localhost:3013/health"
+  timeoutMs: 10000
+scopes: ["llm:query"]
+limits: { rps: 3, burst: 6, timeoutMs: 45000 }

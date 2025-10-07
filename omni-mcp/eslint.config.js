@@ -55,6 +55,7 @@ export default [
       '*.config.ts',
       '**/*.test.ts',
       '**/*.spec.ts',
+      'apps/*/dist/',
     ],
   },
 ];

@@ -1,17 +1,12 @@
 name: firecrawl
 enabled: false
 command: npx
-args:
-  - "@firecrawl/mcp-server"
-  - start
+args: ["firecrawl-mcp-server", "start"]
 env:
   FIRECRAWL_API_KEY: "${FIRECRAWL_API_KEY}"
 healthCheck:
-  type: stdio
+  type: http
+  url: "http://localhost:3000/healthz"
   timeoutMs: 10000
-scopes:
-  - web:scrape
-limits:
-  rps: 3
-  burst: 6
-  timeoutMs: 30000
+scopes: ["crawl:read"]
+limits: { rps: 2, burst: 5, timeoutMs: 30000 }

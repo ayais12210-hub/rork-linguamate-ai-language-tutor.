@@ -1,17 +1,12 @@
 name: elevenlabs
 enabled: false
 command: npx
-args:
-  - "elevenlabs-mcp"
-  - start
+args: ["elevenlabs-mcp", "start"]
 env:
   ELEVENLABS_API_KEY: "${ELEVENLABS_API_KEY}"
 healthCheck:
-  type: stdio
+  type: http
+  url: "http://localhost:3004/health"
   timeoutMs: 10000
-scopes:
-  - audio:generate
-limits:
-  rps: 2
-  burst: 4
-  timeoutMs: 60000
+scopes: ["audio:generate"]
+limits: { rps: 5, burst: 10, timeoutMs: 45000 }

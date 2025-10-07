@@ -1,0 +1,12 @@
+name: adobe-express
+enabled: false
+command: npx
+args: ["adobe-express-mcp-server", "start"]
+env:
+  ADOBE_EXPRESS_API_KEY: "${ADOBE_EXPRESS_API_KEY}"
+healthCheck:
+  type: http
+  url: "http://localhost:3008/health"
+  timeoutMs: 10000
+scopes: ["adobe:express"]
+limits: { rps: 2, burst: 4, timeoutMs: 30000 }
