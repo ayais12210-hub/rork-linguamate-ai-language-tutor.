@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { loadConfig, hasRequiredEnvs, resolveEnv } from '../apps/orchestrator/src/config/schema.js';
-import { ServerRegistry } from '../apps/orchestrator/src/registry.js';
-import { HealthChecker } from '../apps/orchestrator/src/health.js';
-import { RateLimiterGuard } from '../apps/orchestrator/src/guards/rateLimiter.js';
-import { CircuitBreakerGuard } from '../apps/orchestrator/src/guards/circuitBreaker.js';
-import { TimeoutGuard } from '../apps/orchestrator/src/guards/timeouts.js';
-import { AuthScopesGuard } from '../apps/orchestrator/src/guards/authScopes.js';
+import { loadConfig, hasRequiredEnvs, resolveEnv } from './config/schema.js';
+import { ServerRegistry } from './registry.js';
+import { HealthChecker } from './health.js';
+import { RateLimiterGuard } from './guards/rateLimiter.js';
+import { CircuitBreakerGuard } from './guards/circuitBreaker.js';
+import { TimeoutGuard } from './guards/timeouts.js';
+import { AuthScopesGuard } from './guards/authScopes.js';
 
 describe('Config System', () => {
   it('should load default configuration', () => {
