@@ -1,0 +1,136 @@
+{
+  "servers": [
+    {
+      "name": "github",
+      "description": "GitHub MCP server for repository operations"
+    },
+    {
+      "name": "notion",
+      "description": "Notion MCP server for workspace operations"
+    },
+    {
+      "name": "stripe",
+      "description": "Stripe MCP server for payment operations"
+    },
+    {
+      "name": "supabase",
+      "description": "Supabase MCP server for database operations"
+    },
+    {
+      "name": "playwright",
+      "description": "Playwright MCP server for browser automation"
+    },
+    {
+      "name": "firecrawl",
+      "description": "Firecrawl MCP server for web scraping"
+    },
+    {
+      "name": "perplexity",
+      "description": "Perplexity MCP server for AI search"
+    },
+    {
+      "name": "openrouter",
+      "description": "OpenRouter MCP server for AI model access"
+    },
+    {
+      "name": "gemini",
+      "description": "Google Gemini MCP server for AI operations"
+    },
+    {
+      "name": "elevenlabs",
+      "description": "ElevenLabs MCP server for voice synthesis"
+    },
+    {
+      "name": "asana",
+      "description": "Asana MCP server for project management"
+    },
+    {
+      "name": "zapier",
+      "description": "Zapier MCP server for workflow automation"
+    },
+    {
+      "name": "neon",
+      "description": "Neon MCP server for PostgreSQL operations"
+    },
+    {
+      "name": "sentry",
+      "description": "Sentry MCP server for error monitoring"
+    },
+    {
+      "name": "v0",
+      "description": "V0 MCP server for UI generation"
+    },
+    {
+      "name": "backlog",
+      "description": "Backlog MCP server for project tracking"
+    },
+    {
+      "name": "backup",
+      "description": "Backup MCP server for data operations"
+    },
+    {
+      "name": "berry-rag",
+      "description": "Berry RAG MCP server for retrieval operations"
+    },
+    {
+      "name": "chrome-devtools",
+      "description": "Chrome DevTools MCP server for debugging"
+    },
+    {
+      "name": "context7",
+      "description": "Context7 MCP server for context operations"
+    },
+    {
+      "name": "deepseek-r1",
+      "description": "DeepSeek R1 MCP server for AI operations"
+    },
+    {
+      "name": "fast-intercom",
+      "description": "Fast Intercom MCP server for customer support"
+    },
+    {
+      "name": "gemini-cloud-assist",
+      "description": "Gemini Cloud Assist MCP server for cloud operations"
+    },
+    {
+      "name": "globalping",
+      "description": "GlobalPing MCP server for network monitoring"
+    },
+    {
+      "name": "grok",
+      "description": "Grok MCP server for AI operations"
+    },
+    {
+      "name": "hfspace",
+      "description": "Hugging Face Space MCP server for ML operations"
+    },
+    {
+      "name": "integration-app",
+      "description": "Integration App MCP server for app integrations"
+    },
+    {
+      "name": "minimax",
+      "description": "Minimax MCP server for AI operations"
+    },
+    {
+      "name": "ppl-modelcontext",
+      "description": "PPL Model Context MCP server for AI operations"
+    },
+    {
+      "name": "qwen-max",
+      "description": "Qwen Max MCP server for AI operations"
+    },
+    {
+      "name": "windsor",
+      "description": "Windsor MCP server for operations"
+    },
+    {
+      "name": "adobe-commerce",
+      "description": "Adobe Commerce MCP server for e-commerce operations"
+    },
+    {
+      "name": "adobe-express",
+      "description": "Adobe Express MCP server for creative operations"
+    }
+  ]
+}

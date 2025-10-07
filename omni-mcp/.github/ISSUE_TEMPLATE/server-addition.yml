@@ -1,0 +1,18 @@
+name: Server addition
+description: Request to add a new MCP server
+title: "server: "
+labels: ["server"]
+body:
+  - type: input
+    id: name
+    attributes: { label: Server name (kebab-case) }
+    validations: { required: true }
+  - type: textarea
+    id: env
+    attributes: { label: Required ENV keys (one per line) }
+  - type: textarea
+    id: probe
+    attributes: { label: Probe type (stdio/http) and details }
+  - type: textarea
+    id: scope
+    attributes: { label: Minimal token scopes required }

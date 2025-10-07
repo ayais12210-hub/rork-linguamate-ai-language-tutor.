@@ -94,3 +94,7 @@ health-status:
 metrics:
 	@echo "Metrics:"
 	@curl -s http://localhost:3000/metrics || echo "Orchestrator not running"
+
+# PRD operations
+prd:
+	pnpm docs:registry && pnpm validate:registry

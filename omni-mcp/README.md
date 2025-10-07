@@ -55,6 +55,50 @@ features:
 
 3. Restart the orchestrator: `make up`
 
+## Architecture
+(See `docs/PRD.md` for full diagram and schema.)
+
+## Server Registry Matrix
+> Generated from `servers/servers.manifest.json`
+
+<!-- BEGIN:REGISTRY-TABLE -->
+| Server | Package/Bin | Env Keys | Probe | Default Enabled |
+|---|---|---:|---|---|
+| `adobe-commerce` | `adobe-commerce-mcp` | 3 | http | ❌ |
+| `adobe-express` | `adobe-express-mcp-server` | 1 | http | ❌ |
+| `asana` | `mcp-server-asana` | 1 | http | ❌ |
+| `backlog` | `backlog-mcp` | 2 | http | ❌ |
+| `backup` | `mcp-backup-server` | 3 | stdio | ❌ |
+| `berry-rag` | `berry-rag` | 2 | http | ❌ |
+| `chrome-devtools` | `@chrome-devtools/mcp-server` | 2 | stdio | ❌ |
+| `context7` | `context7-mcp` | 2 | http | ❌ |
+| `deepseek-r1` | `MCP-server-Deepseek_R1` | 1 | http | ❌ |
+| `elevenlabs` | `elevenlabs-mcp` | 1 | http | ❌ |
+| `fast-intercom` | `fast-intercom-mcp` | 1 | http | ❌ |
+| `firecrawl` | `firecrawl-mcp-server` | 1 | http | ❌ |
+| `gemini` | `gemini-mcp` | 1 | http | ❌ |
+| `gemini-cloud-assist` | `gemini-cloud-assist-mcp` | 3 | http | ❌ |
+| `github` | `github-mcp-server` | 1 | stdio | ❌ |
+| `globalping` | `globalping-mcp` | 1 | http | ❌ |
+| `grok` | `grok-mcp` | 1 | http | ❌ |
+| `hfspace` | `hfspace-mcp` | 1 | http | ❌ |
+| `integration-app` | `integration-app-mcp` | 1 | http | ❌ |
+| `minimax` | `minimax-mcp` | 1 | http | ❌ |
+| `neon` | `neon-mcp` | 1 | http | ❌ |
+| `notion` | `notion-mcp-server` | 2 | http | ❌ |
+| `openrouter` | `openrouter-mcp` | 1 | http | ❌ |
+| `perplexity` | `perplexity-mcp` | 1 | http | ❌ |
+| `playwright` | `playwright-mcp` | 1 | http | ❌ |
+| `ppl-modelcontext` | `ppl-modelcontext-mcp` | 1 | http | ❌ |
+| `qwen-max` | `MCP-server-Qwen_Max` | 1 | http | ❌ |
+| `sentry` | `sentry-mcp` | 1 | http | ❌ |
+| `stripe` | `@stripe/agent-toolkit` | 2 | stdio | ❌ |
+| `supabase` | `supabase-mcp` | 3 | http | ❌ |
+| `v0` | `v0-mcp` | 1 | http | ❌ |
+| `windsor` | `windsor-mcp` | 1 | http | ❌ |
+| `zapier` | `zapier-mcp` | 1 | http | ❌ |
+<!-- END:REGISTRY-TABLE -->
+
 ## Omni-MCP Capability Matrix
 
 > **Legend**: HC = HealthCheck type; Limits = rps/burst/timeoutMs; Scopes are indicative least-privilege intents to document/enforce.
@@ -570,6 +614,11 @@ The GitHub Actions workflow includes:
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
+
+## Development Workflows
+- Validate registry & YAML/env: `pnpm validate:registry`
+- Regenerate README matrix: `pnpm docs:registry` or `make prd`
+- Run orchestrator: `pnpm -C apps/orchestrator dev`
 
 ## Support
 
