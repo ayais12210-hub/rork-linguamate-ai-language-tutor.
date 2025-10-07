@@ -24,7 +24,7 @@ export class SafeStorage {
   }
 
   async initialize(): Promise<Result<void>> {
-    return wrapAsync<T>(async () => {
+    return wrapAsync<void>(async () => {
       // Load quarantine entries
       const quarantineData = await AsyncStorage.getItem(QUARANTINE_KEY);
       if (quarantineData) {
@@ -201,7 +201,7 @@ export class SafeStorage {
   }
 
   async getAllKeys(): Promise<Result<string[]>> {
-    return wrapAsync<Array<{ key: string; reason: string; timestamp: number }>>(async () => {
+    return wrapAsync<string[]>(async () => {
       try {
         const keys = await AsyncStorage.getAllKeys();
         return keys.filter(key => !key.startsWith(QUARANTINE_PREFIX));
@@ -216,7 +216,7 @@ export class SafeStorage {
   }
 
   async getQuarantineEntries(): Promise<Result<Array<{ key: string; reason: string; timestamp: number }>>> {
-    return wrapAsync<void>(async () => {
+    return wrapAsync<Array<{ key: string; reason: string; timestamp: number }>>(async () => {
       const entries: Array<{ key: string; reason: string; timestamp: number }> = [];
       
       for (const key of this.quarantineEntries) {
@@ -241,7 +241,7 @@ export class SafeStorage {
   }
 
   async restoreQuarantineEntry(key: string): Promise<Result<void>> {
-    return wrapAsync(async () => {
+    return wrapAsync<void>(async () => {
       const quarantineKey = `${QUARANTINE_PREFIX}${key}`;
       const data = await AsyncStorage.getItem(quarantineKey);
       

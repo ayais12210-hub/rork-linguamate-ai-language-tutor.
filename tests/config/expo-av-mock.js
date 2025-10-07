@@ -1,0 +1,60 @@
+// Mock Expo AV for Jest tests
+module.exports = {
+  Audio: {
+    setAudioModeAsync: jest.fn(() => Promise.resolve()),
+    requestPermissionsAsync: jest.fn(() => Promise.resolve({ granted: true })),
+    getPermissionsAsync: jest.fn(() => Promise.resolve({ granted: true })),
+    createAsync: jest.fn(() => Promise.resolve({
+      sound: {
+        playAsync: jest.fn(() => Promise.resolve()),
+        pauseAsync: jest.fn(() => Promise.resolve()),
+        stopAsync: jest.fn(() => Promise.resolve()),
+        setPositionAsync: jest.fn(() => Promise.resolve()),
+        setVolumeAsync: jest.fn(() => Promise.resolve()),
+        setRateAsync: jest.fn(() => Promise.resolve()),
+        setIsLoopingAsync: jest.fn(() => Promise.resolve()),
+        getStatusAsync: jest.fn(() => Promise.resolve({
+          isLoaded: true,
+          isPlaying: false,
+          positionMillis: 0,
+          durationMillis: 1000,
+          volume: 1.0,
+          isMuted: false,
+          isLooping: false,
+          shouldPlay: false,
+          rate: 1.0,
+          shouldCorrectPitch: true,
+          pitchCorrectionQuality: 'high',
+        })),
+        unloadAsync: jest.fn(() => Promise.resolve()),
+      },
+    })),
+  },
+  Video: {
+    createAsync: jest.fn(() => Promise.resolve({
+      video: {
+        playAsync: jest.fn(() => Promise.resolve()),
+        pauseAsync: jest.fn(() => Promise.resolve()),
+        stopAsync: jest.fn(() => Promise.resolve()),
+        setPositionAsync: jest.fn(() => Promise.resolve()),
+        setVolumeAsync: jest.fn(() => Promise.resolve()),
+        setRateAsync: jest.fn(() => Promise.resolve()),
+        setIsLoopingAsync: jest.fn(() => Promise.resolve()),
+        getStatusAsync: jest.fn(() => Promise.resolve({
+          isLoaded: true,
+          isPlaying: false,
+          positionMillis: 0,
+          durationMillis: 1000,
+          volume: 1.0,
+          isMuted: false,
+          isLooping: false,
+          shouldPlay: false,
+          rate: 1.0,
+          shouldCorrectPitch: true,
+          pitchCorrectionQuality: 'high',
+        })),
+        unloadAsync: jest.fn(() => Promise.resolve()),
+      },
+    })),
+  },
+};
