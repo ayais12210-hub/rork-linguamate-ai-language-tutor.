@@ -23,7 +23,7 @@ export function createLogger(config: Config): pino.Logger {
     };
   }
 
-  if (config.security.redactSecrets) {
+  if (config.security?.redactSecrets) {
     loggerOptions.redact = {
       paths: ['password', 'token', 'key', 'secret', 'authorization'],
       censor: '[REDACTED]',

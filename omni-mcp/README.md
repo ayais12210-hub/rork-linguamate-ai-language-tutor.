@@ -7,10 +7,15 @@ A production-grade MCP (Model Context Protocol) framework for orchestrating mult
 - 🚀 **Multi-Server Orchestration**: Manage 50+ MCP servers from a single orchestrator
 - 🔒 **Security First**: Least-privilege tokens, rate limiting, circuit breakers, and audit logging
 - 📊 **Observability**: OpenTelemetry traces, structured logging, and Prometheus metrics
-- 🏥 **Health Monitoring**: Comprehensive health checks with automatic restart policies
+- 🏥 **Health Monitoring**: Active health probes (stdio/HTTP) with retries, backoff, and circuit breaker signals
 - ⚡ **Feature Flags**: Enable/disable servers without code changes
 - 🔧 **Developer Experience**: Hot reload, health CLI, and comprehensive tooling
 - 🛡️ **Production Ready**: CI/CD pipelines, security scanning, and graceful shutdowns
+- 🐳 **Docker Ready**: Multi-stage Dockerfile with health checks and security hardening
+- 🔐 **Environment Validation**: Zod schemas for each server's environment with auto-generated .env.example
+- 🌐 **Egress Control**: Outbound allow-list enforcement for network security
+- 📈 **Rich Metrics**: Per-server metrics (spawn/exit/restarts, probe latency) with Prometheus integration
+- 🔍 **Audit Logging**: NDJSON audit events with automatic secret redaction
 
 ## Quick Start
 
@@ -190,13 +195,59 @@ limits:
   timeoutMs: 30000
 ```
 
+## Health Probes
+
+Omni-MCP implements active health monitoring with two probe types:
+
+### Stdio Probes
+- Spawn server binary with `--health` flag
+- Monitor exit code (0 = healthy, non-zero = unhealthy)
+- Configurable timeout and interval
+- Used for servers without HTTP endpoints
+
+### HTTP Probes
+- GET request to server's health endpoint
+- 2xx status codes = healthy
+- Configurable timeout and interval
+- Used for servers with HTTP health endpoints
+
+### Probe Configuration
+
+```yaml
+# servers/example.yaml
+healthCheck:
+  type: http  # or stdio
+  url: "http://localhost:3000/healthz"  # for HTTP probes
+  timeoutMs: 10000
+  intervalMs: 10000
+
+probe:
+  type: http
+  url: "http://localhost:3000/healthz"
+  timeoutMs: 10000
+  intervalMs: 10000
+```
+
+### Health Status Levels
+
+- **OK**: All enabled servers are healthy
+- **Degraded**: Some servers have consecutive failures < 3
+- **Down**: One or more servers have consecutive failures ≥ 3
+
+### Circuit Breaker Integration
+
+Probe failures feed into circuit breaker logic:
+- Prevents cascading failures
+- Automatic recovery when servers become healthy
+- Configurable failure thresholds
+
 ## API Endpoints
 
 ### Health Endpoints
 
 - `GET /healthz` - Overall health status
-- `GET /readyz` - Readiness check (all servers healthy)
-- `GET /metrics` - Prometheus metrics
+- `GET /readyz` - Readiness check with probe statuses (returns 200 only when all enabled servers are healthy)
+- `GET /metrics` - Prometheus metrics including probe latency and failure counts
 
 ### Server Management
 
@@ -283,19 +334,48 @@ make health
 - Use environment variables for all sensitive data
 - Secrets are automatically redacted in logs (configurable)
 - Support for Doppler, 1Password, and GitHub Actions Secrets
+- Zod schema validation for environment variables
 
 ### Access Control
 
 - Each server defines its required scopes
-- Rate limiting per server
+- Rate limiting per server with configurable RPS and burst limits
 - Circuit breakers for fault tolerance
-- Audit logging for all operations
+- Audit logging for all operations with NDJSON format
+- Per-server timeout and retry configuration
 
 ### Network Security
 
-- Outbound allowlist for production environments
+- **Outbound Allow-list**: Enforce allowed domains for HTTP probes and external requests
 - TLS/SSL for all external communications
 - No inbound network exposure (servers communicate via stdio)
+- Egress controller validates all outbound connections
+
+### Security Configuration
+
+```yaml
+# config/prod.yaml
+network:
+  outboundAllowlist:
+    - "api.github.com"
+    - "api.stripe.com"
+    - "*.supabase.co"
+    - "*.openai.com"
+
+security:
+  auditLog: true
+  redactSecrets: true
+```
+
+### Audit Logging
+
+All security-relevant events are logged in NDJSON format:
+
+```json
+{"timestamp":"2024-01-15T10:30:00.000Z","event":"spawn","server":"github","data":{"pid":1234,"command":"npx"}}
+{"timestamp":"2024-01-15T10:30:05.000Z","event":"probe_ok","server":"github","data":{"latency_ms":150}}
+{"timestamp":"2024-01-15T10:30:10.000Z","event":"egress_blocked","hostname":"malicious.com","context":"probe"}
+```
 
 ## Observability
 
@@ -318,10 +398,12 @@ Structured JSON logging with automatic correlation:
 
 Prometheus metrics available at `/metrics`:
 
-- Server health status
-- Request rates and latencies
-- Error rates
-- Circuit breaker states
+- **Server Lifecycle**: `mcp_server_spawn_total`, `mcp_server_exit_total`, `mcp_server_restart_total`
+- **Health Probes**: `mcp_probe_success_total`, `mcp_probe_fail_total`, `mcp_probe_latency_ms`
+- **Server Uptime**: `mcp_server_uptime_seconds`
+- **Request Rates**: Per-server RPS and burst metrics
+- **Circuit Breaker States**: Open/closed/half-open states
+- **Error Rates**: Per-server error counts and types
 
 ### Tracing
 
@@ -335,15 +417,59 @@ OpenTelemetry traces with Jaeger integration:
 
 ### Docker
 
-```dockerfile
-FROM node:20-alpine
-WORKDIR /app
-COPY package*.json pnpm-lock.yaml ./
-RUN npm install -g pnpm && pnpm install --frozen-lockfile
-COPY . .
-RUN pnpm build
-EXPOSE 3000
-CMD ["pnpm", "start"]
+Omni-MCP includes a multi-stage Dockerfile with security hardening:
+
+```bash
+# Build and run with Docker Compose
+docker-compose up --build
+
+# Or build manually
+docker build -t omni-mcp .
+docker run -p 8787:8787 --env-file .env omni-mcp
+```
+
+### Docker Compose
+
+The included `docker-compose.yml` provides:
+
+- **Orchestrator service**: Main application with health checks
+- **Nginx service**: Reverse proxy with rate limiting (production profile)
+- **Volume mounts**: Read-only config and servers, writable logs and audit
+- **Health checks**: Built-in health monitoring
+- **Security**: Non-root user, minimal attack surface
+
+```yaml
+# docker-compose.yml
+services:
+  orchestrator:
+    build: .
+    ports:
+      - "8787:8787"
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env
+    volumes:
+      - ./config:/app/config:ro
+      - ./servers:/app/servers:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:8787/healthz').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+```
+
+### Environment Sync Generator
+
+The `.env.example` file is automatically generated from server configurations:
+
+```bash
+# Generate/update .env.example
+pnpm tsx scripts/generate-dotenv.ts
+
+# Check if .env.example is up to date (used in CI)
+pnpm tsx scripts/generate-dotenv.ts --check
 ```
 
 ### Environment Setup
@@ -413,6 +539,33 @@ pnpm tsx scripts/health.ts --server github
 - Update documentation
 - Use conventional commits
 - Ensure all CI checks pass
+
+### Pre-commit Hooks
+
+Husky and lint-staged are configured for automatic code quality:
+
+```bash
+# Install pre-commit hooks
+pnpm prepare
+
+# Pre-commit runs automatically on git commit:
+# - ESLint with auto-fix
+# - Prettier formatting
+# - TypeScript type checking
+# - Tests
+# - .env.example validation
+```
+
+### CI/CD Pipeline
+
+The GitHub Actions workflow includes:
+
+- **Build & Test**: TypeScript compilation, linting, testing with coverage
+- **Environment Validation**: Automatic `.env.example` generation and validation
+- **Health Matrix**: Conditional health checks for each server (skips gracefully without secrets)
+- **Security Scanning**: Trivy vulnerability scanning with SARIF upload
+- **Artifact Upload**: Build artifacts, coverage reports, and audit logs
+- **Coverage Badge**: Automatic coverage reporting with Codecov integration
 
 ## License
 

@@ -77,6 +77,10 @@ export class ServerRegistry {
   }
 
   private checkRequiredEnvs(serverConfig: ServerConfig): boolean {
+    if (!serverConfig.env) {
+      return true;
+    }
+    
     for (const [key, value] of Object.entries(serverConfig.env)) {
       if (value && !process.env[key]) {
         return false;

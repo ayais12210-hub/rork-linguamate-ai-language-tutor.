@@ -6,7 +6,7 @@ export class CircuitBreakerGuard {
 
   createBreaker(serverName: string, config: ServerConfig): CircuitBreaker {
     const breaker = new CircuitBreaker(this.createServerFunction(serverName), {
-      timeout: config.limits.timeoutMs,
+      timeout: config.timeouts?.opMs || 30000,
       errorThresholdPercentage: 50,
       resetTimeout: 30000,
       rollingCountTimeout: 10000,

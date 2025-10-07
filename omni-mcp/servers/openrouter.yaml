@@ -8,5 +8,19 @@ healthCheck:
   type: http
   url: "http://localhost:3021/health"
   timeoutMs: 10000
+  intervalMs: 10000
 scopes: ["llm:route"]
-limits: { rps: 3, burst: 6, timeoutMs: 45000 }
+limits: 
+  rps: 3
+  burst: 6
+timeouts:
+  opMs: 45000
+  startMs: 30000
+retry:
+  attempts: 3
+  backoffMs: 1000
+probe:
+  type: http
+  url: "http://localhost:3021/health"
+  timeoutMs: 10000
+  intervalMs: 10000
