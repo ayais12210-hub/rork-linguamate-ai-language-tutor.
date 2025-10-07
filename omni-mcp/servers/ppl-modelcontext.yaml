@@ -1,0 +1,12 @@
+name: ppl-modelcontext
+enabled: false
+command: npx
+args: ["ppl-modelcontext-mcp", "start"]
+env:
+  PPL_API_KEY: "${PPL_API_KEY}"
+healthCheck:
+  type: http
+  url: "http://localhost:3023/health"
+  timeoutMs: 10000
+scopes: ["search:read"]
+limits: { rps: 2, burst: 4, timeoutMs: 40000 }

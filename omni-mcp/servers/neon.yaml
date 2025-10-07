@@ -1,0 +1,12 @@
+name: neon
+enabled: false
+command: npx
+args: ["neon-mcp", "start"]
+env:
+  NEON_DATABASE_URL: "${NEON_DATABASE_URL}"
+healthCheck:
+  type: http
+  url: "http://localhost:3026/health"
+  timeoutMs: 10000
+scopes: ["db:read", "db:write"]
+limits: { rps: 10, burst: 20, timeoutMs: 30000 }

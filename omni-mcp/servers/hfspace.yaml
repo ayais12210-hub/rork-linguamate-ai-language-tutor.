@@ -1,0 +1,12 @@
+name: hfspace
+enabled: false
+command: npx
+args: ["hfspace-mcp", "start"]
+env:
+  HUGGINGFACE_TOKEN: "${HUGGINGFACE_TOKEN}"
+healthCheck:
+  type: http
+  url: "http://localhost:3025/health"
+  timeoutMs: 10000
+scopes: ["ml:invoke"]
+limits: { rps: 2, burst: 4, timeoutMs: 45000 }

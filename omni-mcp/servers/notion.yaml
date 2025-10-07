@@ -1,0 +1,13 @@
+name: notion
+enabled: false
+command: npx
+args: ["notion-mcp-server", "start"]
+env:
+  NOTION_TOKEN: "${NOTION_TOKEN}"
+  NOTION_DATABASE_ID: "${NOTION_DATABASE_ID:-}"
+healthCheck:
+  type: http
+  url: "http://localhost:3007/health"
+  timeoutMs: 10000
+scopes: ["notion:read","notion:write"]
+limits: { rps: 3, burst: 6, timeoutMs: 30000 }

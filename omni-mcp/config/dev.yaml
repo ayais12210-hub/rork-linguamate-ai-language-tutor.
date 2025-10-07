@@ -1,0 +1,23 @@
+# Development configuration
+# Enables a few free servers for development/testing
+
+features:
+  chrome-devtools:
+    enabled: true
+  playwright:
+    enabled: true
+  backup:
+    enabled: true
+
+# Development-specific settings
+runtime:
+  maxConcurrency: 5
+  defaultTimeoutMs: 15000
+
+observability:
+  otelEnabled: true
+  sampling: 1.0  # Full sampling in dev
+
+security:
+  auditLog: true
+  redactSecrets: false  # Show secrets in dev logs

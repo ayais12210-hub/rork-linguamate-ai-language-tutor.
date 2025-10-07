@@ -1,0 +1,19 @@
+name: backup
+enabled: false
+command: npx
+args:
+  - "mcp-backup-server"
+  - start
+env:
+  BACKUP_DIR: "${BACKUP_DIR:-./backups}"
+  BACKUP_BUCKET: "${BACKUP_BUCKET:-}"
+  BACKUP_CREDENTIALS_JSON_PATH: "${BACKUP_CREDENTIALS_JSON_PATH:-}"
+healthCheck:
+  type: stdio
+  timeoutMs: 10000
+scopes:
+  - backup:read
+limits:
+  rps: 1
+  burst: 2
+  timeoutMs: 120000

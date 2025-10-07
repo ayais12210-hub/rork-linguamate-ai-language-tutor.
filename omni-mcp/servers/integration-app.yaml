@@ -1,0 +1,12 @@
+name: integration-app
+enabled: false
+command: npx
+args: ["integration-app-mcp", "start"]
+env:
+  INTEGRATION_API_KEY: "${INTEGRATION_API_KEY:-}"
+healthCheck:
+  type: http
+  url: "http://localhost:3032/health"
+  timeoutMs: 10000
+scopes: ["integration:execute"]
+limits: { rps: 2, burst: 4, timeoutMs: 30000 }

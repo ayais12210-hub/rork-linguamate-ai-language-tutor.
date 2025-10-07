@@ -1,0 +1,27 @@
+# Production configuration
+# Conservative settings for production
+
+runtime:
+  maxConcurrency: 20
+  defaultTimeoutMs: 60000
+  retry:
+    attempts: 5
+    backoffMs: 2000
+
+observability:
+  otelEnabled: true
+  sampling: 0.01  # Low sampling in production
+
+security:
+  auditLog: true
+  redactSecrets: true
+
+network:
+  outboundAllowlist:
+    - "api.github.com"
+    - "api.stripe.com"
+    - "api.openai.com"
+    - "api.anthropic.com"
+    - "api.google.com"
+    - "api.notion.so"
+    - "api.supabase.com"

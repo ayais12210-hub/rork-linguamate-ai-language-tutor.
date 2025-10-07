@@ -1,0 +1,7 @@
+packages:
+  - 'apps/*'
+
+npmrc: |
+  auto-install-peers=true
+  strict-peer-dependencies=false
+  shamefully-hoist=true

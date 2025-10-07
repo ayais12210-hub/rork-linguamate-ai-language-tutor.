@@ -1,0 +1,12 @@
+name: gemini
+enabled: false
+command: npx
+args: ["gemini-mcp", "start"]
+env:
+  GEMINI_API_KEY: "${GEMINI_API_KEY}"
+healthCheck:
+  type: http
+  url: "http://localhost:3020/health"
+  timeoutMs: 10000
+scopes: ["llm:query"]
+limits: { rps: 3, burst: 6, timeoutMs: 45000 }

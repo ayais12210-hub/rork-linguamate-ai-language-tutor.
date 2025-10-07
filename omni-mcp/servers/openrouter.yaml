@@ -1,0 +1,12 @@
+name: openrouter
+enabled: false
+command: npx
+args: ["openrouter-mcp", "start"]
+env:
+  OPENROUTER_API_KEY: "${OPENROUTER_API_KEY}"
+healthCheck:
+  type: http
+  url: "http://localhost:3021/health"
+  timeoutMs: 10000
+scopes: ["llm:route"]
+limits: { rps: 3, burst: 6, timeoutMs: 45000 }

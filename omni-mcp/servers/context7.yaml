@@ -1,0 +1,13 @@
+name: context7
+enabled: false
+command: npx
+args: ["context7-mcp", "start"]
+env:
+  UPSTASH_REDIS_REST_URL: "${UPSTASH_REDIS_REST_URL}"
+  UPSTASH_REDIS_REST_TOKEN: "${UPSTASH_REDIS_REST_TOKEN}"
+healthCheck:
+  type: http
+  url: "http://localhost:3001/healthz"
+  timeoutMs: 10000
+scopes: ["cache:read","cache:write"]
+limits: { rps: 5, burst: 10, timeoutMs: 25000 }
