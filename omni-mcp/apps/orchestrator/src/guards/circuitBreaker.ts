@@ -53,6 +53,10 @@ export class CircuitBreakerGuard {
 
   getBreakerState(serverName: string): string | undefined {
     const breaker = this.breakers.get(serverName);
-    return breaker ? 'unknown' : undefined;
+    if (!breaker) return undefined;
+    if (breaker.opened) return 'open';
+    if (breaker.halfOpen) return 'halfOpen';
+    if (breaker.closed) return 'closed';
+    return 'unknown';
   }
 }
