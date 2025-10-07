@@ -31,9 +31,13 @@ jobs:
             **/node_modules
             ~/.cache/ms-playwright
           key: node-${{ runner.os }}-${{ hashFiles('**/package-lock.json', '**/pnpm-lock.yaml', '**/yarn.lock', '**/bun.lock') }}
+      - name: Install pnpm
+        run: npm install -g pnpm
+      - name: Verify pnpm installation
+        run: pnpm --version
       - name: Install deps
         run: |
-          if [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
+          if [ -f pnpm-lock.yaml ]; then pnpm i --frozen-lockfile; \
           elif [ -f yarn.lock ]; then yarn --frozen-lockfile; \
           elif [ -f bun.lock ]; then bun install --frozen-lockfile; \
           else npm ci; fi
@@ -68,9 +72,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: "20" }
+      - name: Install pnpm
+        run: npm install -g pnpm
+      - name: Verify pnpm installation
+        run: pnpm --version
       - name: Install deps
         run: |
-          if [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
+          if [ -f pnpm-lock.yaml ]; then pnpm i --frozen-lockfile; \
           elif [ -f yarn.lock ]; then yarn --frozen-lockfile; \
           elif [ -f bun.lock ]; then bun install --frozen-lockfile; \
           else npm ci; fi
@@ -89,9 +97,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: "20" }
+      - name: Install pnpm
+        run: npm install -g pnpm
+      - name: Verify pnpm installation
+        run: pnpm --version
       - name: Install deps
         run: |
-          if [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
+          if [ -f pnpm-lock.yaml ]; then pnpm i --frozen-lockfile; \
           elif [ -f yarn.lock ]; then yarn --frozen-lockfile; \
           elif [ -f bun.lock ]; then bun install --frozen-lockfile; \
           else npm ci; fi
@@ -136,9 +148,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: "20" }
+      - name: Install pnpm
+        run: npm install -g pnpm
+      - name: Verify pnpm installation
+        run: pnpm --version
       - name: Install deps
         run: |
-          if [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
+          if [ -f pnpm-lock.yaml ]; then pnpm i --frozen-lockfile; \
           elif [ -f yarn.lock ]; then yarn --frozen-lockfile; \
           elif [ -f bun.lock ]; then bun install --frozen-lockfile; \
           else npm ci; fi
