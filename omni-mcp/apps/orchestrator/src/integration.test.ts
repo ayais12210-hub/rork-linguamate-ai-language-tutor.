@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { MCPOrchestrator } from '../apps/orchestrator/src/bootstrap.js';
+import { MCPOrchestrator } from './bootstrap.js';
 
 describe('Orchestrator Integration Tests', () => {
   let orchestrator: MCPOrchestrator;
