@@ -1,0 +1,18 @@
+name: stripe
+enabled: false
+command: npx
+args:
+  - "@stripe/agent-toolkit"
+  - start
+env:
+  STRIPE_API_KEY: "${STRIPE_API_KEY}"
+  STRIPE_WEBHOOK_SECRET: "${STRIPE_WEBHOOK_SECRET:-}"
+healthCheck:
+  type: stdio
+  timeoutMs: 10000
+scopes:
+  - stripe:read
+limits:
+  rps: 2
+  burst: 4
+  timeoutMs: 45000

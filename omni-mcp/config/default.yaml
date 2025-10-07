@@ -1,0 +1,119 @@
+# Default configuration for Omni-MCP
+# This file is committed and provides the base configuration
+
+# Feature flags - all servers disabled by default
+features:
+  firecrawl:
+    enabled: false
+  chrome-devtools:
+    enabled: false
+  context7:
+    enabled: false
+  gemini-cloud-assist:
+    enabled: false
+  github:
+    enabled: false
+  perplexity:
+    enabled: false
+  ppl-modelcontext:
+    enabled: false
+  supabase:
+    enabled: false
+  playwright:
+    enabled: false
+  microsoft:
+    enabled: false
+  elevenlabs:
+    enabled: false
+  sentry:
+    enabled: false
+  stripe:
+    enabled: false
+  zapier:
+    enabled: false
+  windsor:
+    enabled: false
+  notion:
+    enabled: false
+  adobe-express:
+    enabled: false
+  backlog:
+    enabled: false
+  backup:
+    enabled: false
+  berry-rag:
+    enabled: false
+  hfspace:
+    enabled: false
+  v0:
+    enabled: false
+  startup-framework:
+    enabled: false
+  stripe-alt:
+    enabled: false
+  allvoicelab:
+    enabled: false
+  audio-mcp:
+    enabled: false
+  deepseek-r1:
+    enabled: false
+  gemini:
+    enabled: false
+  integration-app:
+    enabled: false
+  audio-transcriber:
+    enabled: false
+  openrouter:
+    enabled: false
+  qwen-max:
+    enabled: false
+  grok:
+    enabled: false
+  lara:
+    enabled: false
+  youtube-translate:
+    enabled: false
+  translator-ai:
+    enabled: false
+  a2a-gateway:
+    enabled: false
+  agentrpc:
+    enabled: false
+  aivis-speech:
+    enabled: false
+  minimax:
+    enabled: false
+  daisys:
+    enabled: false
+  adobe-commerce:
+    enabled: false
+  globalping:
+    enabled: false
+  fast-intercom:
+    enabled: false
+  neon:
+    enabled: false
+  asana:
+    enabled: false
+
+# Runtime configuration
+runtime:
+  maxConcurrency: 10
+  defaultTimeoutMs: 30000
+  retry:
+    attempts: 3
+    backoffMs: 1000
+
+# Network configuration
+network:
+  outboundAllowlist: []
+
+# Observability configuration
+observability:
+  otelEnabled: true
+  sampling: 0.1
+
+# Security configuration
+security:
+  auditLog: true
+  redactSecrets: true

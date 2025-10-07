@@ -1,0 +1,17 @@
+name: elevenlabs
+enabled: false
+command: npx
+args:
+  - elevenlabs-mcp
+  - start
+env:
+  ELEVENLABS_API_KEY: "${ELEVENLABS_API_KEY}"
+healthCheck:
+  type: stdio
+  timeoutMs: 10000
+scopes:
+  - audio:generate
+limits:
+  rps: 2
+  burst: 4
+  timeoutMs: 60000

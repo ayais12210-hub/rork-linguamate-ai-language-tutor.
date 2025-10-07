@@ -1,0 +1,20 @@
+name: supabase
+enabled: false
+command: npx
+args:
+  - supabase-mcp
+  - start
+env:
+  SUPABASE_URL: "${SUPABASE_URL}"
+  SUPABASE_ANON_KEY: "${SUPABASE_ANON_KEY}"
+  SUPABASE_SERVICE_ROLE_KEY: "${SUPABASE_SERVICE_ROLE_KEY:-}"
+healthCheck:
+  type: stdio
+  timeoutMs: 10000
+scopes:
+  - database:read
+  - database:write
+limits:
+  rps: 5
+  burst: 10
+  timeoutMs: 30000

@@ -1,0 +1,17 @@
+name: github
+enabled: false
+command: npx
+args:
+  - "github-mcp-server"
+  - start
+env:
+  GITHUB_TOKEN: "${GITHUB_TOKEN}"
+healthCheck:
+  type: stdio
+  timeoutMs: 12000
+scopes:
+  - repo:read
+limits:
+  rps: 5
+  burst: 10
+  timeoutMs: 30000

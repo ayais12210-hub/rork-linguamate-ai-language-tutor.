@@ -1,0 +1,17 @@
+name: zapier
+enabled: false
+command: npx
+args:
+  - zapier-mcp
+  - start
+env:
+  ZAPIER_NLA_API_KEY: "${ZAPIER_NLA_API_KEY}"
+healthCheck:
+  type: stdio
+  timeoutMs: 10000
+scopes:
+  - automation:execute
+limits:
+  rps: 3
+  burst: 6
+  timeoutMs: 45000

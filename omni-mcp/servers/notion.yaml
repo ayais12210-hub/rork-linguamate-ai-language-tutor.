@@ -1,0 +1,18 @@
+name: notion
+enabled: false
+command: npx
+args:
+  - "notion-mcp-server"
+  - start
+env:
+  NOTION_TOKEN: "${NOTION_TOKEN}"
+  NOTION_DATABASE_ID: "${NOTION_DATABASE_ID:-}"
+healthCheck:
+  type: stdio
+  timeoutMs: 10000
+scopes:
+  - notion:read
+limits:
+  rps: 3
+  burst: 6
+  timeoutMs: 30000

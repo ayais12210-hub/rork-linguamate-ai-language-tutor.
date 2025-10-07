@@ -1,0 +1,17 @@
+name: playwright
+enabled: false
+command: npx
+args:
+  - "@playwright/mcp-server"
+  - start
+env:
+  PLAYWRIGHT_BROWSERS_PATH: "${PLAYWRIGHT_BROWSERS_PATH:-}"
+healthCheck:
+  type: stdio
+  timeoutMs: 15000
+scopes:
+  - browser:automate
+limits:
+  rps: 2
+  burst: 4
+  timeoutMs: 60000
