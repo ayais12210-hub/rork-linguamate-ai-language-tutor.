@@ -3,29 +3,17 @@
     "fs-local": {
       "command": "npx",
       "args": ["@modelcontextprotocol/server-filesystem"],
-      "env": {
-        "ROOT": "${workspaceFolder}"
-      },
+      "env": { "ROOT": "${workspaceFolder}" },
       "permissions": {
         "read": ["app", "components", "backend", "lib", "tests", "schemas", ".github", "docs"],
         "write": ["tests", "docs", ".github", "schemas"]
       }
     },
-
-    "github": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
-      "env": {
-        "GITHUB_TOKEN": "${env:GITHUB_TOKEN}",
-        "GITHUB_REPO": "ayais12210-hub/Linguamate-ai-tutor"
-      }
-    },
-
     "http": {
       "command": "npx",
       "args": ["@modelcontextprotocol/server-http"],
       "env": {
-        "MCP_HTTP_ALLOWED_HOSTS": "api.openai.com,api.anthropic.com,api.elevenlabs.io,api.vercel.com,api.expo.dev,api.revenuecat.com,api.stripe.com,linguamate.yourdomain.com,localhost,127.0.0.1"
+        "MCP_HTTP_ALLOWED_HOSTS": "api.coingecko.com,registry.npmjs.org,en.wikipedia.org,raw.githubusercontent.com,localhost,127.0.0.1"
       }
     }
   }
