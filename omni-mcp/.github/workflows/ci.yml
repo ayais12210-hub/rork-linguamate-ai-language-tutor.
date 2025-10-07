@@ -61,15 +61,17 @@ jobs:
     - name: Build application
       run: pnpm build
       
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: build-artifacts
-        path: |
-          apps/orchestrator/dist/
-          coverage/
-          audit.log
-        retention-days: 7
+      - name: Dotenv up-to-date
+        run: pnpm dotenv:check
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: |
+            apps/orchestrator/dist/
+            coverage/
+            audit.log
+          retention-days: 7
 
   health-matrix:
     runs-on: ubuntu-latest

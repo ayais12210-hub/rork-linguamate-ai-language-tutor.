@@ -1,16 +1,14 @@
 name: firecrawl
 enabled: false
 command: npx
-args: ["firecrawl-mcp-server", "start"]
+args: ["firecrawl-mcp", "start"]
 env:
   FIRECRAWL_API_KEY: "${FIRECRAWL_API_KEY}"
-healthCheck:
-  type: http
-  url: "http://localhost:3000/healthz"
-  timeoutMs: 10000
+probe:
+  type: stdio
+  timeoutMs: 12000
   intervalMs: 10000
-scopes: ["crawl:read"]
-limits: 
+limits:
   rps: 2
   burst: 5
 timeouts:
@@ -19,8 +17,4 @@ timeouts:
 retry:
   attempts: 3
   backoffMs: 1000
-probe:
-  type: http
-  url: "http://localhost:3000/healthz"
-  timeoutMs: 10000
-  intervalMs: 10000
+scopes: ["crawl:read"]

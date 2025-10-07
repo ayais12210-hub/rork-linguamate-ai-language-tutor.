@@ -1,128 +1,46 @@
-import { appendFileSync } from 'fs';
-import { join } from 'path';
+import fs from 'node:fs';
 
-export interface AuditEvent {
-  timestamp: string;
-  event: string;
-  server: string;
-  data: Record<string, unknown>;
+const stream = process.env.NODE_ENV === 'production' ? process.stdout : fs.createWriteStream('./audit.log', { flags: 'a' });
+const REDACT = /(token|key|secret|password)=([A-Za-z0-9._-]+)/gi;
+
+export function audit(ev: Record<string, unknown>): void {
+  const safe = JSON.stringify(ev).replace(REDACT, (_m, k) => `${k}=[redacted]`);
+  stream.write(safe + '\n');
 }
 
-// Redact values that look like secrets
-function redactSecrets(value: unknown): unknown {
-  if (typeof value === 'string') {
-    // Redact token-like patterns
-    if (value.match(/^[A-Za-z0-9]{20,}$/) || value.includes('token') || value.includes('key') || value.includes('secret')) {
-      return '[REDACTED]';
-    }
-  }
-  
-  if (typeof value === 'object' && value !== null) {
-    const redacted: Record<string, unknown> = {};
-    for (const [key, val] of Object.entries(value)) {
-      if (key.toLowerCase().includes('token') || key.toLowerCase().includes('key') || key.toLowerCase().includes('secret')) {
-        redacted[key] = '[REDACTED]';
-      } else {
-        redacted[key] = redactSecrets(val);
-      }
-    }
-    return redacted;
-  }
-  
-  return value;
-}
-
-// Format audit event as NDJSON
-function formatAuditEvent(event: AuditEvent): string {
-  const redactedData = redactSecrets(event.data);
-  return JSON.stringify({
-    ...event,
-    data: redactedData,
-  }) + '\n';
-}
-
-// Write audit event to file and stdout
-export function logAuditEvent(event: AuditEvent): void {
-  const formatted = formatAuditEvent(event);
-  
-  // Write to audit.log in development
-  if (process.env.NODE_ENV !== 'production') {
-    const auditLogPath = join(process.cwd(), 'audit.log');
-    appendFileSync(auditLogPath, formatted);
-  }
-  
-  // Write to stdout in production
-  if (process.env.NODE_ENV === 'production') {
-    process.stdout.write(formatted);
-  }
-}
-
-// Log server spawn event
-export function logServerSpawn(server: string, data: Record<string, unknown>): void {
-  logAuditEvent({
+export function auditServerEvent(server: string, event: string, data: Record<string, unknown> = {}): void {
+  audit({
     timestamp: new Date().toISOString(),
-    event: 'spawn',
     server,
-    data,
+    event,
+    ...data,
   });
 }
 
-// Log server exit event
-export function logServerExit(server: string, data: Record<string, unknown>): void {
-  logAuditEvent({
-    timestamp: new Date().toISOString(),
-    event: 'exit',
-    server,
-    data,
+export function logServerSpawn(server: string, data: Record<string, unknown> = {}): void {
+  auditServerEvent(server, 'server_spawn', data);
+}
+
+export function logServerExit(server: string, data: Record<string, unknown> = {}): void {
+  auditServerEvent(server, 'server_exit', data);
+}
+
+export function logServerRestart(server: string, data: Record<string, unknown> = {}): void {
+  auditServerEvent(server, 'server_restart', data);
+}
+
+export function auditProbeResult(server: string, success: boolean, latencyMs: number, error?: string): void {
+  auditServerEvent(server, success ? 'probe_ok' : 'probe_fail', {
+    latencyMs,
+    error,
   });
 }
 
-// Log server restart event
-export function logServerRestart(server: string, data: Record<string, unknown>): void {
-  logAuditEvent({
+export function auditEgressBlock(hostname: string, context: string): void {
+  audit({
     timestamp: new Date().toISOString(),
-    event: 'restart',
-    server,
-    data,
-  });
-}
-
-// Log probe success event
-export function logProbeSuccess(server: string, data: Record<string, unknown>): void {
-  logAuditEvent({
-    timestamp: new Date().toISOString(),
-    event: 'probe_ok',
-    server,
-    data,
-  });
-}
-
-// Log probe failure event
-export function logProbeFailure(server: string, data: Record<string, unknown>): void {
-  logAuditEvent({
-    timestamp: new Date().toISOString(),
-    event: 'probe_fail',
-    server,
-    data,
-  });
-}
-
-// Log security event
-export function logSecurityEvent(server: string, data: Record<string, unknown>): void {
-  logAuditEvent({
-    timestamp: new Date().toISOString(),
-    event: 'security',
-    server,
-    data,
-  });
-}
-
-// Log configuration change event
-export function logConfigChange(server: string, data: Record<string, unknown>): void {
-  logAuditEvent({
-    timestamp: new Date().toISOString(),
-    event: 'config_change',
-    server,
-    data,
+    event: 'egress_blocked',
+    hostname,
+    context,
   });
 }

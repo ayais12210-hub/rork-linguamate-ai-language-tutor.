@@ -3,55 +3,38 @@ import yaml from 'js-yaml';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 
-// Health check configuration schema
+// Health check configuration schema (legacy alias)
 const HealthCheckSchema = z.object({
   type: z.enum(['stdio', 'http']),
   command: z.string().optional(),
   url: z.string().optional(),
   timeoutMs: z.number().positive().default(10000),
-  intervalMs: z.number().positive().default(10000),
 });
 
-// Server limits schema
-const ServerLimitsSchema = z.object({
-  rps: z.number().positive().default(3),
-  burst: z.number().positive().default(6),
-});
-
-// Server timeouts schema
-const ServerTimeoutsSchema = z.object({
-  opMs: z.number().positive().default(30000),
-  startMs: z.number().positive().default(30000),
-});
-
-// Server retry schema
-const ServerRetrySchema = z.object({
-  attempts: z.number().positive().default(3),
-  backoffMs: z.number().positive().default(1000),
-});
-
-// Server probe schema
-const ServerProbeSchema = z.object({
-  type: z.enum(['stdio', 'http']),
-  url: z.string().optional(),
-  command: z.string().optional(),
-  timeoutMs: z.number().positive().default(10000),
-  intervalMs: z.number().positive().default(10000),
-});
-
-// Server configuration schema
+// Server configuration schema with per-server overrides
 const ServerConfigSchema = z.object({
   name: z.string(),
   enabled: z.boolean().default(false),
   command: z.string(),
   args: z.array(z.string()),
   env: z.record(z.string()),
-  healthCheck: HealthCheckSchema,
-  scopes: z.array(z.string()).default([]),
-  limits: ServerLimitsSchema.optional(),
-  timeouts: ServerTimeoutsSchema.optional(),
-  retry: ServerRetrySchema.optional(),
-  probe: ServerProbeSchema.optional(),
+  healthCheck: HealthCheckSchema, // legacy alias
+  probe: HealthCheckSchema.extend({
+    intervalMs: z.number().int().positive().optional()
+  }).optional(),
+  limits: z.object({ 
+    rps: z.number().int().positive().optional(), 
+    burst: z.number().int().positive().optional() 
+  }).optional(),
+  timeouts: z.object({ 
+    opMs: z.number().int().positive().optional(), 
+    startMs: z.number().int().positive().optional() 
+  }).optional(),
+  retry: z.object({ 
+    attempts: z.number().int().nonnegative().optional(), 
+    backoffMs: z.number().int().nonnegative().optional() 
+  }).optional(),
+  scopes: z.array(z.string()).optional()
 });
 
 // Feature flags schema
@@ -103,10 +86,6 @@ export const ConfigSchema = z.object({
 export type Config = z.infer<typeof ConfigSchema>;
 export type ServerConfig = z.infer<typeof ServerConfigSchema>;
 export type HealthCheck = z.infer<typeof HealthCheckSchema>;
-export type ServerLimits = z.infer<typeof ServerLimitsSchema>;
-export type ServerTimeouts = z.infer<typeof ServerTimeoutsSchema>;
-export type ServerRetry = z.infer<typeof ServerRetrySchema>;
-export type ServerProbe = z.infer<typeof ServerProbeSchema>;
 
 // Environment variable interpolation
 function interpolateEnvVars(template: string): string {
@@ -211,6 +190,28 @@ export function validateEnv(name: string, env: Record<string, string>): { ok: bo
   };
 }
 
+// Resolve environment map with interpolation
+export function resolveEnvMap(envMap: Record<string, string> | undefined): { resolved: Record<string, string>; missing: string[] } {
+  const resolved: Record<string, string> = {};
+  const missing: string[] = [];
+  
+  if (!envMap) {
+    return { resolved, missing };
+  }
+  
+  for (const [key, value] of Object.entries(envMap)) {
+    const interpolated = interpolateEnvVars(value);
+    resolved[key] = interpolated;
+    
+    // Check if required env var is missing
+    if (value && !interpolated) {
+      missing.push(key);
+    }
+  }
+  
+  return { resolved, missing };
+}
+
 // Collect required environment keys from configuration
 export function collectRequiredEnvKeys(cfg: Config): string[] {
   const keys = new Set<string>();
@@ -224,22 +225,4 @@ export function collectRequiredEnvKeys(cfg: Config): string[] {
   }
   
   return Array.from(keys).sort();
-}
-
-// Resolve environment map with interpolation
-export function resolveEnvMap(envMap: Record<string, string>): { resolved: Record<string, string>; missing: string[] } {
-  const resolved: Record<string, string> = {};
-  const missing: string[] = [];
-  
-  for (const [key, value] of Object.entries(envMap)) {
-    const interpolated = interpolateEnvVars(value);
-    resolved[key] = interpolated;
-    
-    // Check if required env var is missing
-    if (value && !interpolated) {
-      missing.push(key);
-    }
-  }
-  
-  return { resolved, missing };
 }

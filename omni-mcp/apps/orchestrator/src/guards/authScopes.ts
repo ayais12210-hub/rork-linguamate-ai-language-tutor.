@@ -4,7 +4,7 @@ export class AuthScopesGuard {
   private scopes: Map<string, string[]> = new Map();
 
   registerServer(serverName: string, config: ServerConfig): void {
-    this.scopes.set(serverName, config.scopes);
+    this.scopes.set(serverName, config.scopes || []);
   }
 
   validateScope(serverName: string, requiredScope: string): boolean {

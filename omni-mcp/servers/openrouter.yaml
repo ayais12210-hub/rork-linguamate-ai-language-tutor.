@@ -4,23 +4,17 @@ command: npx
 args: ["openrouter-mcp", "start"]
 env:
   OPENROUTER_API_KEY: "${OPENROUTER_API_KEY}"
-healthCheck:
-  type: http
-  url: "http://localhost:3021/health"
-  timeoutMs: 10000
+probe:
+  type: stdio
+  timeoutMs: 12000
   intervalMs: 10000
-scopes: ["llm:route"]
-limits: 
-  rps: 3
-  burst: 6
+limits:
+  rps: 2
+  burst: 4
 timeouts:
-  opMs: 45000
+  opMs: 60000
   startMs: 30000
 retry:
   attempts: 3
   backoffMs: 1000
-probe:
-  type: http
-  url: "http://localhost:3021/health"
-  timeoutMs: 10000
-  intervalMs: 10000
+scopes: ["llm:chat"]

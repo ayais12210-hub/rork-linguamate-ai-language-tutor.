@@ -8,6 +8,8 @@ import { TimeoutGuard } from './guards/timeouts.js';
 import { AuthScopesGuard } from './guards/authScopes.js';
 import { createLogger, logServerEvent, logServerError } from './observability/logger.js';
 import { initializeOpenTelemetry, shutdownOpenTelemetry, type NodeSDK } from './observability/otel.js';
+import { initOTEL } from './observability/otel.js';
+import { initSentry } from './observability/sentry.js';
 import { logServerSpawn, logServerExit, logServerRestart } from './observability/audit.js';
 import { EgressController } from './security/egress.js';
 import { validateEnv } from './config/envSchemas.js';
@@ -58,12 +60,14 @@ export class MCPOrchestrator {
   async start(): Promise<void> {
     try {
       // Initialize observability
+      initOTEL();
+      initSentry(process.env.SENTRY_DSN);
       this.otelSdk = initializeOpenTelemetry(this.config.observability);
       
       // Start health checking
       const enabledServers = this.registry.getEnabledServers();
       const serverMap = new Map(enabledServers);
-      this.healthChecker.startPeriodicHealthChecks(serverMap);
+      this.healthChecker.startPeriodicHealthChecks(serverMap, this.config.network.outboundAllowlist);
       
       // Start servers
       await this.startServers();
@@ -88,7 +92,6 @@ export class MCPOrchestrator {
           event: 'skipped',
           reason: 'env_validation_failed',
           missing: envValidation.missing,
-          errors: envValidation.errors,
         });
         continue;
       }

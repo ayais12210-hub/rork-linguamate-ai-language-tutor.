@@ -1,19 +1,17 @@
+import { request } from 'undici';
+
 export interface ProbeResult {
   ok: boolean;
   ms: number;
-  error?: string;
 }
 
-export async function httpProbe(
-  url: string, 
-  timeoutMs: number
-): Promise<ProbeResult> {
+export async function httpProbe(url: string, timeoutMs: number): Promise<ProbeResult> {
   const t0 = Date.now();
   const ctrl = new AbortController();
   const id = setTimeout(() => ctrl.abort(), timeoutMs);
   
   try {
-    const res = await fetch(url, { 
+    const res = await request(url, { 
       method: 'GET', 
       signal: ctrl.signal,
       headers: {
@@ -21,23 +19,16 @@ export async function httpProbe(
       }
     });
     
-    const ms = Date.now() - t0;
-    const ok = res.status >= 200 && res.status < 300;
-    
     return { 
-      ok, 
-      ms,
-      error: ok ? undefined : `HTTP ${res.status}`
+      ok: res.statusCode >= 200 && res.statusCode < 300, 
+      ms: Date.now() - t0 
     };
-  } catch (error) {
-    const ms = Date.now() - t0;
-    
+  } catch {
     return { 
       ok: false, 
-      ms,
-      error: error instanceof Error ? error.message : String(error)
+      ms: Date.now() - t0 
     };
-  } finally {
-    clearTimeout(id);
+  } finally { 
+    clearTimeout(id); 
   }
 }

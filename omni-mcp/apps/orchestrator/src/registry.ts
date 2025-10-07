@@ -2,6 +2,8 @@ import { readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 import yaml from 'js-yaml';
 import type { ServerConfig, Config } from './config/schema.js';
+import { resolveEnvMap } from './config/schema.js';
+import { validateEnv } from './config/envSchemas.js';
 
 export class ServerRegistry {
   private servers: Map<string, ServerConfig> = new Map();
@@ -63,29 +65,26 @@ export class ServerRegistry {
     return featureEnabled || serverEnabled;
   }
 
-  getServerHealthStatus(): Record<string, { enabled: boolean; hasRequiredEnvs: boolean }> {
-    const status: Record<string, { enabled: boolean; hasRequiredEnvs: boolean }> = {};
+  getServerHealthStatus(): Record<string, { enabled: boolean; hasRequiredEnvs: boolean; missingEnvs: string[] }> {
+    const status: Record<string, { enabled: boolean; hasRequiredEnvs: boolean; missingEnvs: string[] }> = {};
     
     for (const [name, serverConfig] of this.servers) {
       const enabled = this.isServerEnabled(name);
-      const hasRequiredEnvs = this.checkRequiredEnvs(serverConfig);
+      const { resolved, missing } = resolveEnvMap(serverConfig.env);
+      const envValidation = validateEnv(name, resolved);
+      const missingEnvs = [...missing, ...envValidation.missing];
       
-      status[name] = { enabled, hasRequiredEnvs };
+      status[name] = { 
+        enabled, 
+        hasRequiredEnvs: missingEnvs.length === 0,
+        missingEnvs 
+      };
     }
     
     return status;
   }
 
-  private checkRequiredEnvs(serverConfig: ServerConfig): boolean {
-    if (!serverConfig.env) {
-      return true;
-    }
-    
-    for (const [key, value] of Object.entries(serverConfig.env)) {
-      if (value && !process.env[key]) {
-        return false;
-      }
-    }
-    return true;
+  getEffectiveProbeConfig(serverConfig: ServerConfig) {
+    return serverConfig.probe ?? serverConfig.healthCheck;
   }
 }

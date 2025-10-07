@@ -2,6 +2,8 @@ import type { ServerConfig } from './config/schema.js';
 import { stdioProbe } from './probes/stdioProbe.js';
 import { httpProbe } from './probes/httpProbe.js';
 import { Counter, Histogram, Gauge } from 'prom-client';
+import { auditProbeResult } from './observability/audit.js';
+import { validateProbeUrl } from './security/egress.js';
 
 export interface HealthStatus {
   healthy: boolean;
@@ -60,28 +62,35 @@ export class HealthChecker {
   private intervals: Map<string, NodeJS.Timeout> = new Map();
   private consecutiveFailures: Map<string, number> = new Map();
 
-  async checkServerHealth(serverName: string, config: ServerConfig): Promise<HealthStatus> {
+  async checkServerHealth(serverName: string, config: ServerConfig, allowlist: string[] = []): Promise<HealthStatus> {
     try {
+      const probeConfig = config.probe ?? config.healthCheck;
       let result;
       
-      if (config.healthCheck.type === 'stdio') {
-        const command = config.healthCheck.command || config.command;
-        const args = config.healthCheck.command ? [] : config.args;
-        result = await stdioProbe(command, args, config.healthCheck.timeoutMs);
-      } else if (config.healthCheck.type === 'http') {
-        if (!config.healthCheck.url) {
+      if (probeConfig.type === 'stdio') {
+        const command = probeConfig.command || config.command;
+        const args = probeConfig.command ? [] : config.args;
+        result = await stdioProbe(command, args, probeConfig.timeoutMs);
+      } else if (probeConfig.type === 'http') {
+        if (!probeConfig.url) {
           throw new Error('HTTP health check requires URL');
         }
-        result = await httpProbe(config.healthCheck.url, config.healthCheck.timeoutMs);
+        
+        // Validate URL against allowlist
+        if (!validateProbeUrl(probeConfig.url, allowlist)) {
+          throw new Error('URL not in allowlist');
+        }
+        
+        result = await httpProbe(probeConfig.url, probeConfig.timeoutMs);
       } else {
-        throw new Error(`Unsupported health check type: ${config.healthCheck.type}`);
+        throw new Error(`Unsupported health check type: ${probeConfig.type}`);
       }
 
       const status: HealthStatus = {
         healthy: result.ok,
         lastCheck: new Date(),
         responseTime: result.ms,
-        error: result.error,
+        error: result.ok ? undefined : 'Probe failed',
         consecutiveFailures: result.ok ? 0 : (this.consecutiveFailures.get(serverName) || 0) + 1,
       };
 
@@ -89,10 +98,12 @@ export class HealthChecker {
       if (result.ok) {
         this.consecutiveFailures.set(serverName, 0);
         probeSuccessTotal.inc({ server: serverName });
+        auditProbeResult(serverName, true, result.ms);
       } else {
         const failures = (this.consecutiveFailures.get(serverName) || 0) + 1;
         this.consecutiveFailures.set(serverName, failures);
         probeFailTotal.inc({ server: serverName });
+        auditProbeResult(serverName, false, result.ms, 'Probe failed');
       }
 
       // Record latency
@@ -101,10 +112,11 @@ export class HealthChecker {
       this.statuses.set(serverName, status);
       return status;
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       const status: HealthStatus = {
         healthy: false,
         lastCheck: new Date(),
-        error: error instanceof Error ? error.message : String(error),
+        error: errorMessage,
         responseTime: 0,
         consecutiveFailures: (this.consecutiveFailures.get(serverName) || 0) + 1,
       };
@@ -112,6 +124,7 @@ export class HealthChecker {
       const failures = (this.consecutiveFailures.get(serverName) || 0) + 1;
       this.consecutiveFailures.set(serverName, failures);
       probeFailTotal.inc({ server: serverName });
+      auditProbeResult(serverName, false, 0, errorMessage);
 
       this.statuses.set(serverName, status);
       return status;
@@ -138,11 +151,12 @@ export class HealthChecker {
     serverUptimeGauge.set({ server: serverName }, uptimeSeconds);
   }
 
-  startPeriodicHealthChecks(servers: Map<string, ServerConfig>): void {
+  startPeriodicHealthChecks(servers: Map<string, ServerConfig>, allowlist: string[] = []): void {
     for (const [serverName, config] of servers) {
-      const intervalMs = config.healthCheck.intervalMs || 10000;
+      const probeConfig = config.probe ?? config.healthCheck;
+      const intervalMs = (probeConfig as any).intervalMs || 10000;
       const interval = setInterval(async () => {
-        await this.checkServerHealth(serverName, config);
+        await this.checkServerHealth(serverName, config, allowlist);
       }, intervalMs);
 
       this.intervals.set(serverName, interval);

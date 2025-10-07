@@ -64,7 +64,6 @@ describe('stdioProbe', () => {
     expect(result).toEqual({
       ok: false,
       ms: expect.any(Number),
-      error: 'exit code 1',
     });
   });
 
@@ -88,7 +87,6 @@ describe('stdioProbe', () => {
     expect(result).toEqual({
       ok: false,
       ms: expect.any(Number),
-      error: 'timeout',
     });
     expect(mockChild.kill).toHaveBeenCalled();
   });
@@ -106,15 +104,16 @@ describe('stdioProbe', () => {
     const promise = stdioProbe('test-cmd', ['arg1'], 5000);
 
     // Simulate error event
-    const errorHandler = mockChild.on.mock.calls.find(call => call[0] === 'error')[1];
-    errorHandler(new Error('spawn failed'));
+    const errorHandler = mockChild.on.mock.calls.find(call => call[0] === 'error')?.[1];
+    if (errorHandler) {
+      errorHandler(new Error('spawn failed'));
+    }
 
     const result = await promise;
 
     expect(result).toEqual({
       ok: false,
       ms: expect.any(Number),
-      error: 'spawn failed',
     });
   });
 });

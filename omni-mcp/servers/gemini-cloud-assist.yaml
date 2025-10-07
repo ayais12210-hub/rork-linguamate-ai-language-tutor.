@@ -6,13 +6,11 @@ env:
   GOOGLE_PROJECT_ID: "${GOOGLE_PROJECT_ID}"
   GOOGLE_APPLICATION_CREDENTIALS: "${GOOGLE_APPLICATION_CREDENTIALS}"
   GEMINI_API_KEY: "${GEMINI_API_KEY}"
-healthCheck:
-  type: http
-  url: "http://localhost:3019/health"
-  timeoutMs: 10000
+probe:
+  type: stdio
+  timeoutMs: 12000
   intervalMs: 10000
-scopes: ["ml:invoke"]
-limits: 
+limits:
   rps: 3
   burst: 6
 timeouts:
@@ -21,8 +19,4 @@ timeouts:
 retry:
   attempts: 3
   backoffMs: 1000
-probe:
-  type: http
-  url: "http://localhost:3019/health"
-  timeoutMs: 10000
-  intervalMs: 10000
+scopes: ["cloud:assist", "llm:chat"]

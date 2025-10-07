@@ -3,24 +3,18 @@ enabled: false
 command: npx
 args: ["playwright-mcp", "start"]
 env:
-  PLAYWRIGHT_BROWSERS_PATH: "${PLAYWRIGHT_BROWSERS_PATH:-}"
-healthCheck:
-  type: http
-  url: "http://localhost:3003/health"
-  timeoutMs: 10000
+  PLAYWRIGHT_BROWSERS_PATH: "${PLAYWRIGHT_BROWSERS_PATH}"
+probe:
+  type: stdio
+  timeoutMs: 15000
   intervalMs: 10000
-scopes: ["browser:launch"]
-limits: 
-  rps: 2
-  burst: 4
+limits:
+  rps: 1
+  burst: 3
 timeouts:
   opMs: 60000
   startMs: 30000
 retry:
-  attempts: 3
-  backoffMs: 1000
-probe:
-  type: http
-  url: "http://localhost:3003/health"
-  timeoutMs: 10000
-  intervalMs: 10000
+  attempts: 2
+  backoffMs: 2000
+scopes: ["browser:control"]

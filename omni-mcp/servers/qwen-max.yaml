@@ -1,26 +1,20 @@
 name: qwen-max
 enabled: false
 command: npx
-args: ["MCP-server-Qwen_Max", "start"]
+args: ["qwen-mcp", "start"]
 env:
   QWEN_API_KEY: "${QWEN_API_KEY}"
-healthCheck:
-  type: http
-  url: "http://localhost:3012/health"
-  timeoutMs: 10000
+probe:
+  type: stdio
+  timeoutMs: 12000
   intervalMs: 10000
-scopes: ["llm:query"]
-limits: 
-  rps: 3
-  burst: 6
+limits:
+  rps: 2
+  burst: 4
 timeouts:
-  opMs: 45000
+  opMs: 60000
   startMs: 30000
 retry:
   attempts: 3
   backoffMs: 1000
-probe:
-  type: http
-  url: "http://localhost:3012/health"
-  timeoutMs: 10000
-  intervalMs: 10000
+scopes: ["llm:chat"]

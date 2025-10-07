@@ -1,18 +1,14 @@
-# Multi-stage Dockerfile for omni-mcp orchestrator
+# Multi-stage build for omni-mcp orchestrator
 FROM node:20-alpine AS builder
 
-# Install pnpm
-RUN npm install -g pnpm@latest
-
-# Set working directory
 WORKDIR /app
 
 # Copy package files
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml ./
 COPY apps/orchestrator/package.json ./apps/orchestrator/
 
 # Install dependencies
-RUN pnpm install --frozen-lockfile
+RUN npm install -g pnpm && pnpm install --frozen-lockfile
 
 # Copy source code
 COPY . .
@@ -23,35 +19,25 @@ RUN pnpm build
 # Production stage
 FROM node:20-alpine AS runner
 
+WORKDIR /app
+
 # Install pnpm
-RUN npm install -g pnpm@latest
+RUN npm install -g pnpm
+
+# Copy built application
+COPY --from=builder /app/apps/orchestrator/dist ./dist
+COPY --from=builder /app/apps/orchestrator/package.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/config ./config
+COPY --from=builder /app/servers ./servers
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S omni-mcp -u 1001
 
-# Set working directory
-WORKDIR /app
+# Change ownership
+RUN chown -R omni-mcp:nodejs /app
 
-# Copy package files
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/orchestrator/package.json ./apps/orchestrator/
-
-# Install production dependencies only
-RUN pnpm install --frozen-lockfile --prod
-
-# Copy built application
-COPY --from=builder /app/apps/orchestrator/dist ./apps/orchestrator/dist
-
-# Copy configuration files
-COPY config/ ./config/
-COPY servers/ ./servers/
-
-# Create directories for logs and audit
-RUN mkdir -p /app/logs /app/audit && \
-    chown -R omni-mcp:nodejs /app
-
-# Switch to non-root user
 USER omni-mcp
 
 # Expose port
@@ -59,7 +45,7 @@ EXPOSE 8787
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD node -e "fetch('http://localhost:8787/healthz').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
+  CMD curl -f http://localhost:8787/healthz || exit 1
 
 # Start the application
-CMD ["node", "apps/orchestrator/dist/index.js"]
+CMD ["node", "dist/index.js"]

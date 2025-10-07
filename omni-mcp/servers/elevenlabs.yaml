@@ -4,23 +4,17 @@ command: npx
 args: ["elevenlabs-mcp", "start"]
 env:
   ELEVENLABS_API_KEY: "${ELEVENLABS_API_KEY}"
-healthCheck:
-  type: http
-  url: "http://localhost:3004/health"
-  timeoutMs: 10000
+probe:
+  type: stdio
+  timeoutMs: 12000
   intervalMs: 10000
-scopes: ["audio:generate"]
-limits: 
-  rps: 5
-  burst: 10
+limits:
+  rps: 3
+  burst: 6
 timeouts:
   opMs: 45000
   startMs: 30000
 retry:
   attempts: 3
   backoffMs: 1000
-probe:
-  type: http
-  url: "http://localhost:3004/health"
-  timeoutMs: 10000
-  intervalMs: 10000
+scopes: ["audio:generate"]
