@@ -1,0 +1,254 @@
+name: Dev CI Guardian Workflow
+description: Comprehensive CI/CD pipeline with quality gates
+version: 1.0.0
+
+trigger:
+  event: ci.start
+  payload:
+    prNumber: number
+    branchName: string
+    commitSha: string
+    author: string
+    changedFiles: array
+
+steps:
+  - name: playwright_smoke_tests
+    description: Run end-to-end smoke tests for critical user flows
+    tool: test.e2e
+    provider: playwright
+    config:
+      timeout: 300000
+      retries: 2
+      parallel: 4
+      headless: true
+    input:
+      tests: [login_flow, coach_session, quiz_completion, translation_flow]
+      environments: [staging, preview]
+      browsers: [chromium, firefox, webkit]
+      prNumber: "${trigger.payload.prNumber}"
+    output:
+      testResults: object
+      passed: boolean
+      failedTests: array
+      duration: number
+      coverage: number
+
+  - name: performance_audit
+    description: Measure Core Web Vitals and performance metrics
+    tool: lcp.measure
+    provider: chrome-devtools
+    config:
+      timeout: 120000
+      iterations: 3
+      throttling: 3g
+    input:
+      urls: [login_page, coach_page, quiz_page, dashboard]
+      metrics: [LCP, FID, CLS, TTFB, FCP]
+      thresholds:
+        LCP: 2500
+        FID: 100
+        CLS: 0.1
+        TTFB: 600
+    output:
+      metrics: object
+      passed: boolean
+      violations: array
+      recommendations: array
+
+  - name: latency_monitoring
+    description: Check latency to critical external services
+    tool: latency.check
+    provider: globalping
+    config:
+      timeout: 60000
+      probes: 5
+      regions: [us-east, eu-west, asia-pacific]
+    input:
+      endpoints:
+        - STT: string
+        - TTS: string
+        - MT: string
+        - LLM: string
+      thresholds:
+        STT: 2000
+        TTS: 5000
+        MT: 3000
+        LLM: 4000
+    output:
+      latencies: object
+      passed: boolean
+      slowEndpoints: array
+      recommendations: array
+
+  - name: schema_validation
+    description: Validate all schemas and API contracts
+    tool: schema.validate
+    provider: ppl-modelcontext
+    config:
+      timeout: 30000
+      strict: true
+      include_examples: true
+    input:
+      schemas: [lesson.schema.json, telemetry.schema.json, coach.feedback.schema.json, billing.entitlement.schema.json]
+      apiContracts: array
+      prNumber: "${trigger.payload.prNumber}"
+    output:
+      validationResults: object
+      passed: boolean
+      errors: array
+      warnings: array
+      score: number
+
+  - name: sentry_release
+    description: Create Sentry release and health gate
+    tool: release.create
+    provider: sentry
+    config:
+      timeout: 15000
+      environment: staging
+      auto_deploy: false
+    input:
+      version: "${trigger.payload.commitSha}"
+      environment: staging
+      prNumber: "${trigger.payload.prNumber}"
+      author: "${trigger.payload.author}"
+      changes: "${trigger.payload.changedFiles}"
+    output:
+      releaseId: string
+      releaseUrl: string
+      healthGate: object
+      deployed: boolean
+
+  - name: health_gate_evaluation
+    description: Evaluate overall health gate status
+    tool: health.evaluate
+    provider: sentry
+    config:
+      timeout: 10000
+      thresholds:
+        error_rate: 0.01
+        performance_score: 0.9
+        test_coverage: 0.8
+    input:
+      testResults: "${steps.playwright_smoke_tests.output.testResults}"
+      performanceMetrics: "${steps.performance_audit.output.metrics}"
+      latencyResults: "${steps.latency_monitoring.output.latencies}"
+      schemaValidation: "${steps.schema_validation.output.validationResults}"
+      releaseId: "${steps.sentry_release.output.releaseId}"
+    output:
+      healthGatePassed: boolean
+      overallScore: number
+      failures: array
+      warnings: array
+
+  - name: pr_comment
+    description: Post comprehensive CI results comment
+    tool: pr.comment
+    provider: github
+    config:
+      timeout: 10000
+      format: markdown
+    input:
+      prNumber: "${trigger.payload.prNumber}"
+      results: object
+      comment: |
+        ## CI/CD Pipeline Results
+        
+        **Status**: ${steps.health_gate_evaluation.output.healthGatePassed ? '✅ PASSED' : '❌ FAILED'}
+        **Overall Score**: ${steps.health_gate_evaluation.output.overallScore}/100
+        
+        ### Test Results
+        - **E2E Tests**: ${steps.playwright_smoke_tests.output.passed ? '✅ PASSED' : '❌ FAILED'}
+        - **Performance**: ${steps.performance_audit.output.passed ? '✅ PASSED' : '❌ FAILED'}
+        - **Latency**: ${steps.latency_monitoring.output.passed ? '✅ PASSED' : '❌ FAILED'}
+        - **Schema Validation**: ${steps.schema_validation.output.passed ? '✅ PASSED' : '❌ FAILED'}
+        
+        ### Performance Metrics
+        ${steps.performance_audit.output.metrics}
+        
+        ### Latency Results
+        ${steps.latency_monitoring.output.latencies}
+        
+        ### Issues Found
+        ${steps.health_gate_evaluation.output.failures}
+        
+        ### Warnings
+        ${steps.health_gate_evaluation.output.warnings}
+        
+        ---
+        *Automated CI/CD Pipeline by DevGuardian*
+    output:
+      commentId: number
+      posted: boolean
+
+guards:
+  budget:
+    maxMs: 600000
+    maxTokens: 5000
+    maxCost: 2.00
+  
+  security:
+    secretsScanning: true
+    dependencyCheck: true
+    vulnerabilityScan: true
+  
+  fallbacks:
+    onTestFailure: manual_review
+    onPerformanceFailure: performance_budget_exceeded
+    onLatencyFailure: service_degradation_warning
+    onSchemaFailure: schema_validation_error
+
+errorHandling:
+  onError:
+    action: fail_pipeline
+    fallback: manual_review_required
+    notification: slack
+    retry:
+      attempts: 1
+      backoff: linear
+      maxDelay: 30000
+
+monitoring:
+  metrics:
+    - name: ci_pipeline_duration
+      type: histogram
+      labels: [branch, author]
+    
+    - name: test_pass_rate
+      type: gauge
+      labels: [test_suite]
+    
+    - name: performance_score_distribution
+      type: histogram
+      labels: [metric]
+    
+    - name: latency_p95
+      type: histogram
+      labels: [service, region]
+  
+  alerts:
+    - name: CI Pipeline Slow
+      condition: p95_duration > 600000
+      severity: warning
+    
+    - name: High Test Failure Rate
+      condition: test_failure_rate > 0.1
+      severity: warning
+    
+    - name: Performance Regression
+      condition: performance_score_drop > 0.1
+      severity: critical
+    
+    - name: High Latency
+      condition: p95_latency > 5000
+      severity: warning
+
+outputs:
+  healthGatePassed: boolean
+  overallScore: number
+  testResults: object
+  performanceMetrics: object
+  latencyResults: object
+  schemaValidation: object
+  releaseId: string
+  commentId: number

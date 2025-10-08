@@ -1,0 +1,167 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Telemetry Schema",
+  "description": "Schema for application telemetry and analytics data",
+  "type": "object",
+  "required": [
+    "timestamp",
+    "userId",
+    "sessionId",
+    "event",
+    "properties"
+  ],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Event timestamp in ISO 8601 format"
+    },
+    "userId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "User identifier (hashed for privacy)"
+    },
+    "sessionId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Session identifier"
+    },
+    "event": {
+      "type": "string",
+      "enum": [
+        "app_start",
+        "app_stop",
+        "lesson_start",
+        "lesson_complete",
+        "quiz_start",
+        "quiz_complete",
+        "coach_session_start",
+        "coach_session_complete",
+        "translation_request",
+        "voice_input",
+        "voice_output",
+        "error_occurred",
+        "feature_used",
+        "user_action",
+        "performance_metric"
+      ],
+      "description": "Event type"
+    },
+    "properties": {
+      "type": "object",
+      "description": "Event-specific properties",
+      "properties": {
+        "language": {
+          "type": "string",
+          "enum": [
+            "en", "es", "fr", "de", "it", "pt", "ru", "ja", "ko", "zh", "ar", "hi", "th", "vi", "tr", "pl", "nl", "sv", "da", "no", "fi"
+          ],
+          "description": "Language being used"
+        },
+        "targetLanguage": {
+          "type": "string",
+          "enum": [
+            "en", "es", "fr", "de", "it", "pt", "ru", "ja", "ko", "zh", "ar", "hi", "th", "vi", "tr", "pl", "nl", "sv", "da", "no", "fi"
+          ],
+          "description": "Target language for learning"
+        },
+        "difficulty": {
+          "type": "string",
+          "enum": ["beginner", "intermediate", "advanced"],
+          "description": "Difficulty level"
+        },
+        "duration": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Duration in milliseconds"
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Score or rating"
+        },
+        "accuracy": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Accuracy score"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence score"
+        },
+        "errorCode": {
+          "type": "string",
+          "description": "Error code if applicable"
+        },
+        "errorMessage": {
+          "type": "string",
+          "description": "Error message if applicable"
+        },
+        "featureName": {
+          "type": "string",
+          "description": "Name of the feature being used"
+        },
+        "action": {
+          "type": "string",
+          "description": "User action performed"
+        },
+        "value": {
+          "type": "number",
+          "description": "Numeric value associated with the event"
+        },
+        "text": {
+          "type": "string",
+          "description": "Text content (truncated for privacy)"
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Additional metadata",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "context": {
+      "type": "object",
+      "description": "Additional context information",
+      "properties": {
+        "platform": {
+          "type": "string",
+          "enum": ["web", "ios", "android"],
+          "description": "Platform where event occurred"
+        },
+        "version": {
+          "type": "string",
+          "description": "App version"
+        },
+        "device": {
+          "type": "string",
+          "description": "Device information (anonymized)"
+        },
+        "network": {
+          "type": "string",
+          "enum": ["wifi", "cellular", "unknown"],
+          "description": "Network type"
+        },
+        "location": {
+          "type": "string",
+          "description": "General location (country/region only)"
+        }
+      },
+      "additionalProperties": true
+    },
+    "traceId": {
+      "type": "string",
+      "description": "Distributed tracing ID"
+    },
+    "spanId": {
+      "type": "string",
+      "description": "Span ID for tracing"
+    }
+  },
+  "additionalProperties": false
+}

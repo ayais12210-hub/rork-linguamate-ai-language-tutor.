@@ -1,0 +1,218 @@
+name: Bilingual Coach Workflow
+description: AI-powered speech coaching with STT→NLU→MT→TTS pipeline
+version: 1.0.0
+
+trigger:
+  event: app.coach.session.start
+  payload:
+    userId: string
+    sessionId: string
+    targetLanguage: string
+    sourceLanguage: string
+    audioData?: string
+    textInput?: string
+
+steps:
+  - name: speech_to_text
+    description: Convert audio to text using STT service
+    tool: stt.transcribe
+    provider: openrouter|gemini|integration-app
+    config:
+      fallback: integration-app.stt.local
+      timeout: 12000
+      language: "${trigger.payload.sourceLanguage}"
+    input:
+      audioData: "${trigger.payload.audioData}"
+      language: "${trigger.payload.sourceLanguage}"
+    output:
+      text: string
+      confidence: number
+      segments: array
+
+  - name: natural_language_understanding
+    description: Analyze grammar, intent, and language patterns
+    tool: nlu.analyze
+    provider: openrouter|deepseek-r1
+    config:
+      model: deepseek-r1
+      timeout: 15000
+      maxTokens: 2000
+    input:
+      text: "${steps.speech_to_text.output.text}"
+      language: "${trigger.payload.sourceLanguage}"
+      context: "language_learning_coaching"
+    output:
+      intent: string
+      grammar: object
+      entities: array
+      sentiment: string
+      confidence: number
+
+  - name: machine_translation
+    description: Translate to target language with learning context
+    tool: mt.translate
+    provider: gemini|openrouter|minimax
+    config:
+      domain: conversational
+      glossaries: true
+      timeout: 10000
+      maxTokens: 1500
+    input:
+      text: "${steps.speech_to_text.output.text}"
+      sourceLanguage: "${trigger.payload.sourceLanguage}"
+      targetLanguage: "${trigger.payload.targetLanguage}"
+      context: "language_learning"
+    output:
+      translation: string
+      alternatives: array
+      confidence: number
+      glossary: array
+
+  - name: feedback_generation
+    description: Generate coaching feedback using reasoning model
+    tool: feedback.generate
+    provider: deepseek-r1|qwen-max
+    config:
+      model: deepseek-r1
+      rubric: pronunciation|fluency|grammar|vocab
+      timeout: 20000
+      maxTokens: 3000
+    input:
+      originalText: "${steps.speech_to_text.output.text}"
+      translation: "${steps.machine_translation.output.translation}"
+      nluAnalysis: "${steps.natural_language_understanding.output}"
+      targetLanguage: "${trigger.payload.targetLanguage}"
+      rubric: pronunciation|fluency|grammar|vocab
+    output:
+      feedback: string
+      suggestions: array
+      score: object
+      strengths: array
+      improvements: array
+      nextActions: array
+
+  - name: text_to_speech
+    description: Generate audio feedback in target language
+    tool: tts.speak
+    provider: elevenlabs
+    config:
+      voice: "${user.profile.voice}"
+      prosody: "${steps.feedback_generation.output.score}"
+      timeout: 30000
+    input:
+      text: "${steps.feedback_generation.output.feedback}"
+      voice: "${user.profile.voice}"
+      language: "${trigger.payload.targetLanguage}"
+      prosody: "${steps.feedback_generation.output.score}"
+    output:
+      audioUrl: string
+      duration: number
+      format: string
+
+  - name: telemetry_logging
+    description: Log session data for analytics and monitoring
+    tool: telemetry.log
+    provider: sentry|supabase
+    config:
+      batch: true
+      timeout: 5000
+    input:
+      sessionId: "${trigger.payload.sessionId}"
+      userId: "${trigger.payload.userId}"
+      event: coach_session_completed
+      data:
+        duration: number
+        steps: array
+        scores: object
+        errors: array
+    output:
+      logged: boolean
+      traceId: string
+
+  - name: data_persistence
+    description: Store session data and create SRS cards
+    tool: persist.session
+    provider: neon
+    config:
+      timeout: 10000
+      retries: 3
+    input:
+      sessionId: "${trigger.payload.sessionId}"
+      userId: "${trigger.payload.userId}"
+      sessionData:
+        originalText: "${steps.speech_to_text.output.text}"
+        translation: "${steps.machine_translation.output.translation}"
+        feedback: "${steps.feedback_generation.output}"
+        audioUrl: "${steps.text_to_speech.output.audioUrl}"
+        scores: object
+        duration: number
+      srsCards:
+        - text: "${steps.speech_to_text.output.text}"
+          translation: "${steps.machine_translation.output.translation}"
+          difficulty: string
+          tags: array
+    output:
+      sessionId: string
+      cardIds: array
+
+guards:
+  budget:
+    maxMs: 180000
+    maxTokens: 10000
+    maxCost: 0.50
+  
+  security:
+    piiRedaction: true
+    dataRetention: 90d
+    encryption: true
+  
+  fallbacks:
+    onSttFailure: text_only_mode
+    onTtsFailure: text_feedback_only
+    onNluFailure: basic_translation
+    onMtFailure: fallback_translation
+
+errorHandling:
+  onError:
+    action: sentry.capture
+    fallback: text_only_mode
+    notification: slack
+    retry:
+      attempts: 2
+      backoff: exponential
+      maxDelay: 10000
+
+monitoring:
+  metrics:
+    - name: coach_session_duration
+      type: histogram
+      labels: [language, difficulty]
+    
+    - name: stt_accuracy
+      type: gauge
+      labels: [language, model]
+    
+    - name: feedback_quality_score
+      type: gauge
+      labels: [rubric, model]
+  
+  alerts:
+    - name: High STT Error Rate
+      condition: stt_error_rate > 0.1
+      severity: warning
+    
+    - name: Slow Coach Response
+      condition: p95_duration > 30000
+      severity: warning
+    
+    - name: Coach Service Down
+      condition: success_rate < 0.95
+      severity: critical
+
+outputs:
+  sessionId: string
+  feedback: object
+  audioUrl: string
+  translation: object
+  srsCards: array
+  metrics: object

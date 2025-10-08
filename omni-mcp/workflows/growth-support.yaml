@@ -1,0 +1,192 @@
+name: Growth Support Workflow
+description: Automated growth and support operations
+version: 1.0.0
+
+trigger:
+  event: zapier.revops.event
+  payload:
+    eventType: lead.created|ticket.created|milestone.hit|user.upgraded
+    userId?: string
+    leadId?: string
+    ticketId?: string
+    data: object
+
+steps:
+  - name: event_classification
+    description: Classify event type and extract relevant data
+    tool: classify.event
+    provider: openrouter
+    config:
+      timeout: 5000
+      maxTokens: 1000
+    input:
+      eventType: "${trigger.payload.eventType}"
+      data: "${trigger.payload.data}"
+      context: revops_automation
+    output:
+      eventCategory: string
+      priority: high|medium|low
+      actionRequired: array
+      extractedData: object
+
+  - name: intercom_tracking
+    description: Track event in Intercom for user journey analytics
+    tool: intercom.event
+    provider: fast-intercom
+    config:
+      timeout: 8000
+      batch: true
+    input:
+      eventType: "${trigger.payload.eventType}"
+      userId: "${trigger.payload.userId}"
+      leadId: "${trigger.payload.leadId}"
+      ticketId: "${trigger.payload.ticketId}"
+      eventData: "${steps.event_classification.output.extractedData}"
+      tags: array
+    output:
+      eventId: string
+      tracked: boolean
+      userTagged: boolean
+
+  - name: creative_generation
+    description: Generate marketing creative assets for campaigns
+    tool: asset.generate
+    provider: adobe-express
+    config:
+      timeout: 30000
+      formats: [image, video, banner]
+    input:
+      prompt: string
+      size: 1920x1080|1080x1080|728x90
+      style: brand_consistent
+      eventType: "${trigger.payload.eventType}"
+      context: "${steps.event_classification.output.extractedData}"
+    output:
+      assetUrl: string
+      assetId: string
+      formats: array
+      metadata: object
+
+  - name: task_creation
+    description: Create follow-up tasks in Asana
+    tool: task.create
+    provider: asana
+    config:
+      timeout: 10000
+      assignee: content_team
+    input:
+      projectId: string
+      taskName: string
+      description: string
+      assignee: string
+      dueDate: string
+      priority: "${steps.event_classification.output.priority}"
+      tags: array
+      eventContext: "${steps.event_classification.output.extractedData}"
+    output:
+      taskId: string
+      taskUrl: string
+      assigned: boolean
+
+  - name: data_logging
+    description: Log event data to databases
+    tool: log.event
+    provider: neon|supabase
+    config:
+      timeout: 5000
+      batch: true
+      async: true
+    input:
+      eventType: "${trigger.payload.eventType}"
+      userId: "${trigger.payload.userId}"
+      eventData: "${steps.event_classification.output.extractedData}"
+      timestamp: string
+      source: zapier
+      processed: boolean
+    output:
+      logged: boolean
+      recordId: string
+
+  - name: realtime_notification
+    description: Send real-time notifications to relevant teams
+    tool: notify.realtime
+    provider: supabase
+    config:
+      timeout: 3000
+      channels: [slack, email, push]
+    input:
+      eventType: "${trigger.payload.eventType}"
+      priority: "${steps.event_classification.output.priority}"
+      recipients: array
+      message: string
+      data: "${steps.event_classification.output.extractedData}"
+      channels: [slack, email, push]
+    output:
+      notificationsSent: array
+      delivered: boolean
+
+guards:
+  budget:
+    maxMs: 60000
+    maxTokens: 5000
+    maxCost: 0.25
+  
+  security:
+    piiRedaction: true
+    dataRetention: 365d
+    encryption: true
+  
+  fallbacks:
+    onIntercomFailure: skip_tracking
+    onCreativeFailure: use_template
+    onTaskFailure: manual_task
+    onLoggingFailure: retry_later
+
+errorHandling:
+  onError:
+    action: log_and_continue
+    fallback: basic_logging
+    notification: slack
+    retry:
+      attempts: 2
+      backoff: exponential
+      maxDelay: 10000
+
+monitoring:
+  metrics:
+    - name: revops_event_processing_time
+      type: histogram
+      labels: [event_type, priority]
+    
+    - name: intercom_tracking_success_rate
+      type: gauge
+      labels: [event_type]
+    
+    - name: creative_generation_time
+      type: histogram
+      labels: [format, size]
+    
+    - name: task_creation_success_rate
+      type: gauge
+      labels: [assignee, priority]
+  
+  alerts:
+    - name: High Priority Event Processing Slow
+      condition: p95_processing_time > 30000
+      severity: warning
+    
+    - name: Intercom Tracking Failed
+      condition: tracking_failure_rate > 0.05
+      severity: warning
+    
+    - name: Creative Generation Failed
+      condition: creative_failure_rate > 0.1
+      severity: warning
+
+outputs:
+  eventProcessed: boolean
+  intercomTracked: boolean
+  creativeGenerated: boolean
+  taskCreated: boolean
+  notificationsSent: array
+  recordId: string

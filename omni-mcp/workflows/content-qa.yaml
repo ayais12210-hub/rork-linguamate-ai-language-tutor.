@@ -1,0 +1,231 @@
+name: Content QA Workflow
+description: Automated content quality assurance and review
+version: 1.0.0
+
+trigger:
+  event: github.pr.opened
+  payload:
+    prNumber: number
+    prUrl: string
+    branchName: string
+    filesChanged: array
+    author: string
+
+steps:
+  - name: pr_analysis
+    description: Analyze PR for content changes and scope
+    tool: pr.analyze
+    provider: github
+    config:
+      timeout: 10000
+      include_files: true
+      include_diff: true
+    input:
+      prNumber: "${trigger.payload.prNumber}"
+      prUrl: "${trigger.payload.prUrl}"
+      branchName: "${trigger.payload.branchName}"
+    output:
+      filesChanged: array
+      contentFiles: array
+      diffSummary: string
+      scope: string
+
+  - name: schema_validation
+    description: Validate all content files against schemas
+    tool: validate.schema
+    provider: ppl-modelcontext
+    config:
+      schemas: [lesson.schema.json, quiz.schema.json, flashcard.schema.json]
+      strict: true
+      timeout: 15000
+    input:
+      files: "${steps.pr_analysis.output.contentFiles}"
+      schemas: [lesson.schema.json, quiz.schema.json, flashcard.schema.json]
+      prNumber: "${trigger.payload.prNumber}"
+    output:
+      validationResults: array
+      overallScore: number
+      criticalErrors: array
+      warnings: array
+
+  - name: pedagogy_lint
+    description: Check content for pedagogical best practices
+    tool: lint.pedagogy
+    provider: openrouter
+    config:
+      model: claude-3-sonnet
+      timeout: 20000
+      maxTokens: 4000
+    input:
+      contentFiles: "${steps.pr_analysis.output.contentFiles}"
+      contentType: string
+      rules:
+        - forbidden_patterns: [inappropriate_content, bias, stereotypes]
+        - level_alignment: [difficulty_consistency, progression_logic]
+        - accessibility: [clear_language, cultural_sensitivity]
+        - engagement: [interactive_elements, motivation_factors]
+    output:
+      pedagogyScore: number
+      violations: array
+      suggestions: array
+      recommendations: array
+
+  - name: accessibility_check
+    description: Check UI content for accessibility compliance
+    tool: a11y.scan
+    provider: v0
+    config:
+      timeout: 15000
+      standards: [WCAG_2.1_AA, Section_508]
+    input:
+      contentFiles: "${steps.pr_analysis.output.contentFiles}"
+      uiElements: array
+      standards: [WCAG_2.1_AA, Section_508]
+    output:
+      a11yScore: number
+      violations: array
+      warnings: array
+      fixes: array
+
+  - name: voice_quality_check
+    description: QA TTS samples for tone and speed
+    tool: qa.voice
+    provider: windsor
+    config:
+      timeout: 25000
+      metrics: [tone, pace, clarity, pronunciation]
+    input:
+      audioSamples: array
+      targetLanguage: string
+      voiceProfile: string
+      qualityMetrics: [tone, pace, clarity, pronunciation]
+    output:
+      voiceScore: number
+      issues: array
+      recommendations: array
+      needsHumanReview: boolean
+
+  - name: decision_engine
+    description: Make approve/block decision based on all checks
+    tool: decide.review
+    provider: deepseek-r1
+    config:
+      model: deepseek-r1
+      timeout: 15000
+      maxTokens: 2000
+    input:
+      validationScore: "${steps.schema_validation.output.overallScore}"
+      pedagogyScore: "${steps.pedagogy_lint.output.pedagogyScore}"
+      a11yScore: "${steps.accessibility_check.output.a11yScore}"
+      voiceScore: "${steps.voice_quality_check.output.voiceScore}"
+      criticalErrors: "${steps.schema_validation.output.criticalErrors}"
+      violations: array
+      prContext: "${steps.pr_analysis.output.diffSummary}"
+    output:
+      decision: approve|block|request_changes
+      confidence: number
+      reasons: array
+      requiredChanges: array
+      optionalSuggestions: array
+
+  - name: pr_comment
+    description: Post comprehensive review comment
+    tool: pr.comment
+    provider: github
+    config:
+      timeout: 10000
+      format: markdown
+    input:
+      prNumber: "${trigger.payload.prNumber}"
+      decision: "${steps.decision_engine.output.decision}"
+      comment: |
+        ## Content QA Review Results
+        
+        **Decision**: ${steps.decision_engine.output.decision}
+        **Confidence**: ${steps.decision_engine.output.confidence}
+        
+        ### Scores
+        - **Schema Validation**: ${steps.schema_validation.output.overallScore}/100
+        - **Pedagogy Quality**: ${steps.pedagogy_lint.output.pedagogyScore}/100
+        - **Accessibility**: ${steps.accessibility_check.output.a11yScore}/100
+        - **Voice Quality**: ${steps.voice_quality_check.output.voiceScore}/100
+        
+        ### Issues Found
+        ${steps.decision_engine.output.reasons}
+        
+        ### Required Changes
+        ${steps.decision_engine.output.requiredChanges}
+        
+        ### Suggestions
+        ${steps.decision_engine.output.optionalSuggestions}
+        
+        ---
+        *Automated QA Review by ContentQAAgent*
+    output:
+      commentId: number
+      posted: boolean
+
+guards:
+  budget:
+    maxMs: 90000
+    maxTokens: 10000
+    maxCost: 0.75
+  
+  security:
+    contentScanning: true
+    sensitiveDataCheck: true
+  
+  fallbacks:
+    onValidationFailure: manual_review
+    onPedagogyFailure: basic_check
+    onA11yFailure: skip_a11y
+    onVoiceFailure: mark_needs_review
+
+errorHandling:
+  onError:
+    action: manual_review_fallback
+    fallback: basic_approval
+    notification: slack
+    retry:
+      attempts: 1
+      backoff: linear
+      maxDelay: 5000
+
+monitoring:
+  metrics:
+    - name: qa_review_time
+      type: histogram
+      labels: [content_type, decision]
+    
+    - name: validation_pass_rate
+      type: gauge
+      labels: [content_type]
+    
+    - name: pedagogy_score_distribution
+      type: histogram
+      labels: [content_type]
+    
+    - name: a11y_compliance_rate
+      type: gauge
+      labels: [standard]
+  
+  alerts:
+    - name: Low Pedagogy Scores
+      condition: avg_pedagogy_score < 70
+      severity: warning
+    
+    - name: High A11y Violations
+      condition: a11y_violation_rate > 0.1
+      severity: warning
+    
+    - name: QA Review Slow
+      condition: p95_review_time > 60000
+      severity: warning
+
+outputs:
+  decision: string
+  confidence: number
+  scores: object
+  commentId: number
+  requiredChanges: array
+  suggestions: array

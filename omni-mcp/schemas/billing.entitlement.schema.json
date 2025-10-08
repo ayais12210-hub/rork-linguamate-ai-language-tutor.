@@ -1,0 +1,204 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Billing Entitlement Schema",
+  "description": "Schema for user billing entitlements and subscription management",
+  "type": "object",
+  "required": [
+    "userId",
+    "plan",
+    "seats",
+    "expiresAt",
+    "createdAt",
+    "updatedAt"
+  ],
+  "properties": {
+    "userId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "User identifier"
+    },
+    "plan": {
+      "type": "string",
+      "enum": ["free", "pro", "family", "enterprise"],
+      "description": "Subscription plan type"
+    },
+    "seats": {
+      "type": "number",
+      "minimum": 1,
+      "description": "Number of seats/licenses"
+    },
+    "expiresAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Subscription expiration date"
+    },
+    "subscriptionId": {
+      "type": "string",
+      "description": "Stripe subscription ID"
+    },
+    "customerId": {
+      "type": "string",
+      "description": "Stripe customer ID"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "canceled", "past_due", "unpaid", "incomplete", "trialing"],
+      "description": "Subscription status"
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "unlimited_lessons",
+          "ai_coach",
+          "voice_practice",
+          "offline_mode",
+          "progress_tracking",
+          "family_sharing",
+          "priority_support",
+          "advanced_analytics",
+          "custom_lessons",
+          "api_access"
+        ]
+      },
+      "description": "Enabled features for this plan"
+    },
+    "limits": {
+      "type": "object",
+      "description": "Usage limits for the plan",
+      "properties": {
+        "lessonsPerMonth": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Maximum lessons per month (0 = unlimited)"
+        },
+        "coachSessionsPerMonth": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Maximum coach sessions per month (0 = unlimited)"
+        },
+        "translationsPerMonth": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Maximum translations per month (0 = unlimited)"
+        },
+        "storageGB": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Storage limit in GB (0 = unlimited)"
+        },
+        "apiCallsPerMonth": {
+          "type": "number",
+          "minimum": 0,
+          "description": "API calls per month (0 = unlimited)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "usage": {
+      "type": "object",
+      "description": "Current usage statistics",
+      "properties": {
+        "lessonsThisMonth": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Lessons used this month"
+        },
+        "coachSessionsThisMonth": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Coach sessions used this month"
+        },
+        "translationsThisMonth": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Translations used this month"
+        },
+        "storageUsedGB": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Storage used in GB"
+        },
+        "apiCallsThisMonth": {
+          "type": "number",
+          "minimum": 0,
+          "description": "API calls used this month"
+        },
+        "lastResetDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Last usage reset date"
+        }
+      },
+      "additionalProperties": false
+    },
+    "billing": {
+      "type": "object",
+      "description": "Billing information",
+      "properties": {
+        "amount": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Monthly amount in cents"
+        },
+        "currency": {
+          "type": "string",
+          "enum": ["usd", "eur", "gbp", "cad", "aud"],
+          "description": "Currency code"
+        },
+        "interval": {
+          "type": "string",
+          "enum": ["month", "year"],
+          "description": "Billing interval"
+        },
+        "nextBillingDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Next billing date"
+        },
+        "trialEnd": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Trial end date (if applicable)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata",
+      "properties": {
+        "source": {
+          "type": "string",
+          "enum": ["stripe", "manual", "promotion"],
+          "description": "Source of the entitlement"
+        },
+        "promoCode": {
+          "type": "string",
+          "description": "Promo code used (if applicable)"
+        },
+        "referralCode": {
+          "type": "string",
+          "description": "Referral code (if applicable)"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Administrative notes"
+        }
+      },
+      "additionalProperties": true
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Creation timestamp"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last update timestamp"
+    }
+  },
+  "additionalProperties": false
+}
