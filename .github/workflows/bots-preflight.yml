@@ -2,7 +2,9 @@ name: bots-preflight
 on:
   pull_request:
     paths: ['.github/**','omni-mcp/**']
-concurrency: { group: bots-preflight-${{ github.ref }}, cancel-in-progress: true }
+concurrency:
+  group: bots-preflight-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   verify:
     runs-on: ubuntu-latest

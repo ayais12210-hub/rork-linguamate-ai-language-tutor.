@@ -1,0 +1,26 @@
+# Crowdin configuration for Linguamate AI Tutor
+# See: https://support.crowdin.com/configuration-file/
+
+project_id: ${{ secrets.CROWDIN_PROJECT_ID }}
+api_token: ${{ secrets.CROWDIN_API_TOKEN }}
+
+files:
+  - source: locales/en.json
+    translation: locales/%two_letters_code%.json
+    type: json
+    update_option: update_as_unapproved
+
+languages_mapping:
+  two_letters_code: %two_letters_code%
+  locale: %locale%
+  android_code: %android_code%
+  osx_code: %osx_code%
+  osx_locale: %osx_locale%
+
+preserve_hierarchy: true
+export_only_approved: false
+export_approved_only: false
+skip_untranslated_strings: false
+skip_untranslated_files: false
+export_with_min_permissions: false
+keep_translations: true
