@@ -25,7 +25,23 @@
       "command": "npx",
       "args": ["@modelcontextprotocol/server-http"],
       "env": {
-        "MCP_HTTP_ALLOWED_HOSTS": "api.openai.com,api.anthropic.com,api.elevenlabs.io,api.vercel.com,api.expo.dev,api.revenuecat.com,api.stripe.com,linguamate.yourdomain.com,localhost,127.0.0.1"
+        "MCP_HTTP_ALLOWED_HOSTS": "api.openai.com,api.anthropic.com,api.elevenlabs.io,api.vercel.com,api.expo.dev,api.revenuecat.com,api.stripe.com,linguamate.yourdomain.com,localhost,127.0.0.1,api.cursor.com"
+      }
+    },
+
+    "gitops-enhanced": {
+      "command": "python3",
+      "args": ["mcp_servers/gitops_server.py"],
+      "env": {
+        "GITHUB_TOKEN": "${env:GITHUB_TOKEN}"
+      }
+    },
+
+    "cursor-tools": {
+      "command": "python3",
+      "args": ["mcp_servers/cursor_server.py"],
+      "env": {
+        "CURSOR_API_KEY": "${env:CURSOR_API_KEY}"
       }
     }
   }
