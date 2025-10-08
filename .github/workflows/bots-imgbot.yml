@@ -1,0 +1,50 @@
+name: bots-imgbot
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    paths:
+      - "**/*.png"
+      - "**/*.jpg"
+      - "**/*.jpeg"
+      - "**/*.gif"
+      - "**/*.svg"
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: bots-imgbot-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  imgbot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: ImgBot
+        uses: ImgBotApp/ImgBot@v0.1.2
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Optional: Set compression quality (1-100, default: 80)
+          IMGBOT_COMPRESSION_QUALITY: 80
+          # Optional: Set commit message
+          IMGBOT_COMMIT_MESSAGE: "🤖 ImgBot: Optimize images"
+          # Optional: Set PR title
+          IMGBOT_PR_TITLE: "🤖 ImgBot: Optimize images"
+          # Optional: Set PR body
+          IMGBOT_PR_BODY: |
+            ## 🤖 ImgBot Optimization Summary
+            
+            This PR optimizes images in your repository to reduce file sizes while maintaining visual quality.
+            
+            ### Changes:
+            - Compressed images using lossless optimization
+            - Reduced file sizes without quality loss
+            - Updated image references as needed
+            
+            ### Benefits:
+            - Faster page load times
+            - Reduced bandwidth usage
+            - Better user experience
+            
+            ---
+            *This PR was automatically created by ImgBot*

@@ -1,0 +1,36 @@
+# Allstar configuration for security policy enforcement
+# See: https://github.com/ossf/allstar
+
+# Branch protection rules
+branch_protection:
+  - pattern: main
+    required_status_checks:
+      strict: true
+      contexts:
+        - bots-lint
+        - bots-codeql
+        - mcp-guard
+    enforce_admins: true
+    required_pull_request_reviews:
+      required_approving_review_count: 1
+      dismiss_stale_reviews: true
+      require_code_owner_reviews: true
+    restrictions:
+      users: []
+      teams: []
+
+# Issue labeling requirements
+issue_labeling:
+  require_labels: true
+  allowed_labels:
+    - bug
+    - enhancement
+    - documentation
+    - question
+    - help wanted
+    - good first issue
+
+# Security policy enforcement
+security_policy:
+  require_security_policy: true
+  require_security_advisories: true
