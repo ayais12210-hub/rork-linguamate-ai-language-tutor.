@@ -30,9 +30,22 @@ For **MCP changes** (under `omni-mcp/**`):
 - **Allstar**: Security policy enforcement
 - **ImgBot**: Automatic image optimization
 
+### Tier 3 (Security & Quality) - Latest Additions
+- **Renovate**: Smart dependency management with grouping
+- **Gitleaks**: Hard secret scanning beyond GitHub's built-in
+- **Dependency Review**: Vulnerability blocking for PRs
+- **Trivy**: Comprehensive artifact and git history scanning
+- **reviewdog**: Inline ESLint comments in PRs
+- **Changesets**: Human-in-the-loop semantic versioning
+- **Codecov**: Comprehensive test coverage reporting
+- **Vitest Coverage**: Inline coverage reports in PRs
+- **Semgrep**: Advanced TypeScript/React security rules
+
 ## PR Requirements
 - Feature PRs (`feat:`) require tests and documentation
 - Large PRs (>500 lines) must include test coverage
 - MCP changes trigger additional validation
 - Documentation updates auto-approve if <100 lines
 - All PRs must pass security scans and linting
+- Vulnerable dependencies are blocked automatically
+- Test coverage threshold: 80% minimum
