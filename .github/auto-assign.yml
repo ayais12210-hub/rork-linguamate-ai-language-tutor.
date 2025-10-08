@@ -1,0 +1,62 @@
+# Auto-assign configuration for Linguamate AI Tutor
+# See: https://github.com/kentaro-m/auto-assign-action
+
+# Add reviewers based on file paths
+addReviewers:
+  - name: "Frontend Changes"
+    paths:
+      - "app/**"
+      - "components/**"
+      - "modules/**"
+      - "*.tsx"
+      - "*.jsx"
+    reviewers:
+      - "ayais12210-hub"
+    assignees:
+      - "ayais12210-hub"
+
+  - name: "Backend Changes"
+    paths:
+      - "backend/**"
+      - "lib/**"
+      - "api/**"
+    reviewers:
+      - "ayais12210-hub"
+    assignees:
+      - "ayais12210-hub"
+
+  - name: "MCP Changes"
+    paths:
+      - "omni-mcp/**"
+    reviewers:
+      - "ayais12210-hub"
+    assignees:
+      - "ayais12210-hub"
+
+  - name: "Documentation"
+    paths:
+      - "docs/**"
+      - "*.md"
+      - "README.md"
+    reviewers:
+      - "ayais12210-hub"
+    assignees:
+      - "ayais12210-hub"
+
+  - name: "Bot Configuration"
+    paths:
+      - ".github/**"
+      - "dangerfile.js"
+      - "commitlint.config.js"
+      - ".all-contributorsrc"
+    reviewers:
+      - "ayais12210-hub"
+    assignees:
+      - "ayais12210-hub"
+
+# Default reviewers for all PRs
+addReviewers:
+  - reviewers:
+      - "ayais12210-hub"
+    assignees:
+      - "ayais12210-hub"

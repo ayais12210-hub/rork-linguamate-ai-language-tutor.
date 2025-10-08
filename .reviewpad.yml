@@ -1,0 +1,65 @@
+# Reviewpad configuration for PR policy enforcement
+# See: https://docs.reviewpad.com/
+
+# Policy: Require tests for new features
+rules:
+  - name: "Require tests for features"
+    if: |
+      hasLabel("feat") && 
+      !hasFile("**/*.test.*") && 
+      !hasFile("**/*.spec.*") &&
+      !hasFile("**/__tests__/**")
+    then: |
+      comment("⚠️ This feature PR should include tests. Please add test files.")
+      addLabel("needs-tests")
+
+  - name: "Require documentation for features"
+    if: |
+      hasLabel("feat") && 
+      !hasFile("README.md") && 
+      !hasFile("docs/**") &&
+      !hasFile("**/*.md")
+    then: |
+      comment("📚 This feature PR should include documentation updates.")
+      addLabel("needs-docs")
+
+  - name: "Block large PRs without tests"
+    if: |
+      pullRequestSize() > 500 && 
+      !hasFile("**/*.test.*") && 
+      !hasFile("**/*.spec.*")
+    then: |
+      comment("🚫 Large PRs (>500 lines) must include tests. Please add test coverage.")
+      addLabel("blocked")
+
+  - name: "Require MCP validation for MCP changes"
+    if: |
+      hasFile("omni-mcp/**") && 
+      !hasLabel("mcp")
+    then: |
+      comment("🔍 MCP changes detected. Please ensure omni-mcp/ validation passes.")
+      addLabel("mcp")
+
+  - name: "Auto-approve documentation updates"
+    if: |
+      hasLabel("docs") && 
+      pullRequestSize() < 100
+    then: |
+      approve()
+      addLabel("auto-approved")
+
+# Workflow policies
+workflows:
+  - name: "Feature Review Process"
+    if: hasLabel("feat")
+    then: |
+      addReviewer(["@ayais12210-hub"])
+      addLabel("needs-review")
+      comment("🎯 Feature PR ready for review. Please check tests and documentation.")
+
+  - name: "Bug Fix Process"
+    if: hasLabel("fix")
+    then: |
+      addReviewer(["@ayais12210-hub"])
+      addLabel("needs-review")
+      comment("🐛 Bug fix ready for review. Please verify the fix and test coverage.")

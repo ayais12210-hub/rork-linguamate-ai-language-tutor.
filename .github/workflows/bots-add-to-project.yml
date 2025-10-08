@@ -1,0 +1,14 @@
+name: bots-add-to-project
+on:
+  issues:
+    types: [opened, labeled]
+  pull_request_target:
+    types: [opened, labeled]
+jobs:
+  route:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/add-to-project@v0.5.0
+        with:
+          project-url: ${{ vars.DEFAULT_PROJECT_URL || secrets.DEFAULT_PROJECT_URL }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}

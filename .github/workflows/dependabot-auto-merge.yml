@@ -1,0 +1,17 @@
+name: bots-dependabot-auto-merge
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize]
+permissions:
+  pull-requests: write
+  contents: write
+jobs:
+  auto-merge:
+    if: contains(github.actor, 'dependabot')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable auto-merge for patch/minor
+        uses: fastify/github-action-merge-dependabot@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          target: minor

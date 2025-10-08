@@ -1,0 +1,55 @@
+name: bots-welcome-bot
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+permissions:
+  issues: write
+  pull-requests: write
+concurrency:
+  group: bots-welcome-bot-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  welcome:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Welcome Bot
+        uses: actions/first-interaction@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          issue-message: |
+            ## 👋 Welcome to Linguamate AI Tutor!
+            
+            Thank you for opening your first issue! We're excited to have you contribute to our AI-powered language learning platform.
+            
+            ### Getting Started
+            - 📚 Check out our [Contributing Guide](CONTRIBUTING.md)
+            - 🐛 For bugs, please include steps to reproduce
+            - 💡 For feature requests, describe the use case
+            - ❓ For questions, check our [FAQ](docs/FAQ.md) first
+            
+            ### Resources
+            - 📖 [Documentation](docs/)
+            - 🚀 [Quick Start Guide](docs/QUICKSTART.md)
+            - 🤖 [Bot Automation Guide](docs/bots-tier1.md)
+            
+            We'll review your issue and get back to you soon!
+          pr-message: |
+            ## 🎉 Welcome, First-Time Contributor!
+            
+            Thank you for your first pull request to Linguamate AI Tutor! We appreciate your contribution.
+            
+            ### What Happens Next
+            - ✅ Our automated bots will run checks
+            - 👀 A maintainer will review your changes
+            - 🔄 We may request changes or ask questions
+            - 🚀 Once approved, your PR will be merged
+            
+            ### Resources
+            - 📚 [Contributing Guide](CONTRIBUTING.md)
+            - 🤖 [Bot Automation Stack](docs/bots-tier1.md)
+            - 🧪 [Testing Guide](docs/TESTING.md)
+            
+            Thank you for helping make Linguamate AI Tutor better! 🌟

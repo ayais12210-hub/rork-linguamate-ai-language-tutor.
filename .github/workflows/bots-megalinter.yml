@@ -1,0 +1,91 @@
+name: bots-megalinter
+on:
+  pull_request:
+  push:
+    branches: ["main"]
+permissions:
+  contents: read
+  pull-requests: write
+concurrency:
+  group: bots-megalinter-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  megalinter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: MegaLinter
+        uses: megalinter/megalinter@v7
+        env:
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MEGALINTER_CONFIG: .mega-linter.yml
+          VALIDATE_ALL_CODEBASE: false
+          VALIDATE_JAVASCRIPT_ES: true
+          VALIDATE_TYPESCRIPT_ES: true
+          VALIDATE_JSON: true
+          VALIDATE_MARKDOWN: true
+          VALIDATE_YAML: true
+          VALIDATE_DOCKERFILE: true
+          VALIDATE_GITHUB_ACTIONS: true
+          VALIDATE_HTML: true
+          VALIDATE_CSS: true
+          VALIDATE_SCSS: true
+          VALIDATE_SASS: true
+          VALIDATE_LESS: true
+          VALIDATE_ENV: true
+          VALIDATE_INI: true
+          VALIDATE_PROPERTIES: true
+          VALIDATE_XML: true
+          VALIDATE_SQL: true
+          VALIDATE_PYTHON: true
+          VALIDATE_RUBY: true
+          VALIDATE_GO: true
+          VALIDATE_RUST: true
+          VALIDATE_JAVA: true
+          VALIDATE_KOTLIN: true
+          VALIDATE_SCALA: true
+          VALIDATE_CSHARP: true
+          VALIDATE_PHP: true
+          VALIDATE_SWIFT: true
+          VALIDATE_DART: true
+          VALIDATE_LUA: true
+          VALIDATE_PERL: true
+          VALIDATE_POWERSHELL: true
+          VALIDATE_R: true
+          VALIDATE_SHELL_SHFMT: true
+          VALIDATE_TERRAFORM: true
+          VALIDATE_ANSIBLE: true
+          VALIDATE_DOCKERFILE_HADOLINT: true
+          VALIDATE_KUBERNETES_KUBEVAL: true
+          VALIDATE_OPENAPI: true
+          VALIDATE_PROTOBUF: true
+          VALIDATE_ARM: true
+          VALIDATE_BICEP: true
+          VALIDATE_CLOUDFORMATION: true
+          VALIDATE_PULUMI: true
+          VALIDATE_DOCKER_COMPOSE: true
+          VALIDATE_EDITORCONFIG: true
+          VALIDATE_GITIGNORE: true
+          VALIDATE_GITATTRIBUTES: true
+          VALIDATE_GITDIFF: true
+          VALIDATE_GITMERGECONFLICT: true
+          VALIDATE_GITSUBMODULES: true
+          VALIDATE_GITWORKTREE: true
+          VALIDATE_GITLABCI: true
+          VALIDATE_JENKINS: true
+          VALIDATE_TRAVIS: true
+          VALIDATE_CIRCLECI: true
+          VALIDATE_AZUREPIPELINES: true
+          VALIDATE_BITBUCKETPIPELINES: true
+          VALIDATE_BUDDY: true
+          VALIDATE_BUILDKITE: true
+          VALIDATE_DRONE: true
+          VALIDATE_GITEA: true
+          VALIDATE_GITLAB: true
+          VALIDATE_JENKINS: true
+          VALIDATE_TEAMCITY: true
+          VALIDATE_WERKER: true
+          VALIDATE_WOODPECKER: true
+          VALIDATE_ZENHUB: true
+          FILTER_REGEX_EXCLUDE: "node_modules/|dist/|build/|.git/"

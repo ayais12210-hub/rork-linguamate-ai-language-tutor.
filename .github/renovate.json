@@ -1,0 +1,14 @@
+{
+  "extends": ["config:recommended"],
+  "timezone": "Europe/Amsterdam",
+  "rangeStrategy": "bump",
+  "labels": ["deps", "renovate"],
+  "prHourlyLimit": 4,
+  "packageRules": [
+    {
+      "matchManagers": ["npm"],
+      "groupName": "minor/patch deps",
+      "matchUpdateTypes": ["minor", "patch"]
+    }
+  ]
+}

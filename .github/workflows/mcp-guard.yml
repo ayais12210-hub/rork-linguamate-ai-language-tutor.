@@ -1,0 +1,55 @@
+name: mcp-guard
+on:
+  pull_request:
+    paths:
+      - "omni-mcp/**"
+  push:
+    branches: ["main"]
+    paths:
+      - "omni-mcp/**"
+concurrency:
+  group: mcp-guard-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify JSON and YAML syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s globstar nullglob
+          echo "Checking JSON files…"
+          for f in omni-mcp/**/*.json; do
+            [ -e "$f" ] || continue
+            jq . "$f" >/dev/null
+            echo "OK  $f"
+          done
+          echo "Checking YAML files…"
+          # Use python YAML if yamllint is unavailable
+          python3 - <<'PY'
+import os, sys, yaml
+base = "omni-mcp"
+for root,_,files in os.walk(base):
+  for fn in files:
+    if fn.endswith((".yml",".yaml")):
+      p = os.path.join(root,fn)
+      with open(p,"r") as fh:
+        yaml.safe_load(fh)
+      print("OK ", p)
+PY
+      - name: Basic secret pattern scan (no false positives on comments)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RInE "(api[_-]?key|secret|token|authorization|bearer)[\"': ]" omni-mcp | grep -vE "^\s*//|^\s*#|^\s*/\*"; then
+            echo "::error::Potential secret-like string found in omni-mcp. Move secrets to Actions secrets or env files."
+            exit 1
+          fi
+      - name: Enforce folder structure
+        shell: bash
+        run: |
+          test -d omni-mcp/schemas || { echo "::error::Missing omni-mcp/schemas"; exit 1; }
+          test -d omni-mcp/workflows || { echo "::error::Missing omni-mcp/workflows"; exit 1; }
+          echo "Structure OK"

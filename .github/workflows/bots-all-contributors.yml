@@ -1,0 +1,28 @@
+name: bots-all-contributors
+on:
+  issues:
+    types: [closed]
+  pull_request:
+    types: [closed]
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: bots-all-contributors-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  all-contributors:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true || github.event.issue.state == 'closed'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: All Contributors Bot
+        uses: all-contributors/all-contributors-action@v1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          config-file: .all-contributorsrc
+          files: README.md
+          commit-message: "docs: update contributors"
+          commit-message-scope: "contributors"

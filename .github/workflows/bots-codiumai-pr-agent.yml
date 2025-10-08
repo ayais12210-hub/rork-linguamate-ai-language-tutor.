@@ -1,0 +1,47 @@
+name: bots-codiumai-pr-agent
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+concurrency:
+  group: bots-codiumai-pr-agent-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  pr-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: PR Agent
+        uses: codium-ai/pr-agent@v0.0.1
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_AGENT_CONFIG: |
+            {
+              "pr_review": {
+                "enabled": true,
+                "auto_review": true,
+                "auto_approve": false,
+                "max_review_commits": 20,
+                "max_review_files": 50,
+                "max_review_lines": 1000
+              },
+              "pr_description": {
+                "enabled": true,
+                "auto_update": true,
+                "template": "## Summary\n\n## Changes\n\n## Testing\n\n## Checklist"
+              },
+              "pr_labels": {
+                "enabled": true,
+                "auto_label": true
+              },
+              "pr_questions": {
+                "enabled": true,
+                "auto_ask": true
+              }
+            }

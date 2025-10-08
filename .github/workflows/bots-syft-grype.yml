@@ -1,0 +1,12 @@
+name: bots-syft-grype
+on: [pull_request]
+concurrency: { group: bots-syft-grype-${{ github.ref }}, cancel-in-progress: true }
+jobs:
+  sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: anchore/sbom-action@v0
+        with: { format: cyclonedx, output-file: sbom.cdx.json }
+      - uses: anchore/scan-action@v5
+        with: { sbom: sbom.cdx.json }

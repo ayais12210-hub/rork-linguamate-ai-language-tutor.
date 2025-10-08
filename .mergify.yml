@@ -1,0 +1,63 @@
+pull_request_rules:
+  - name: Auto-merge minor/patch updates
+    conditions:
+      - base=main
+      - label=deps
+      - status-success=bots-lint
+      - status-success=bots-codeql
+      - status-success=mcp-guard
+      - "#approved-reviews-by-code-owners>=1"
+    actions:
+      merge:
+        method: merge
+        strict: smart+fastforward
+
+  - name: Auto-merge documentation changes
+    conditions:
+      - base=main
+      - label=docs
+      - status-success=bots-lint
+      - "#approved-reviews-by-code-owners>=1"
+    actions:
+      merge:
+        method: merge
+        strict: smart+fastforward
+
+  - name: Queue for review (major changes)
+    conditions:
+      - base=main
+      - label=feat
+      - status-success=bots-lint
+      - status-success=bots-codeql
+      - status-success=mcp-guard
+      - "#approved-reviews-by-code-owners>=2"
+    actions:
+      queue:
+        name: default
+
+  - name: Queue for review (bug fixes)
+    conditions:
+      - base=main
+      - label=fix
+      - status-success=bots-lint
+      - status-success=bots-codeql
+      - status-success=mcp-guard
+      - "#approved-reviews-by-code-owners>=1"
+    actions:
+      queue:
+        name: default
+
+queue_rules:
+  - name: default
+    conditions:
+      - base=main
+    spec:
+      priority: 0
+      max_batch_size: 3
+      batch_size_window: 30
+      checks:
+        - bots-lint
+        - bots-codeql
+        - mcp-guard
+      required_approvals:
+        - approved-reviews-by-code-owners: 1
