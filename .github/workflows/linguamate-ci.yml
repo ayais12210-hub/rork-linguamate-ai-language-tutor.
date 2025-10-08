@@ -171,7 +171,20 @@ jobs:
           if [ -f "coverage/cobertura-coverage.xml" ]; then
             COVERAGE=$(grep -o 'line-rate="[0-9.]*"' coverage/cobertura-coverage.xml | grep -o '[0-9.]*' | head -1)
             if [ ! -z "$COVERAGE" ]; then
-              COVERAGE_PERCENT=$(echo "$COVERAGE * 100" | bc -l | cut -d. -f1)
+              # Convert coverage (e.g., 0.87) to percent as integer without bc
+              COVERAGE_INT=${COVERAGE%.*}
+              COVERAGE_DEC=${COVERAGE#*.}
+              if [ "$COVERAGE" = "$COVERAGE_INT" ]; then
+                COVERAGE_PERCENT=$((COVERAGE_INT * 100))
+              else
+                # Pad decimal to two digits
+                if [ ${#COVERAGE_DEC} -eq 1 ]; then
+                  COVERAGE_DEC="${COVERAGE_DEC}0"
+                elif [ ${#COVERAGE_DEC} -gt 2 ]; then
+                  COVERAGE_DEC="${COVERAGE_DEC:0:2}"
+                fi
+                COVERAGE_PERCENT=$((10#$COVERAGE_INT * 100 + 10#$COVERAGE_DEC))
+              fi
               echo "Coverage: $COVERAGE_PERCENT%"
               if [ "$COVERAGE_PERCENT" -lt "$COVERAGE_THRESHOLD" ]; then
                 echo "❌ Coverage $COVERAGE_PERCENT% is below threshold $COVERAGE_THRESHOLD%"
