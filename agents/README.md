@@ -328,6 +328,7 @@ We welcome contributions from the community! Please see our [Contributing Guidel
 
 ## 📚 Documentation
 
+### Core System Documentation
 - [Architecture Overview](agents/ARCHITECTURE.md)
 - [Memory System](agents/MEMORY_SYSTEM.md)
 - [Tools Integration](agents/TOOLS_INTEGRATION.md)
@@ -338,6 +339,16 @@ We welcome contributions from the community! Please see our [Contributing Guidel
 - [Task Management](agents/TASK_MANAGEMENT.md)
 - [Setup Guide](agents/SETUP_GUIDE.md)
 - [Implementation Roadmap](agents/IMPLEMENTATION_ROADMAP.md)
+
+### Advanced System Components
+- [Advanced AI Reasoning & Decision Making](agents/ADVANCED_AI_REASONING.md)
+- [Multi-Modal AI Integration](agents/MULTIMODAL_AI_INTEGRATION.md)
+- [Advanced Personalization Engine](agents/ADVANCED_PERSONALIZATION_ENGINE.md)
+- [Real-Time Collaboration & Social Learning](agents/REAL_TIME_COLLABORATION.md)
+- [Advanced Analytics & Insights Dashboard](agents/ADVANCED_ANALYTICS_DASHBOARD.md)
+- [Plugin Architecture & Extensibility](agents/PLUGIN_ARCHITECTURE.md)
+- [Advanced Security & Privacy Features](agents/ADVANCED_SECURITY_PRIVACY.md)
+- [Developer Tools & API Ecosystem](agents/DEVELOPER_TOOLS_API_ECOSYSTEM.md)
 
 ## 🆘 Support
 
