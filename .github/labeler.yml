@@ -1,0 +1,21 @@
+deps:
+  - changed-files:
+      - any-glob-to-any-file: ["**/package.json","**/pnpm-lock.yaml","**/yarn.lock",".github/workflows/**"]
+ci:
+  - changed-files:
+      - any-glob-to-any-file: [".github/**"]
+frontend:
+  - changed-files:
+      - any-glob-to-any-file: ["app/**","components/**","modules/**"]
+backend:
+  - changed-files:
+      - any-glob-to-any-file: ["backend/**","lib/**"]
+docs:
+  - changed-files:
+      - any-glob-to-any-file: ["docs/**","**/*.md"]
+tests:
+  - changed-files:
+      - any-glob-to-any-file: ["**/__tests__/**","tests/**"]
+mcp:
+  - changed-files:
+      - any-glob-to-any-file: ["omni-mcp/**"]
