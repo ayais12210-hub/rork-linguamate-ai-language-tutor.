@@ -1,0 +1,76 @@
+{
+  "projectName": "Linguamate AI Tutor",
+  "projectOwner": "ayais12210-hub",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": true,
+  "commitConvention": "conventional",
+  "contributors": [
+    {
+      "login": "ayais12210-hub",
+      "name": "Sunil",
+      "avatar_url": "https://github.com/ayais12210-hub.png",
+      "profile": "https://github.com/ayais12210-hub",
+      "contributions": [
+        "code",
+        "design",
+        "doc",
+        "ideas",
+        "maintenance",
+        "projectManagement",
+        "review",
+        "test"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "skipCi": true,
+  "badgeTemplate": "<img alt='All Contributors' src='https://img.shields.io/badge/all_contributors-<%= contributors.length %>-orange.svg?style=flat-square'>",
+  "contributorTemplate": "<a href='<%= contributor.profile %>'><img src='<%= contributor.avatar_url %>' width='<%= options.imageSize %>px;' alt=''/><br /><sub><b><%= contributor.name %></b></sub></a><br /><%= contributor.contributions.map(c => `<a href='#${c}' title='${c}'>${c}</a>`).join(' ') %>",
+  "types": {
+    "code": {
+      "symbol": "💻",
+      "description": "Code",
+      "link": "[<%= symbol %>](https://github.com/<%= projectOwner %>/<%= projectName %>/commits?author=<%= contributor.login %>)"
+    },
+    "design": {
+      "symbol": "🎨",
+      "description": "Design",
+      "link": "[<%= symbol %>](https://github.com/<%= projectOwner %>/<%= projectName %>/commits?author=<%= contributor.login %>)"
+    },
+    "doc": {
+      "symbol": "📝",
+      "description": "Documentation",
+      "link": "[<%= symbol %>](https://github.com/<%= projectOwner %>/<%= projectName %>/commits?author=<%= contributor.login %>)"
+    },
+    "ideas": {
+      "symbol": "💡",
+      "description": "Ideas, Planning, & Feedback",
+      "link": "[<%= symbol %>](https://github.com/<%= projectOwner %>/<%= projectName %>/commits?author=<%= contributor.login %>)"
+    },
+    "maintenance": {
+      "symbol": "🔧",
+      "description": "Maintenance",
+      "link": "[<%= symbol %>](https://github.com/<%= projectOwner %>/<%= projectName %>/commits?author=<%= contributor.login %>)"
+    },
+    "projectManagement": {
+      "symbol": "📋",
+      "description": "Project Management",
+      "link": "[<%= symbol %>](https://github.com/<%= projectOwner %>/<%= projectName %>/commits?author=<%= contributor.login %>)"
+    },
+    "review": {
+      "symbol": "👀",
+      "description": "Reviewed Pull Requests",
+      "link": "[<%= symbol %>](https://github.com/<%= projectOwner %>/<%= projectName %>/commits?author=<%= contributor.login %>)"
+    },
+    "test": {
+      "symbol": "⚠️",
+      "description": "Tests",
+      "link": "[<%= symbol %>](https://github.com/<%= projectOwner %>/<%= projectName %>/commits?author=<%= contributor.login %>)"
+    }
+  }
+}

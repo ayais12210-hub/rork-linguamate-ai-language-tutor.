@@ -30,16 +30,16 @@ For **MCP changes** (under `omni-mcp/**`):
 - **Allstar**: Security policy enforcement
 - **ImgBot**: Automatic image optimization
 
-### Tier 3 (Security & Quality) - Latest Additions
-- **Renovate**: Smart dependency management with grouping
-- **Gitleaks**: Hard secret scanning beyond GitHub's built-in
-- **Dependency Review**: Vulnerability blocking for PRs
-- **Trivy**: Comprehensive artifact and git history scanning
-- **reviewdog**: Inline ESLint comments in PRs
-- **Changesets**: Human-in-the-loop semantic versioning
-- **Codecov**: Comprehensive test coverage reporting
-- **Vitest Coverage**: Inline coverage reports in PRs
-- **Semgrep**: Advanced TypeScript/React security rules
+### Tier 4 (AI-Powered & Advanced) - Latest Additions
+- **CodiumAI PR-Agent**: AI-powered code reviews and suggestions
+- **Sweep Bot**: AI agent for automatic issue resolution
+- **Danger JS**: Custom PR rules engine for project-specific requirements
+- **MegaLinter**: Comprehensive linting with 70+ linters
+- **SLSA Generator**: Build provenance for supply chain security
+- **All-Contributors Bot**: Automatic contributor recognition
+- **Welcome Bot**: New contributor onboarding and guidance
+- **commitlint**: Conventional commit message enforcement
+- **Auto-Assign**: Smart reviewer assignment based on file paths
 
 ## PR Requirements
 - Feature PRs (`feat:`) require tests and documentation
@@ -49,3 +49,6 @@ For **MCP changes** (under `omni-mcp/**`):
 - All PRs must pass security scans and linting
 - Vulnerable dependencies are blocked automatically
 - Test coverage threshold: 80% minimum
+- AI-powered reviews provide intelligent suggestions
+- Custom PR rules enforce project-specific requirements
+- Conventional commit format is mandatory
