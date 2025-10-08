@@ -1,0 +1,105 @@
+{
+  "name": "advanced-analytics",
+  "version": "1.0.0",
+  "description": "Advanced analytics and reporting plugin for MCP orchestrator",
+  "author": "Linguamate.ai",
+  "license": "MIT",
+  "dependencies": ["monitoring-system", "cache-manager"],
+  "capabilities": [
+    {
+      "name": "analytics.dashboard",
+      "type": "ui",
+      "description": "Analytics dashboard component",
+      "config": {
+        "refreshInterval": 30000,
+        "maxDataPoints": 1000
+      }
+    },
+    {
+      "name": "analytics.report",
+      "type": "tool",
+      "description": "Generate analytics reports",
+      "config": {
+        "formats": ["json", "csv", "pdf"],
+        "retentionDays": 90
+      }
+    },
+    {
+      "name": "analytics.workflow",
+      "type": "workflow",
+      "description": "Automated analytics workflow",
+      "config": {
+        "schedule": "0 0 * * *",
+        "timeout": 300000
+      }
+    },
+    {
+      "name": "analytics.agent",
+      "type": "agent",
+      "description": "Analytics processing agent",
+      "config": {
+        "maxConcurrency": 5,
+        "batchSize": 100
+      }
+    }
+  ],
+  "hooks": [
+    {
+      "event": "workflow:completed",
+      "handler": "onWorkflowCompleted",
+      "priority": 10
+    },
+    {
+      "event": "tool:executed",
+      "handler": "onToolExecuted",
+      "priority": 5
+    },
+    {
+      "event": "agent:status_updated",
+      "handler": "onAgentStatusUpdated",
+      "priority": 1
+    }
+  ],
+  "routes": [
+    {
+      "path": "/analytics/dashboard",
+      "method": "GET",
+      "handler": "getDashboard",
+      "middleware": ["auth", "rate-limit"]
+    },
+    {
+      "path": "/analytics/reports",
+      "method": "POST",
+      "handler": "generateReport",
+      "middleware": ["auth", "validation"]
+    },
+    {
+      "path": "/analytics/metrics/:metric",
+      "method": "GET",
+      "handler": "getMetric",
+      "middleware": ["auth"]
+    }
+  ],
+  "config": {
+    "database": {
+      "analyticsTable": "analytics_events",
+      "reportsTable": "analytics_reports"
+    },
+    "cache": {
+      "ttl": 3600,
+      "strategy": "analytics"
+    },
+    "alerts": {
+      "thresholds": {
+        "errorRate": 0.05,
+        "responseTime": 5000
+      }
+    }
+  },
+  "metadata": {
+    "category": "analytics",
+    "tags": ["monitoring", "reporting", "dashboard"],
+    "icon": "chart-line",
+    "color": "#3B82F6"
+  }
+}
