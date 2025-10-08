@@ -350,6 +350,16 @@ We welcome contributions from the community! Please see our [Contributing Guidel
 - [Advanced Security & Privacy Features](agents/ADVANCED_SECURITY_PRIVACY.md)
 - [Developer Tools & API Ecosystem](agents/DEVELOPER_TOOLS_API_ECOSYSTEM.md)
 
+### Cutting-Edge AI Technologies
+- [Quantum-Inspired AI Algorithms](agents/QUANTUM_INSPIRED_AI_ALGORITHMS.md)
+- [Federated Learning System](agents/FEDERATED_LEARNING_SYSTEM.md)
+- [Neural Architecture Search (NAS)](agents/NEURAL_ARCHITECTURE_SEARCH.md)
+- [Self-Supervised Learning](agents/SELF_SUPERVISED_LEARNING.md)
+- [Multi-Agent Reinforcement Learning](agents/MULTI_AGENT_REINFORCEMENT_LEARNING.md)
+- [Explainable AI (XAI) Framework](agents/EXPLAINABLE_AI_FRAMEWORK.md)
+- [Advanced Computer Vision with Transformers](agents/VISION_TRANSFORMERS.md)
+- [Edge AI Deployment and Optimization](agents/EDGE_AI_DEPLOYMENT.md)
+
 ## 🆘 Support
 
 ### Getting Help
