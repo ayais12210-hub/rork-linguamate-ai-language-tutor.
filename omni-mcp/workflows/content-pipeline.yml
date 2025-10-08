@@ -1,0 +1,202 @@
+name: Content Pipeline Workflow
+description: Automated content ingestion, validation, embedding, and publishing pipeline
+version: 1.0.0
+
+stages:
+  ingest:
+    description: "Ingest content from various sources"
+    inputs:
+      - type: "file"
+        path: "/workspace/content/lessons/*.json"
+        schema: "lesson"
+      - type: "file"
+        path: "/workspace/content/quiz/*.json"
+        schema: "quiz"
+      - type: "file"
+        path: "/workspace/content/flashcards/*.json"
+        schema: "flashcard"
+      - type: "api"
+        endpoint: "https://api.content-provider.com/lessons"
+        auth: "bearer_token"
+        schema: "lesson"
+    
+    processors:
+      - name: "file_reader"
+        type: "filesystem"
+        config:
+          recursive: true
+          extensions: [".json", ".md", ".txt"]
+      
+      - name: "api_fetcher"
+        type: "http"
+        config:
+          timeout: 30000
+          retries: 3
+          rate_limit: 100 # requests per minute
+  
+  validate:
+    description: "Validate content against schemas and business rules"
+    validators:
+      - name: "schema_validation"
+        type: "zod"
+        schemas:
+          lesson: "/workspace/omni-mcp/schemas/core.ts#LessonSchema"
+          quiz: "/workspace/omni-mcp/schemas/core.ts#QuizItemSchema"
+          flashcard: "/workspace/omni-mcp/schemas/core.ts#FlashcardSchema"
+      
+      - name: "content_validation"
+        type: "custom"
+        rules:
+          - "lesson.title.length >= 5"
+          - "lesson.content.text.length >= 100"
+          - "quiz.question.length >= 10"
+          - "flashcard.front.length >= 1"
+          - "flashcard.back.length >= 1"
+      
+      - name: "i18n_validation"
+        type: "i18n"
+        checks:
+          - "all_required_languages_present"
+          - "translation_quality_score > 0.8"
+          - "no_missing_translations"
+      
+      - name: "media_validation"
+        type: "media"
+        checks:
+          - "audio_urls_accessible"
+          - "image_urls_accessible"
+          - "video_urls_accessible"
+          - "file_sizes_within_limits"
+    
+    on_failure:
+      action: "quarantine"
+      path: "/workspace/quarantine/invalid-content"
+      notification: "slack"
+  
+  embed:
+    description: "Generate embeddings for search and recommendations"
+    embedding_service:
+      provider: "openai"
+      model: "text-embedding-3-large"
+      dimensions: 1536
+      batch_size: 100
+      timeout: 30000
+    
+    vector_store:
+      provider: "pinecone"
+      index: "linguamate-content"
+      namespace: "lessons"
+      upsert_batch_size: 50
+    
+    embedding_strategies:
+      - name: "lesson_content"
+        fields: ["title", "description", "content.text", "vocabulary.word"]
+        weight: 1.0
+      
+      - name: "quiz_content"
+        fields: ["question", "explanation"]
+        weight: 0.8
+      
+      - name: "flashcard_content"
+        fields: ["front", "back"]
+        weight: 0.9
+    
+    metadata:
+      include: ["language", "difficulty", "contentType", "tags", "createdAt"]
+      exclude: ["audioUrl", "imageUrl", "videoUrl"]
+  
+  publish:
+    description: "Publish validated content to production"
+    targets:
+      - name: "database"
+        type: "postgres"
+        table: "content_lessons"
+        operation: "upsert"
+        conflict_resolution: "update"
+      
+      - name: "cache"
+        type: "redis"
+        key_pattern: "lesson:{id}"
+        ttl: 86400 # 24 hours
+      
+      - name: "cdn"
+        type: "filesystem"
+        path: "/workspace/public/content"
+        compress: true
+      
+      - name: "search_index"
+        type: "elasticsearch"
+        index: "linguamate-lessons"
+        operation: "index"
+    
+    notifications:
+      - channel: "slack"
+        message: "Content published: {count} items"
+        include_errors: true
+      
+      - channel: "email"
+        recipients: ["content-team@linguamate.ai"]
+        subject: "Content Pipeline Report"
+        include_summary: true
+
+monitoring:
+  metrics:
+    - name: "ingestion_rate"
+      type: "counter"
+      description: "Items ingested per minute"
+    
+    - name: "validation_success_rate"
+      type: "gauge"
+      description: "Percentage of items passing validation"
+    
+    - name: "embedding_latency"
+      type: "histogram"
+      description: "Time to generate embeddings"
+    
+    - name: "publish_latency"
+      type: "histogram"
+      description: "Time to publish content"
+  
+  alerts:
+    - name: "High Validation Failure Rate"
+      condition: "validation_success_rate < 0.9"
+      severity: "warning"
+    
+    - name: "Slow Embedding Generation"
+      condition: "embedding_latency.p95 > 30000"
+      severity: "warning"
+    
+    - name: "Pipeline Failure"
+      condition: "pipeline_status == 'failed'"
+      severity: "critical"
+
+scheduling:
+  triggers:
+    - type: "file_watch"
+      path: "/workspace/content"
+      events: ["created", "modified"]
+      debounce: 5000
+    
+    - type: "cron"
+      schedule: "0 */6 * * *" # Every 6 hours
+      description: "Regular content sync"
+    
+    - type: "webhook"
+      endpoint: "/api/webhooks/content-updated"
+      secret: "${WEBHOOK_SECRET}"
+
+outputs:
+  - name: "validation_report"
+    path: "/workspace/reports/content-validation.json"
+    format: "json"
+    include_errors: true
+  
+  - name: "embedding_report"
+    path: "/workspace/reports/embedding-generation.json"
+    format: "json"
+    include_metrics: true
+  
+  - name: "publish_report"
+    path: "/workspace/reports/content-publish.json"
+    format: "json"
+    include_summary: true

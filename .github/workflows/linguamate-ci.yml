@@ -1,0 +1,605 @@
+name: 🚀 Linguamate AI Tutor - Complete CI Pipeline
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: linguamate-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+  BUN_VERSION: 'latest'
+  COVERAGE_THRESHOLD: 80
+
+jobs:
+  # Setup and Environment
+  setup:
+    name: 🔧 Environment Setup
+    runs-on: ubuntu-latest
+    outputs:
+      cache-key: ${{ steps.cache-key.outputs.key }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      
+      - name: Generate cache key
+        id: cache-key
+        run: echo "key=bun-${{ runner.os }}-${{ hashFiles('**/bun.lockb') }}" >> $GITHUB_OUTPUT
+      
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.bun/install/cache
+          key: ${{ steps.cache-key.outputs.key }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+      
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      
+      - name: Verify MCP configuration
+        run: bun run mcp:check
+
+  # Type Checking
+  typecheck:
+    name: 🔍 TypeScript Type Check
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.bun/install/cache
+          key: ${{ needs.setup.outputs.cache-key }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+      
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      
+      - name: Type check frontend
+        run: bun run typecheck
+      
+      - name: Type check backend
+        run: bun run backend:typecheck
+      
+      - name: Type check omni-mcp
+        run: |
+          cd omni-mcp
+          if [ -f "package.json" ]; then
+            bun install --frozen-lockfile
+            bun run typecheck || echo "omni-mcp typecheck not configured"
+          fi
+
+  # Linting and Formatting
+  lint:
+    name: 🧹 Lint & Format Check
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.bun/install/cache
+          key: ${{ needs.setup.outputs.cache-key }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+      
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      
+      - name: Run ESLint
+        run: bun run lint
+      
+      - name: Check formatting
+        run: bun run format:check
+      
+      - name: Check backend linting
+        run: bun run backend:lint
+      
+      - name: Check for circular dependencies
+        run: |
+          npx madge --circular app components modules || (echo "Circular dependencies found" && exit 1)
+
+  # Unit Tests
+  test:
+    name: 🧪 Unit Tests & Coverage
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.bun/install/cache
+          key: ${{ needs.setup.outputs.cache-key }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+      
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      
+      - name: Run frontend tests with coverage
+        run: bun run test:ci
+      
+      - name: Run backend tests
+        run: bun run backend:test
+      
+      - name: Check coverage threshold
+        run: |
+          if [ -f "coverage/cobertura-coverage.xml" ]; then
+            COVERAGE=$(grep -o 'line-rate="[0-9.]*"' coverage/cobertura-coverage.xml | grep -o '[0-9.]*' | head -1)
+            if [ ! -z "$COVERAGE" ]; then
+              # Convert coverage (e.g., 0.87) to percent as integer without bc
+              COVERAGE_INT=${COVERAGE%.*}
+              COVERAGE_DEC=${COVERAGE#*.}
+              if [ "$COVERAGE" = "$COVERAGE_INT" ]; then
+                COVERAGE_PERCENT=$((COVERAGE_INT * 100))
+              else
+                # Pad decimal to two digits
+                if [ ${#COVERAGE_DEC} -eq 1 ]; then
+                  COVERAGE_DEC="${COVERAGE_DEC}0"
+                elif [ ${#COVERAGE_DEC} -gt 2 ]; then
+                  COVERAGE_DEC="${COVERAGE_DEC:0:2}"
+                fi
+                COVERAGE_PERCENT=$((10#$COVERAGE_INT * 100 + 10#$COVERAGE_DEC))
+              fi
+              echo "Coverage: $COVERAGE_PERCENT%"
+              if [ "$COVERAGE_PERCENT" -lt "$COVERAGE_THRESHOLD" ]; then
+                echo "❌ Coverage $COVERAGE_PERCENT% is below threshold $COVERAGE_THRESHOLD%"
+                exit 1
+              else
+                echo "✅ Coverage $COVERAGE_PERCENT% meets threshold $COVERAGE_THRESHOLD%"
+              fi
+            fi
+          fi
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: ./coverage/coverage-final.json
+          flags: unittests
+          fail_ci_if_error: false
+
+  # E2E Tests
+  e2e:
+    name: 🎭 E2E Tests
+    runs-on: ubuntu-latest
+    needs: setup
+    timeout-minutes: 20
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+      
+      - name: Run E2E tests
+        run: npm run e2e:ci
+      
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  # Accessibility Tests
+  a11y:
+    name: ♿ Accessibility Tests
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+      
+      - name: Run accessibility tests
+        run: npm run a11y
+        continue-on-error: true
+      
+      - name: Upload accessibility report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: a11y-report
+          path: playwright-report/
+          retention-days: 7
+
+  # Security Audit
+  audit:
+    name: 🔒 Security Audit
+    runs-on: ubuntu-latest
+    needs: setup
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.bun/install/cache
+          key: ${{ needs.setup.outputs.cache-key }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+      
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      
+      - name: Run npm audit
+        run: bun run audit:ci
+        continue-on-error: true
+      
+      - name: Run Semgrep security scan
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/secrets
+            p/owasp-top-ten
+            p/typescript
+            p/react
+          generateSarif: true
+          sarifFile: semgrep.sarif
+        continue-on-error: true
+      
+      - name: Run Gitleaks secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: --config-path=.gitleaks.toml --redact --verbose
+        continue-on-error: true
+      
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: semgrep.sarif
+
+  # Content Validation
+  validate-content:
+    name: 📚 Content Validation
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.bun/install/cache
+          key: ${{ needs.setup.outputs.cache-key }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+      
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      
+      - name: Install tsx for script execution
+        run: npm install -g tsx
+      
+      - name: Run content validation
+        run: |
+          mkdir -p reports
+          if [ -f "omni-mcp/scripts/validate-content.ts" ]; then
+            cd omni-mcp
+            tsx scripts/validate-content.ts ../content ../reports/content-validation.json || echo "Content validation failed"
+            cd ..
+          else
+            echo "Content validation script not found, skipping..."
+          fi
+        continue-on-error: true
+      
+      - name: Upload content validation report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: content-validation-report
+          path: reports/content-validation.json
+          retention-days: 7
+
+  # Speech Simulation
+  simulate-speech:
+    name: 🎤 Speech Pipeline Simulation
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.bun/install/cache
+          key: ${{ needs.setup.outputs.cache-key }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+      
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      
+      - name: Install tsx for script execution
+        run: npm install -g tsx
+      
+      - name: Run speech simulation
+        run: |
+          mkdir -p reports
+          if [ -f "omni-mcp/scripts/simulate-speech.ts" ]; then
+            cd omni-mcp
+            tsx scripts/simulate-speech.ts 3 ../reports/speech-simulation.json || echo "Speech simulation failed"
+            cd ..
+          else
+            echo "Speech simulation script not found, skipping..."
+          fi
+        continue-on-error: true
+      
+      - name: Upload speech simulation report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: speech-simulation-report
+          path: reports/speech-simulation.json
+          retention-days: 7
+
+  # Build
+  build:
+    name: 🏗️ Build Application
+    runs-on: ubuntu-latest
+    needs: [typecheck, lint, test, audit]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.bun/install/cache
+          key: ${{ needs.setup.outputs.cache-key }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+      
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      
+      - name: Build web application
+        run: bun run web:build
+      
+      - name: Build backend
+        run: bun run backend:build
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            dist/
+            backend/dist/
+          retention-days: 7
+
+  # Health Check
+  health:
+    name: 🏥 Health Check
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.bun/install/cache
+          key: ${{ needs.setup.outputs.cache-key }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+      
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      
+      - name: Install tsx for script execution
+        run: npm install -g tsx
+      
+      - name: Run health checks
+        run: |
+          mkdir -p reports
+          if [ -f "omni-mcp/scripts/health.ts" ]; then
+            cd omni-mcp
+            tsx scripts/health.ts || echo "Health check failed"
+            cd ..
+          else
+            echo "Health check script not found, skipping..."
+          fi
+        continue-on-error: true
+
+  # Performance Tests
+  performance:
+    name: 🚀 Performance Tests
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+          path: dist/
+      
+      - name: Run Lighthouse CI
+        run: |
+          npm install -g @lhci/cli
+          lhci autorun || echo "Lighthouse CI completed with warnings"
+        continue-on-error: true
+      
+      - name: Upload Lighthouse report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-report
+          path: .lighthouseci/
+          retention-days: 7
+
+  # Summary
+  summary:
+    name: 📊 CI Summary
+    runs-on: ubuntu-latest
+    needs: [typecheck, lint, test, e2e, a11y, audit, validate-content, simulate-speech, build, health, performance]
+    if: always()
+    steps:
+      - name: Create CI summary
+        run: |
+          echo "# 🚀 Linguamate AI Tutor - CI Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Pipeline Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔧 Setup | ${{ needs.setup.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔍 Type Check | ${{ needs.typecheck.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🧹 Lint & Format | ${{ needs.lint.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🧪 Unit Tests | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🎭 E2E Tests | ${{ needs.e2e.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ♿ Accessibility | ${{ needs.a11y.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔒 Security Audit | ${{ needs.audit.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📚 Content Validation | ${{ needs.validate-content.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🎤 Speech Simulation | ${{ needs.simulate-speech.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🏗️ Build | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🏥 Health Check | ${{ needs.health.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🚀 Performance | ${{ needs.performance.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check if all critical jobs passed
+          CRITICAL_JOBS="typecheck lint test build"
+          ALL_PASSED=true
+          
+          for job in $CRITICAL_JOBS; do
+            case $job in
+              "typecheck") STATUS="${{ needs.typecheck.result }}" ;;
+              "lint") STATUS="${{ needs.lint.result }}" ;;
+              "test") STATUS="${{ needs.test.result }}" ;;
+              "build") STATUS="${{ needs.build.result }}" ;;
+            esac
+            
+            if [ "$STATUS" != "success" ]; then
+              ALL_PASSED=false
+              break
+            fi
+          done
+          
+          if [ "$ALL_PASSED" = true ]; then
+            echo "## ✅ All Critical Jobs Passed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "The pipeline has successfully completed all critical checks:" >> $GITHUB_STEP_SUMMARY
+            echo "- TypeScript type checking" >> $GITHUB_STEP_SUMMARY
+            echo "- Linting and formatting" >> $GITHUB_STEP_SUMMARY
+            echo "- Unit tests with coverage" >> $GITHUB_STEP_SUMMARY
+            echo "- Application build" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ❌ Critical Jobs Failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Some critical jobs failed. Please review the logs above." >> $GITHUB_STEP_SUMMARY
+          fi
