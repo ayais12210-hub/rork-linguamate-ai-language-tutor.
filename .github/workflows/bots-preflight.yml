@@ -1,0 +1,24 @@
+name: bots-preflight
+on:
+  pull_request:
+    paths: ['.github/**','omni-mcp/**']
+concurrency: { group: bots-preflight-${{ github.ref }}, cancel-in-progress: true }
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint YAML
+        run: |
+          pipx install yamllint || python3 -m pip install --user yamllint
+          yamllint -d "{extends: default, rules: {line-length: {max: 140}}}" .github || true
+      - name: Check JSON
+        run: |
+          find . -name "*.json" -not -path "./node_modules/*" -print0 | xargs -0 -I{} sh -c "jq . {} >/dev/null" || true
+      - name: Renovate vs Dependabot guard
+        run: |
+          if [ -f ".github/renovate.json" ] && grep -q "package-ecosystem: \"npm\"" .github/dependabot.yml 2>/dev/null; then
+            echo "::warning::Prefer Renovate for npm; restrict Dependabot to github-actions"
+          fi
+      - name: List new workflows
+        run: ls -1 .github/workflows | sed 's/^/- /'

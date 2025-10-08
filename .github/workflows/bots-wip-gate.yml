@@ -1,0 +1,7 @@
+name: bots-wip-gate
+on: [pull_request_target]
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: wip/action@v1

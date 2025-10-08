@@ -1,14 +1,6 @@
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule: { interval: "daily" }
-    allow:
-      - dependency-type: "direct"
-    open-pull-requests-limit: 10
-    rebase-strategy: "auto"
-    labels: ["deps"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule: { interval: "weekly" }
-    labels: ["deps","ci"]
+    labels: ["deps", "ci"]
