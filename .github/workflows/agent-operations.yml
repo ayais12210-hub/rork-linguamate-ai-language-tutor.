@@ -1,0 +1,296 @@
+name: Agent Operations Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      agent_type:
+        description: 'Type of agent to run'
+        required: true
+        default: 'manager'
+        type: choice
+        options:
+          - manager
+          - engineer
+          - tester
+          - docs
+          - security
+      task_id:
+        description: 'Task ID to execute'
+        required: true
+        type: string
+      branch_name:
+        description: 'Branch name for agent work'
+        required: false
+        default: 'ai/agent/task'
+        type: string
+      autonomy_level:
+        description: 'Autonomy level for the agent'
+        required: false
+        default: 'planned'
+        type: choice
+        options:
+          - planned
+          - autonomous
+
+  issues:
+    types: [opened, labeled]
+    labels: ['ai:planned', 'ai:autonomous']
+
+  pull_request:
+    types: [opened, synchronize, labeled]
+    labels: ['ai:planned', 'ai:autonomous']
+
+jobs:
+  agent-manager:
+    if: github.event.inputs.agent_type == 'manager' || contains(github.event.issue.labels.*.name, 'ai:planned') || contains(github.event.issue.labels.*.name, 'ai:autonomous')
+    runs-on: ubuntu-latest
+    environment: agent-operations
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r mcp_servers/requirements.txt
+          npm install -g @github/cli
+
+      - name: Authenticate GitHub CLI
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
+      - name: Run Manager Agent
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          AGENT_TYPE: manager
+          TASK_ID: ${{ github.event.inputs.task_id || github.event.issue.number }}
+          BRANCH_NAME: ${{ github.event.inputs.branch_name }}
+          AUTONOMY_LEVEL: ${{ github.event.inputs.autonomy_level || 'planned' }}
+        run: |
+          python3 agents/manager_agent.py
+
+  agent-engineer:
+    if: github.event.inputs.agent_type == 'engineer' || contains(github.event.pull_request.labels.*.name, 'ai:planned') || contains(github.event.pull_request.labels.*.name, 'ai:autonomous')
+    runs-on: ubuntu-latest
+    environment: agent-operations
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          pip install -r mcp_servers/requirements.txt
+
+      - name: Run Engineer Agent
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          AGENT_TYPE: engineer
+          TASK_ID: ${{ github.event.inputs.task_id || github.event.pull_request.number }}
+          BRANCH_NAME: ${{ github.event.inputs.branch_name }}
+          AUTONOMY_LEVEL: ${{ github.event.inputs.autonomy_level || 'planned' }}
+        run: |
+          python3 agents/engineer_agent.py
+
+  agent-tester:
+    if: github.event.inputs.agent_type == 'tester' || contains(github.event.pull_request.labels.*.name, 'ai:planned') || contains(github.event.pull_request.labels.*.name, 'ai:autonomous')
+    runs-on: ubuntu-latest
+    environment: agent-operations
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          pip install -r mcp_servers/requirements.txt
+
+      - name: Run Tester Agent
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          AGENT_TYPE: tester
+          TASK_ID: ${{ github.event.inputs.task_id || github.event.pull_request.number }}
+          BRANCH_NAME: ${{ github.event.inputs.branch_name }}
+          AUTONOMY_LEVEL: ${{ github.event.inputs.autonomy_level || 'planned' }}
+        run: |
+          python3 agents/tester_agent.py
+
+  agent-docs:
+    if: github.event.inputs.agent_type == 'docs' || contains(github.event.issue.labels.*.name, 'ai:planned') || contains(github.event.issue.labels.*.name, 'ai:autonomous')
+    runs-on: ubuntu-latest
+    environment: agent-operations
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r mcp_servers/requirements.txt
+
+      - name: Run Docs Agent
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          AGENT_TYPE: docs
+          TASK_ID: ${{ github.event.inputs.task_id || github.event.issue.number }}
+          BRANCH_NAME: ${{ github.event.inputs.branch_name }}
+          AUTONOMY_LEVEL: ${{ github.event.inputs.autonomy_level || 'planned' }}
+        run: |
+          python3 agents/docs_agent.py
+
+  agent-security:
+    if: github.event.inputs.agent_type == 'security' || contains(github.event.issue.labels.*.name, 'ai:planned') || contains(github.event.issue.labels.*.name, 'ai:autonomous')
+    runs-on: ubuntu-latest
+    environment: agent-operations
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r mcp_servers/requirements.txt
+
+      - name: Run Security Agent
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          AGENT_TYPE: security
+          TASK_ID: ${{ github.event.inputs.task_id || github.event.issue.number }}
+          BRANCH_NAME: ${{ github.event.inputs.branch_name }}
+          AUTONOMY_LEVEL: ${{ github.event.inputs.autonomy_level || 'planned' }}
+        run: |
+          python3 agents/security_agent.py
+
+  cursor-integration:
+    if: always()
+    runs-on: ubuntu-latest
+    environment: agent-operations
+    needs: [agent-manager, agent-engineer, agent-tester, agent-docs, agent-security]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r mcp_servers/requirements.txt
+
+      - name: Update Cursor Project
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        run: |
+          python3 -c "
+          import sys
+          sys.path.append('mcp_servers')
+          from cursor_server import cursor_api_request
+          
+          # Update project with latest changes
+          project_data = {
+              'name': 'Linguamate AI Tutor',
+              'description': 'Multi-agent workforce for React Native + Expo development'
+          }
+          
+          try:
+              result = cursor_api_request('/projects/update', 'PATCH', project_data)
+              print('Cursor project updated successfully')
+          except Exception as e:
+              print(f'Failed to update Cursor project: {e}')
+          "
+
+      - name: Generate Agent Report
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        run: |
+          python3 -c "
+          import json
+          import os
+          from datetime import datetime
+          
+          # Generate agent operation report
+          report = {
+              'timestamp': datetime.now().isoformat(),
+              'workflow_run_id': os.getenv('GITHUB_RUN_ID'),
+              'agent_operations': {
+                  'manager': 'completed' if os.getenv('AGENT_MANAGER_STATUS') == 'success' else 'failed',
+                  'engineer': 'completed' if os.getenv('AGENT_ENGINEER_STATUS') == 'success' else 'failed',
+                  'tester': 'completed' if os.getenv('AGENT_TESTER_STATUS') == 'success' else 'failed',
+                  'docs': 'completed' if os.getenv('AGENT_DOCS_STATUS') == 'success' else 'failed',
+                  'security': 'completed' if os.getenv('AGENT_SECURITY_STATUS') == 'success' else 'failed'
+              }
+          }
+          
+          with open('agent_report.json', 'w') as f:
+              json.dump(report, f, indent=2)
+          
+          print('Agent report generated')
+          "
+
+      - name: Upload Agent Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-operation-report
+          path: agent_report.json
+          retention-days: 30

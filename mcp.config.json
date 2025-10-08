@@ -23,6 +23,21 @@
               "command": "python3",
               "args": ["mcp_servers/gitops_server.py"]
             }
+          },
+          "env": {
+            "GITHUB_TOKEN": "${env:GITHUB_TOKEN}"
+          }
+        },
+        {
+          "id": "cursor",
+          "transport": {
+            "stdio": {
+              "command": "python3",
+              "args": ["mcp_servers/cursor_server.py"]
+            }
+          },
+          "env": {
+            "CURSOR_API_KEY": "${env:CURSOR_API_KEY}"
           }
         }
       ]
