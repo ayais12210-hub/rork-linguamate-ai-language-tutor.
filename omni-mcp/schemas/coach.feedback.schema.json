@@ -1,0 +1,260 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Coach Feedback Schema",
+  "description": "Schema for AI coach feedback and recommendations",
+  "type": "object",
+  "required": [
+    "id",
+    "userId",
+    "sessionId",
+    "type",
+    "feedback",
+    "suggestions",
+    "createdAt"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for the feedback"
+    },
+    "userId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "User identifier"
+    },
+    "sessionId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Session identifier"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["lesson", "quiz", "conversation", "pronunciation"],
+      "description": "Type of coaching session"
+    },
+    "feedback": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Main feedback text"
+    },
+    "suggestions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1,
+      "description": "Actionable suggestions for improvement"
+    },
+    "score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Overall score"
+    },
+    "strengths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Areas where the user performed well"
+    },
+    "areasForImprovement": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Areas that need improvement"
+    },
+    "rubricScores": {
+      "type": "object",
+      "description": "Detailed scores by rubric category",
+      "properties": {
+        "pronunciation": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Pronunciation accuracy score"
+        },
+        "fluency": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Fluency score"
+        },
+        "grammar": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Grammar accuracy score"
+        },
+        "vocabulary": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Vocabulary usage score"
+        },
+        "comprehension": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Comprehension score"
+        }
+      },
+      "additionalProperties": false
+    },
+    "detailedAnalysis": {
+      "type": "object",
+      "description": "Detailed analysis breakdown",
+      "properties": {
+        "phonemes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["phoneme", "accuracy", "timing"],
+            "properties": {
+              "phoneme": {
+                "type": "string",
+                "description": "Phoneme symbol"
+              },
+              "accuracy": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Accuracy score for this phoneme"
+              },
+              "timing": {
+                "type": "object",
+                "required": ["start", "end"],
+                "properties": {
+                  "start": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Start time in milliseconds"
+                  },
+                  "end": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "End time in milliseconds"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Phoneme-level analysis"
+        },
+        "grammarErrors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["error", "correction", "explanation"],
+            "properties": {
+              "error": {
+                "type": "string",
+                "description": "The grammatical error"
+              },
+              "correction": {
+                "type": "string",
+                "description": "Corrected version"
+              },
+              "explanation": {
+                "type": "string",
+                "description": "Explanation of the error"
+              },
+              "severity": {
+                "type": "string",
+                "enum": ["low", "medium", "high"],
+                "description": "Severity of the error"
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Grammar errors found"
+        },
+        "vocabularyUsage": {
+          "type": "object",
+          "properties": {
+            "wordsUsed": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Words used in the session"
+            },
+            "difficultyLevel": {
+              "type": "string",
+              "enum": ["beginner", "intermediate", "advanced"],
+              "description": "Overall vocabulary difficulty"
+            },
+            "repetitions": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Words that were repeated"
+            },
+            "suggestions": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Vocabulary improvement suggestions"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "nextActions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["action", "priority", "description"],
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "Recommended action"
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["low", "medium", "high"],
+            "description": "Priority level"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the action"
+          },
+          "estimatedTime": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Estimated time in minutes"
+          },
+          "resources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Recommended resources"
+          }
+        },
+        "additionalProperties": false
+      },
+      "description": "Recommended next actions"
+    },
+    "audioUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL to audio feedback"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Creation timestamp"
+    }
+  },
+  "additionalProperties": false
+}

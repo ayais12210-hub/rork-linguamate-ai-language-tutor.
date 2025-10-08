@@ -1,212 +1,418 @@
-# Omni-MCP Framework Architecture
+# Linguamate.ai Architecture Documentation
 
-```mermaid
-graph TB
-    subgraph "External Systems"
-        MCP1[GitHub MCP]
-        MCP2[Stripe MCP]
-        MCP3[Notion MCP]
-        MCP4[Firecrawl MCP]
-        MCP5[Supabase MCP]
-        MCPN[... 50+ MCP Servers]
-    end
+## System Overview
 
-    subgraph "Omni-MCP Orchestrator Framework"
-        subgraph "Configuration Layer"
-            CONFIG[Config System]
-            DEFAULT[config/default.yaml]
-            ENV[config/dev.yaml<br/>config/prod.yaml]
-            LOCAL[config/local.yaml<br/>git-ignored]
-            SCHEMA[Zod Schema Validation]
-        end
+Linguamate.ai is a comprehensive language learning platform powered by AI, built with a microservices architecture using MCP (Model Context Protocol) orchestration. The system provides bilingual coaching, instant translation, content management, and growth automation capabilities.
 
-        subgraph "Registry & Discovery"
-            REGISTRY[Server Registry]
-            YAML[servers/*.yaml]
-            ENV_EXAMPLE[.env.example]
-        end
+## High-Level Architecture
 
-        subgraph "Core Orchestrator"
-            BOOTSTRAP[Bootstrap Engine]
-            PROCESS_MGR[Process Manager]
-            HEALTH[Health Checker]
-            GUARDS[Resilience Guards]
-        end
-
-        subgraph "Resilience Layer"
-            RATE_LIMIT[Rate Limiter]
-            CIRCUIT[Circuit Breaker]
-            TIMEOUT[Timeout Manager]
-            RETRY[Retry Logic]
-        end
-
-        subgraph "Security Layer"
-            AUTH_SCOPES[Auth Scopes]
-            SECRET_REDACT[Secret Redaction]
-            AUDIT_LOG[Audit Logging]
-            ALLOW_LIST[Outbound Allow-list]
-        end
-
-        subgraph "Observability"
-            LOGGER[Pino Logger]
-            METRICS[Prometheus Metrics]
-            TRACES[OpenTelemetry]
-            SENTRY[Sentry Integration]
-        end
-
-        subgraph "API Endpoints"
-            HEALTHZ[/healthz]
-            READYZ[/readyz]
-            METRICS_ENDPOINT[/metrics]
-            SERVERS[/servers]
-        end
-
-        subgraph "CI/CD Pipeline"
-            LINT[ESLint]
-            TYPECHECK[TypeScript]
-            TEST[Vitest]
-            HEALTH_CHECK[Health Probe]
-        end
-    end
-
-    subgraph "Infrastructure"
-        PROMETHEUS[Prometheus]
-        JAEGER[Jaeger]
-        LOG_AGGREGATOR[Log Aggregator]
-        SECRET_MANAGER[Secret Manager<br/>Doppler/Vault/1Password]
-    end
-
-    %% Configuration Flow
-    DEFAULT --> CONFIG
-    ENV --> CONFIG
-    LOCAL --> CONFIG
-    CONFIG --> SCHEMA
-    SCHEMA --> BOOTSTRAP
-
-    %% Registry Flow
-    YAML --> REGISTRY
-    ENV_EXAMPLE --> REGISTRY
-    REGISTRY --> BOOTSTRAP
-
-    %% Core Orchestration
-    BOOTSTRAP --> PROCESS_MGR
-    PROCESS_MGR --> HEALTH
-    PROCESS_MGR --> GUARDS
-
-    %% Resilience Integration
-    GUARDS --> RATE_LIMIT
-    GUARDS --> CIRCUIT
-    GUARDS --> TIMEOUT
-    GUARDS --> RETRY
-
-    %% Security Integration
-    BOOTSTRAP --> AUTH_SCOPES
-    LOGGER --> SECRET_REDACT
-    BOOTSTRAP --> AUDIT_LOG
-    PROCESS_MGR --> ALLOW_LIST
-
-    %% Observability Integration
-    BOOTSTRAP --> LOGGER
-    BOOTSTRAP --> METRICS
-    BOOTSTRAP --> TRACES
-    BOOTSTRAP --> SENTRY
-
-    %% API Exposure
-    HEALTH --> HEALTHZ
-    HEALTH --> READYZ
-    METRICS --> METRICS_ENDPOINT
-    PROCESS_MGR --> SERVERS
-
-    %% External Connections
-    PROCESS_MGR --> MCP1
-    PROCESS_MGR --> MCP2
-    PROCESS_MGR --> MCP3
-    PROCESS_MGR --> MCP4
-    PROCESS_MGR --> MCP5
-    PROCESS_MGR --> MCPN
-
-    %% Infrastructure Connections
-    METRICS --> PROMETHEUS
-    TRACES --> JAEGER
-    LOGGER --> LOG_AGGREGATOR
-    BOOTSTRAP --> SECRET_MANAGER
-
-    %% CI/CD Integration
-    LINT --> HEALTH_CHECK
-    TYPECHECK --> HEALTH_CHECK
-    TEST --> HEALTH_CHECK
-    HEALTH_CHECK --> HEALTHZ
-
-    %% Styling
-    classDef configClass fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef coreClass fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    classDef resilienceClass fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    classDef securityClass fill:#ffebee,stroke:#b71c1c,stroke-width:2px
-    classDef observabilityClass fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
-    classDef externalClass fill:#f5f5f5,stroke:#424242,stroke-width:2px
-
-    class CONFIG,DEFAULT,ENV,LOCAL,SCHEMA,REGISTRY,YAML,ENV_EXAMPLE configClass
-    class BOOTSTRAP,PROCESS_MGR,HEALTH,GUARDS coreClass
-    class RATE_LIMIT,CIRCUIT,TIMEOUT,RETRY resilienceClass
-    class AUTH_SCOPES,SECRET_REDACT,AUDIT_LOG,ALLOW_LIST securityClass
-    class LOGGER,METRICS,TRACES,SENTRY,HEALTHZ,READYZ,METRICS_ENDPOINT,SERVERS observabilityClass
-    class MCP1,MCP2,MCP3,MCP4,MCP5,MCPN,PROMETHEUS,JAEGER,LOG_AGGREGATOR,SECRET_MANAGER externalClass
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Linguamate.ai Platform                   │
+├─────────────────────────────────────────────────────────────────┤
+│  Frontend Applications                                          │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │
+│  │   Web App   │  │   iOS App   │  │ Android App │             │
+│  │  (React)    │  │  (Expo RN)  │  │  (Expo RN)  │             │
+│  └─────────────┘  └─────────────┘  └─────────────┘             │
+├─────────────────────────────────────────────────────────────────┤
+│  Backend Services                                               │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │
+│  │   BFF API   │  │   Auth API   │  │  Content API│             │
+│  │  (Hono)     │  │ (Supabase)   │  │   (tRPC)    │             │
+│  └─────────────┘  └─────────────┘  └─────────────┘             │
+├─────────────────────────────────────────────────────────────────┤
+│  MCP Orchestration Layer                                        │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │                omni-mcp/                                    │ │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │ │
+│  │  │ Workflows   │  │   Servers    │  │  Schemas    │         │ │
+│  │  │   (YAML)    │  │   (YAML)    │  │  (JSON)     │         │ │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘         │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+├─────────────────────────────────────────────────────────────────┤
+│  External Services & AI Providers                               │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │
+│  │   LLM APIs  │  │  Speech APIs │  │  Content APIs│            │
+│  │ (OpenRouter │  │(ElevenLabs)  │  │  (Notion)   │            │
+│  │  Gemini)    │  │             │  │             │            │
+│  └─────────────┘  └─────────────┘  └─────────────┘             │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-## Architecture Overview
+## Core Workflows
 
-The Omni-MCP Framework follows a layered architecture pattern with clear separation of concerns:
+### 1. Bilingual Coach Workflow
+**Purpose**: AI-powered speech coaching with STT→NLU→MT→TTS pipeline
 
-### 🏗️ **Configuration Layer**
-- **Layered YAML configs**: `default.yaml` → `$ENV.yaml` → `local.yaml` (git-ignored)
-- **Zod schema validation**: Runtime type safety for all configuration
-- **Environment interpolation**: `${ENV_KEY}` substitution from `process.env`
+```
+User Input (Audio/Text)
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    STT Processing                           │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
+│  │ OpenRouter  │  │   Gemini    │  │ Integration │         │
+│  │    STT      │  │    STT      │  │    App      │         │
+│  └─────────────┘  └─────────────┘  └─────────────┘         │
+└─────────────────────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│                 NLU Analysis                                │
+│  ┌─────────────┐  ┌─────────────┐                          │
+│  │ OpenRouter  │  │ DeepSeek R1 │                          │
+│  │    LLM      │  │  Reasoning  │                          │
+│  └─────────────┘  └─────────────┘                          │
+└─────────────────────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│                Translation                                  │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
+│  │   Gemini    │  │   Minimax   │  │ OpenRouter  │         │
+│  │     MT      │  │     MT      │  │     MT      │         │
+│  └─────────────┘  └─────────────┘  └─────────────┘         │
+└─────────────────────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│                Feedback Generation                          │
+│  ┌─────────────┐  ┌─────────────┐                          │
+│  │ DeepSeek R1 │  │  Qwen Max   │                          │
+│  │  Reasoning  │  │ Long Context│                          │
+│  └─────────────┘  └─────────────┘                          │
+└─────────────────────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    TTS Output                               │
+│  ┌─────────────┐                                           │
+│  │ ElevenLabs  │                                           │
+│  │    TTS      │                                           │
+│  └─────────────┘                                           │
+└─────────────────────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│                Data Persistence                             │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
+│  │    Neon     │  │  Supabase   │  │   Sentry    │         │
+│  │ PostgreSQL  │  │   Realtime  │  │  Telemetry  │         │
+│  └─────────────┘  └─────────────┘  └─────────────┘         │
+└─────────────────────────────────────────────────────────────┘
+```
 
-### 🔍 **Registry & Discovery**
-- **Server definitions**: `/servers/*.yaml` files with metadata, health checks, scopes
-- **Environment mapping**: `.env.example` documents all required variables
-- **Feature flags**: Per-server enable/disable via configuration
+### 2. Instant Translate Workflow
+**Purpose**: Real-time translation with auto-detection and TTS
 
-### ⚙️ **Core Orchestrator**
-- **Bootstrap engine**: Loads config, validates schemas, initializes components
-- **Process manager**: Spawns, monitors, and manages MCP server processes
-- **Health checker**: Implements stdio and HTTP health probes
-- **Resilience guards**: Applies rate limiting, circuit breakers, timeouts
+```
+User Text Input
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│                Language Detection                           │
+│  ┌─────────────┐  ┌─────────────┐                          │
+│  │ OpenRouter  │  │   Gemini    │                          │
+│  │ Detection   │  │ Detection   │                          │
+│  └─────────────┘  └─────────────┘                          │
+└─────────────────────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│                Translation                                  │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
+│  │   Gemini    │  │   Minimax   │  │ OpenRouter  │         │
+│  │     MT      │  │     MT      │  │     MT      │         │
+│  └─────────────┘  └─────────────┘  └─────────────┘         │
+└─────────────────────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    TTS Output                               │
+│  ┌─────────────┐                                           │
+│  │ ElevenLabs  │                                           │
+│  │    TTS      │                                           │
+│  └─────────────┘                                           │
+└─────────────────────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│                Analytics Logging                            │
+│  ┌─────────────┐  ┌─────────────┐                          │
+│  │    Neon     │  │  Supabase   │                          │
+│  │ PostgreSQL  │  │   Events    │                          │
+│  └─────────────┘  └─────────────┘                          │
+└─────────────────────────────────────────────────────────────┘
+```
 
-### 🛡️ **Resilience Layer**
-- **Rate limiting**: Per-server RPS and burst controls
-- **Circuit breaker**: Temporary disable failing servers
-- **Timeout management**: Configurable timeouts per operation type
-- **Retry logic**: Exponential backoff with jitter
+### 3. Lesson Ingest Workflow
+**Purpose**: Automated content ingestion from Notion and web sources
 
-### 🔒 **Security Layer**
-- **Auth scopes**: Least-privilege permissions per server
-- **Secret redaction**: Automatic redaction in logs and metrics
-- **Audit logging**: NDJSON stream of all server events
-- **Outbound allow-list**: Restrict external network calls
+```
+Content Source (Notion/Web)
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│                Content Fetching                             │
+│  ┌─────────────┐  ┌─────────────┐                          │
+│  │   Notion    │  │  Firecrawl  │                          │
+│  │    API      │  │    Crawl    │                          │
+│  └─────────────┘  └─────────────┘                          │
+└─────────────────────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│                Content Normalization                        │
+│  ┌─────────────┐                                           │
+│  │  Qwen Max   │                                           │
+│  │ Long Context│                                           │
+│  └─────────────┘                                           │
+└─────────────────────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│                Schema Validation                            │
+│  ┌─────────────┐                                           │
+│  │ PPL Model   │                                           │
+│  │  Context    │                                           │
+│  └─────────────┘                                           │
+└─────────────────────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│                Content Enrichment                           │
+│  ┌─────────────┐  ┌─────────────┐                          │
+│  │ Perplexity  │  │    Grok     │                          │
+│  │  Research   │  │ Web-aware   │                          │
+│  └─────────────┘  └─────────────┘                          │
+└─────────────────────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│                RAG Ingestion                               │
+│  ┌─────────────┐                                           │
+│  │ Berry RAG   │                                           │
+│  │  Embeddings │                                           │
+│  └─────────────┘                                           │
+└─────────────────────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│                PR Creation                                  │
+│  ┌─────────────┐                                           │
+│  │   GitHub    │                                           │
+│  │     PR      │                                           │
+│  └─────────────┘                                           │
+└─────────────────────────────────────────────────────────────┘
+```
 
-### 📊 **Observability**
-- **Structured logging**: Pino JSON logs with trace correlation
-- **Metrics**: Prometheus-compatible metrics for monitoring
-- **Tracing**: OpenTelemetry integration for distributed tracing
-- **Error reporting**: Optional Sentry integration
+## Data Flow Architecture
 
-### 🌐 **API Endpoints**
-- **`/healthz`**: Basic liveness probe
-- **`/readyz`**: Readiness probe (all enabled servers healthy)
-- **`/metrics`**: Prometheus metrics endpoint
-- **`/servers`**: Server status and configuration
+### User Data Flow
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Mobile    │    │    Web      │    │   Desktop   │
+│    App      │    │    App      │    │    App      │
+└─────────────┘    └─────────────┘    └─────────────┘
+       │                   │                   │
+       └───────────────────┼───────────────────┘
+                           │
+                    ┌─────────────┐
+                    │   BFF API   │
+                    │   (Hono)    │
+                    └─────────────┘
+                           │
+                    ┌─────────────┐
+                    │ MCP Router  │
+                    │ Orchestrator│
+                    └─────────────┘
+                           │
+        ┌─────────────────┼─────────────────┐
+        │                 │                 │
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Workflow  │    │   Workflow  │    │   Workflow  │
+│   Engine    │    │   Engine    │    │   Engine    │
+└─────────────┘    └─────────────┘    └─────────────┘
+```
 
-### 🔄 **CI/CD Pipeline**
-- **Quality gates**: ESLint, TypeScript, Vitest with coverage
-- **Health probes**: Automated health checking in CI
-- **Security scanning**: Dependency and secret scanning
+### Content Data Flow
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Notion    │    │   Web      │    │   Manual    │
+│   Content   │    │  Crawling  │    │   Upload    │
+└─────────────┘    └─────────────┘    └─────────────┘
+       │                   │                   │
+       └───────────────────┼───────────────────┘
+                           │
+                    ┌─────────────┐
+                    │   Ingest    │
+                    │  Workflow   │
+                    └─────────────┘
+                           │
+                    ┌─────────────┐
+                    │ Validation  │
+                    │   Engine    │
+                    └─────────────┘
+                           │
+                    ┌─────────────┐
+                    │   Content   │
+                    │   Store     │
+                    │  (Neon DB)  │
+                    └─────────────┘
+```
 
-## Key Design Principles
+## Technology Stack
 
-1. **🔧 Configuration-Driven**: All behavior controlled via YAML configs
-2. **🛡️ Security-First**: Zero secrets in repo, least-privilege scopes
-3. **📈 Observable**: Comprehensive logging, metrics, and tracing
-4. **🔄 Resilient**: Circuit breakers, retries, and graceful degradation
-5. **🧪 Testable**: High test coverage with integration test support
-6. **📚 Documented**: Clear docs, examples, and troubleshooting guides
+### Frontend
+- **Web**: React + TypeScript + Vite
+- **Mobile**: Expo React Native + TypeScript
+- **State Management**: Zustand
+- **UI Components**: NativeBase / Tamagui
+- **Styling**: Styled Components
+
+### Backend
+- **API Gateway**: Hono (BFF)
+- **API Layer**: tRPC
+- **Authentication**: Supabase Auth
+- **Database**: Neon PostgreSQL
+- **Realtime**: Supabase Realtime
+- **File Storage**: Supabase Storage
+
+### MCP Orchestration
+- **Orchestrator**: Custom TypeScript orchestrator
+- **Workflows**: YAML-based workflow definitions
+- **Schemas**: JSON Schema validation
+- **Health Monitoring**: Custom health check system
+
+### AI & ML Services
+- **LLM Gateway**: OpenRouter
+- **Reasoning**: DeepSeek R1
+- **Long Context**: Qwen Max
+- **Multimodal**: Google Gemini
+- **Fast Paraphrasing**: Minimax
+- **Web-aware**: Grok
+- **TTS**: ElevenLabs
+- **STT**: OpenRouter/Gemini/Integration App
+
+### External Integrations
+- **Content**: Notion, Firecrawl
+- **Support**: Intercom
+- **Project Management**: Asana
+- **Version Control**: GitHub
+- **Payments**: Stripe
+- **Analytics**: Sentry, Mixpanel
+- **Marketing**: Adobe Express
+- **Automation**: Zapier
+
+### Infrastructure
+- **Containerization**: Docker
+- **Orchestration**: Kubernetes
+- **CI/CD**: GitHub Actions
+- **Monitoring**: Sentry, Prometheus
+- **Logging**: Pino
+- **Caching**: Redis
+
+## Security Architecture
+
+### Authentication & Authorization
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Client    │    │   Supabase  │    │   Backend   │
+│    App      │    │    Auth     │    │   Services  │
+└─────────────┘    └─────────────┘    └─────────────┘
+       │                   │                   │
+       │ 1. Login Request  │                   │
+       ├─────────────────►│                   │
+       │                   │                   │
+       │ 2. JWT Token     │                   │
+       │◄─────────────────┤                   │
+       │                   │                   │
+       │ 3. API Request    │                   │
+       │    + JWT          │                   │
+       ├───────────────────┼─────────────────►│
+       │                   │                   │
+       │ 4. Validated      │                   │
+       │    Response       │                   │
+       │◄──────────────────┼───────────────────┤
+```
+
+### Data Protection
+- **Encryption at Rest**: AES-256 for sensitive data
+- **Encryption in Transit**: TLS 1.3 for all communications
+- **PII Redaction**: Automatic redaction in logs and analytics
+- **Data Retention**: Configurable retention policies
+- **Access Control**: Role-based access control (RBAC)
+
+## Monitoring & Observability
+
+### Metrics Collection
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│ Application │    │   Sentry     │    │ Prometheus  │
+│   Metrics   │───►│   Errors    │───►│   Metrics   │
+└─────────────┘    └─────────────┘    └─────────────┘
+       │                   │                   │
+       │                   │                   │
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Custom    │    │   Health    │    │   Alerts    │
+│   Metrics   │    │   Checks    │    │   System    │
+└─────────────┘    └─────────────┘    └─────────────┘
+```
+
+### Health Monitoring
+- **Server Health**: Automated health checks for all MCP servers
+- **Performance Metrics**: Response times, throughput, error rates
+- **Business Metrics**: User engagement, conversion rates, learning progress
+- **Infrastructure Metrics**: CPU, memory, disk, network usage
+
+## Deployment Architecture
+
+### Environment Strategy
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│Development  │    │   Staging   │    │ Production  │
+│Environment  │    │ Environment │    │ Environment │
+└─────────────┘    └─────────────┘    └─────────────┘
+       │                   │                   │
+       │                   │                   │
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Local     │    │   Preview   │    │   Live      │
+│   Testing   │    │   Testing   │    │   Users     │
+└─────────────┘    └─────────────┘    └─────────────┘
+```
+
+### CI/CD Pipeline
+1. **Code Quality**: TypeScript checking, linting, formatting
+2. **Testing**: Unit tests, integration tests, E2E tests
+3. **Security**: Vulnerability scanning, dependency audit
+4. **Build**: Docker image creation, artifact generation
+5. **Deploy**: Staging deployment, production deployment
+6. **Monitor**: Health checks, performance monitoring
+
+## Scalability Considerations
+
+### Horizontal Scaling
+- **Stateless Services**: All services designed to be stateless
+- **Load Balancing**: Multiple instances behind load balancers
+- **Database Sharding**: Horizontal partitioning for large datasets
+- **CDN**: Global content delivery for static assets
+
+### Performance Optimization
+- **Caching**: Redis for frequently accessed data
+- **Connection Pooling**: Database connection optimization
+- **Async Processing**: Background job processing
+- **Resource Optimization**: Efficient memory and CPU usage
+
+## Disaster Recovery
+
+### Backup Strategy
+- **Database Backups**: Automated daily backups with point-in-time recovery
+- **Content Backups**: Regular snapshots of user-generated content
+- **Configuration Backups**: Version-controlled configuration management
+- **Cross-Region Replication**: Multi-region deployment for high availability
+
+### Recovery Procedures
+- **RTO (Recovery Time Objective)**: < 1 hour for critical services
+- **RPO (Recovery Point Objective)**: < 15 minutes for data loss
+- **Automated Failover**: Automatic failover to backup systems
+- **Manual Recovery**: Documented procedures for manual recovery
+
+## Future Architecture Considerations
+
+### Planned Enhancements
+- **Microservices Migration**: Gradual migration to microservices architecture
+- **Event-Driven Architecture**: Implementation of event sourcing and CQRS
+- **AI/ML Pipeline**: Dedicated ML pipeline for model training and deployment
+- **Edge Computing**: Edge deployment for reduced latency
+- **Multi-Tenancy**: Support for enterprise customers with isolated environments
+
+### Technology Evolution
+- **WebAssembly**: Client-side processing for performance-critical operations
+- **GraphQL**: Potential migration from tRPC to GraphQL
+- **Service Mesh**: Istio implementation for service-to-service communication
+- **GitOps**: Git-based deployment and configuration management

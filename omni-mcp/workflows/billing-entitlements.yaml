@@ -1,0 +1,215 @@
+name: Billing Entitlements Workflow
+description: Handle billing events and manage user entitlements
+version: 1.0.0
+
+trigger:
+  event: stripe.checkout.completed
+  payload:
+    sessionId: string
+    customerId: string
+    subscriptionId: string
+    planId: string
+    amount: number
+    currency: string
+    metadata: object
+
+steps:
+  - name: stripe_webhook_validation
+    description: Validate Stripe webhook signature and data
+    tool: webhook.validate
+    provider: stripe
+    config:
+      timeout: 5000
+      signature_validation: true
+      idempotency: true
+    input:
+      webhookSignature: string
+      payload: "${trigger.payload}"
+      secret: "${STRIPE_WEBHOOK_SECRET}"
+    output:
+      isValid: boolean
+      eventId: string
+      processed: boolean
+
+  - name: customer_lookup
+    description: Lookup or create customer in Supabase auth
+    tool: customer.lookup
+    provider: supabase
+    config:
+      timeout: 10000
+      create_if_missing: true
+      sync_profile: true
+    input:
+      stripeCustomerId: "${trigger.payload.customerId}"
+      email: string
+      metadata: "${trigger.payload.metadata}"
+    output:
+      userId: string
+      userExists: boolean
+      profileUpdated: boolean
+
+  - name: subscription_analysis
+    description: Analyze subscription details and entitlements
+    tool: subscription.analyze
+    provider: stripe
+    config:
+      timeout: 8000
+      include_usage: true
+    input:
+      subscriptionId: "${trigger.payload.subscriptionId}"
+      planId: "${trigger.payload.planId}"
+      customerId: "${trigger.payload.customerId}"
+    output:
+      planType: pro|family|enterprise
+      seats: number
+      features: array
+      limits: object
+      expiresAt: string
+      status: string
+
+  - name: entitlement_update
+    description: Update user entitlements in Neon database
+    tool: entitlements.update
+    provider: neon
+    config:
+      timeout: 15000
+      transaction: true
+      retries: 3
+    input:
+      userId: "${steps.customer_lookup.output.userId}"
+      planType: "${steps.subscription_analysis.output.planType}"
+      seats: "${steps.subscription_analysis.output.seats}"
+      features: "${steps.subscription_analysis.output.features}"
+      limits: "${steps.subscription_analysis.output.limits}"
+      expiresAt: "${steps.subscription_analysis.output.expiresAt}"
+      subscriptionId: "${trigger.payload.subscriptionId}"
+    output:
+      entitlementId: string
+      updated: boolean
+      previousPlan: string
+      newPlan: string
+
+  - name: intercom_user_tagging
+    description: Tag user in Intercom for support and marketing
+    tool: user.tag
+    provider: fast-intercom
+    config:
+      timeout: 8000
+      batch: true
+    input:
+      userId: "${steps.customer_lookup.output.userId}"
+      tags: ["pro", "${steps.subscription_analysis.output.planType}", "paid"]
+      attributes:
+        plan: "${steps.subscription_analysis.output.planType}"
+        seats: "${steps.subscription_analysis.output.seats}"
+        subscriptionId: "${trigger.payload.subscriptionId}"
+        upgradeDate: string
+    output:
+      tagged: boolean
+      tagsAdded: array
+      attributesUpdated: boolean
+
+  - name: sentry_event_tracking
+    description: Track billing event in Sentry for analytics
+    tool: event.track
+    provider: sentry
+    config:
+      timeout: 5000
+      async: true
+    input:
+      event: billing-upgrade
+      userId: "${steps.customer_lookup.output.userId}"
+      data:
+        planType: "${steps.subscription_analysis.output.planType}"
+        seats: "${steps.subscription_analysis.output.seats}"
+        amount: "${trigger.payload.amount}"
+        currency: "${trigger.payload.currency}"
+        subscriptionId: "${trigger.payload.subscriptionId}"
+        previousPlan: "${steps.entitlement_update.output.previousPlan}"
+        newPlan: "${steps.entitlement_update.output.newPlan}"
+    output:
+      eventId: string
+      tracked: boolean
+
+  - name: welcome_sequence_trigger
+    description: Trigger welcome sequence for new paid users
+    tool: sequence.trigger
+    provider: zapier
+    config:
+      timeout: 10000
+      async: true
+    input:
+      userId: "${steps.customer_lookup.output.userId}"
+      planType: "${steps.subscription_analysis.output.planType}"
+      sequence: pro_welcome_sequence
+      delay: 0
+    output:
+      sequenceId: string
+      triggered: boolean
+
+guards:
+  budget:
+    maxMs: 60000
+    maxTokens: 2000
+    maxCost: 0.10
+  
+  security:
+    webhookValidation: true
+    idempotencyCheck: true
+    piiRedaction: true
+  
+  fallbacks:
+    onValidationFailure: manual_review
+    onCustomerLookupFailure: create_placeholder
+    onEntitlementFailure: retry_later
+    onTaggingFailure: skip_tagging
+
+errorHandling:
+  onError:
+    action: manual_review_required
+    fallback: basic_entitlement_update
+    notification: slack
+    retry:
+      attempts: 3
+      backoff: exponential
+      maxDelay: 30000
+
+monitoring:
+  metrics:
+    - name: billing_event_processing_time
+      type: histogram
+      labels: [plan_type, event_type]
+    
+    - name: entitlement_update_success_rate
+      type: gauge
+      labels: [plan_type]
+    
+    - name: customer_lookup_success_rate
+      type: gauge
+      labels: [source]
+    
+    - name: intercom_tagging_success_rate
+      type: gauge
+      labels: [tag_type]
+  
+  alerts:
+    - name: Billing Event Processing Slow
+      condition: p95_processing_time > 30000
+      severity: warning
+    
+    - name: Entitlement Update Failed
+      condition: update_failure_rate > 0.05
+      severity: critical
+    
+    - name: Customer Lookup Failed
+      condition: lookup_failure_rate > 0.1
+      severity: warning
+
+outputs:
+  userId: string
+  entitlementId: string
+  planType: string
+  seats: number
+  intercomTagged: boolean
+  sentryTracked: boolean
+  sequenceTriggered: boolean

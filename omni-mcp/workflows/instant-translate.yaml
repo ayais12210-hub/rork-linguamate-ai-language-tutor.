@@ -1,0 +1,160 @@
+name: Instant Translate Workflow
+description: Real-time translation with auto-detection and TTS
+version: 1.0.0
+
+trigger:
+  event: app.translate.tap
+  payload:
+    userId: string
+    text: string
+    sourceLanguage?: string
+    targetLanguage: string
+    context?: string
+
+steps:
+  - name: language_detection
+    description: Auto-detect source language if not provided
+    tool: detect.language
+    provider: openrouter|gemini
+    config:
+      timeout: 5000
+      confidence_threshold: 0.8
+    input:
+      text: "${trigger.payload.text}"
+      targetLanguage: "${trigger.payload.targetLanguage}"
+    output:
+      detectedLanguage: string
+      confidence: number
+      alternatives: array
+
+  - name: translation
+    description: Translate text with conversational context
+    tool: translate.text
+    provider: gemini|minimax|openrouter
+    config:
+      domain: conversational
+      timeout: 8000
+      maxTokens: 1000
+      preserve_formatting: true
+    input:
+      text: "${trigger.payload.text}"
+      sourceLanguage: "${steps.language_detection.output.detectedLanguage}"
+      targetLanguage: "${trigger.payload.targetLanguage}"
+      context: "${trigger.payload.context}"
+      domain: conversational
+    output:
+      translation: string
+      alternatives: array
+      confidence: number
+      detectedLanguage: string
+
+  - name: text_to_speech
+    description: Generate audio for translated text
+    tool: tts.speak
+    provider: elevenlabs
+    config:
+      voice: default
+      timeout: 15000
+      format: mp3
+    input:
+      text: "${steps.translation.output.translation}"
+      voice: default
+      language: "${trigger.payload.targetLanguage}"
+      speed: 1.0
+    output:
+      audioUrl: string
+      duration: number
+      format: string
+
+  - name: data_persistence
+    description: Store translation event for analytics
+    tool: persist.translation
+    provider: neon
+    config:
+      timeout: 5000
+      batch: true
+    input:
+      userId: "${trigger.payload.userId}"
+      translationData:
+        originalText: "${trigger.payload.text}"
+        translatedText: "${steps.translation.output.translation}"
+        sourceLanguage: "${steps.translation.output.detectedLanguage}"
+        targetLanguage: "${trigger.payload.targetLanguage}"
+        confidence: number
+        audioUrl: "${steps.text_to_speech.output.audioUrl}"
+        timestamp: string
+    output:
+      translationId: string
+
+  - name: analytics_logging
+    description: Log translation event for usage analytics
+    tool: analytics.log
+    provider: supabase|sheets
+    config:
+      timeout: 3000
+      async: true
+    input:
+      event: translation_completed
+      userId: "${trigger.payload.userId}"
+      data:
+        sourceLanguage: "${steps.translation.output.detectedLanguage}"
+        targetLanguage: "${trigger.payload.targetLanguage}"
+        textLength: number
+        confidence: number
+        duration: number
+    output:
+      logged: boolean
+
+guards:
+  budget:
+    maxMs: 30000
+    maxTokens: 2000
+    maxCost: 0.10
+  
+  security:
+    piiRedaction: true
+    dataRetention: 30d
+  
+  fallbacks:
+    onDetectionFailure: manual_language_selection
+    onTranslationFailure: cached_translation
+    onTtsFailure: text_only
+
+errorHandling:
+  onError:
+    action: log_and_continue
+    fallback: basic_translation
+    retry:
+      attempts: 1
+      backoff: linear
+      maxDelay: 2000
+
+monitoring:
+  metrics:
+    - name: translation_latency
+      type: histogram
+      labels: [source_language, target_language]
+    
+    - name: detection_accuracy
+      type: gauge
+      labels: [language_pair]
+    
+    - name: tts_generation_time
+      type: histogram
+      labels: [language, voice]
+  
+  alerts:
+    - name: Translation Service Slow
+      condition: p95_latency > 10000
+      severity: warning
+    
+    - name: Language Detection Failed
+      condition: detection_failure_rate > 0.05
+      severity: warning
+
+outputs:
+  translation: string
+  audioUrl: string
+  detectedLanguage: string
+  confidence: number
+  alternatives: array

@@ -1,0 +1,234 @@
+name: Lesson Ingest Workflow
+description: Automated content ingestion from Notion and web sources
+version: 1.0.0
+
+trigger:
+  event: ops.content.submit
+  payload:
+    source: notion.page|firecrawl.crawl
+    sourceId: string
+    contentType: lesson|quiz|flashcard
+    metadata: object
+
+steps:
+  - name: content_fetch
+    description: Fetch content from source (Notion or web crawl)
+    tool: fetch.content
+    provider: notion|firecrawl
+    config:
+      timeout: 30000
+      retries: 3
+      rate_limit: 10
+    input:
+      source: "${trigger.payload.source}"
+      sourceId: "${trigger.payload.sourceId}"
+      contentType: "${trigger.payload.contentType}"
+    output:
+      rawContent: object
+      metadata: object
+      mediaUrls: array
+      sourceUrl: string
+
+  - name: content_normalization
+    description: Normalize content to standard lesson schema
+    tool: normalize.content
+    provider: qwen-max
+    config:
+      model: qwen-max
+      timeout: 45000
+      maxTokens: 8000
+      context_window: 32000
+    input:
+      rawContent: "${steps.content_fetch.output.rawContent}"
+      contentType: "${trigger.payload.contentType}"
+      targetSchema: lesson.schema.json
+      metadata: "${steps.content_fetch.output.metadata}"
+    output:
+      normalizedContent: object
+      validationErrors: array
+      confidence: number
+      suggestions: array
+
+  - name: schema_validation
+    description: Validate content against lesson schema
+    tool: validate.schema
+    provider: ppl-modelcontext
+    config:
+      schema: lesson.schema.json
+      strict: true
+      timeout: 10000
+    input:
+      content: "${steps.content_normalization.output.normalizedContent}"
+      schema: lesson.schema.json
+      contentType: "${trigger.payload.contentType}"
+    output:
+      isValid: boolean
+      errors: array
+      warnings: array
+      score: number
+
+  - name: content_enrichment
+    description: Add cultural notes and current usage examples
+    tool: enrich.content
+    provider: perplexity|grok
+    config:
+      timeout: 20000
+      maxTokens: 4000
+      parallel: true
+    input:
+      content: "${steps.content_normalization.output.normalizedContent}"
+      language: string
+      targetLanguage: string
+      enrichmentTypes: [cultural_notes, current_usage, examples]
+    output:
+      enrichedContent: object
+      culturalNotes: array
+      usageExamples: array
+      additionalContext: string
+
+  - name: rag_ingestion
+    description: Add content to RAG system for search and recommendations
+    tool: rag.ingest
+    provider: berry-rag
+    config:
+      timeout: 15000
+      batch_size: 10
+      embedding_model: text-embedding-3-large
+    input:
+      content: "${steps.content_enrichment.output.enrichedContent}"
+      metadata:
+        contentType: "${trigger.payload.contentType}"
+        language: string
+        difficulty: string
+        tags: array
+        sourceUrl: "${steps.content_fetch.output.sourceUrl}"
+    output:
+      embeddingIds: array
+      searchIndex: string
+      ingested: boolean
+
+  - name: pr_creation
+    description: Create PR for content review and approval
+    tool: pr.create
+    provider: github
+    config:
+      timeout: 10000
+      reviewers: ContentQAAgent
+      labels: [content, needs-review]
+    input:
+      branch: "content/${trigger.payload.contentType}-${trigger.payload.sourceId}"
+      title: "Add ${trigger.payload.contentType}: ${steps.content_normalization.output.normalizedContent.title}"
+      description: |
+        Content ingested from ${trigger.payload.source}
+        
+        **Source**: ${steps.content_fetch.output.sourceUrl}
+        **Type**: ${trigger.payload.contentType}
+        **Validation Score**: ${steps.schema_validation.output.score}
+        
+        **Changes**:
+        - Added ${trigger.payload.contentType} content
+        - Enriched with cultural notes and usage examples
+        - Added to RAG system for search
+        
+        **Files Changed**:
+        - content/${trigger.payload.contentType}/${trigger.payload.sourceId}.json
+        - content/metadata/${trigger.payload.sourceId}.json
+      
+      files:
+        - path: "content/${trigger.payload.contentType}/${trigger.payload.sourceId}.json"
+          content: "${steps.content_enrichment.output.enrichedContent}"
+        - path: "content/metadata/${trigger.payload.sourceId}.json"
+          content: "${steps.content_fetch.output.metadata}"
+    output:
+      prNumber: number
+      prUrl: string
+      branchName: string
+
+  - name: backup_snapshot
+    description: Create backup snapshot of ingested content
+    tool: backup.snapshot
+    provider: backup
+    config:
+      scope: content
+      timeout: 20000
+      compression: true
+    input:
+      scope: content
+      content:
+        sourceId: "${trigger.payload.sourceId}"
+        contentType: "${trigger.payload.contentType}"
+        rawContent: "${steps.content_fetch.output.rawContent}"
+        normalizedContent: "${steps.content_normalization.output.normalizedContent}"
+        enrichedContent: "${steps.content_enrichment.output.enrichedContent}"
+        metadata: "${steps.content_fetch.output.metadata}"
+        timestamp: string
+    output:
+      backupId: string
+      backupUrl: string
+      size: number
+
+guards:
+  budget:
+    maxMs: 120000
+    maxTokens: 15000
+    maxCost: 1.00
+  
+  security:
+    contentScanning: true
+    malwareCheck: true
+    copyrightCheck: true
+  
+  fallbacks:
+    onFetchFailure: manual_upload
+    onNormalizationFailure: basic_schema
+    onValidationFailure: quarantine_content
+    onEnrichmentFailure: skip_enrichment
+
+errorHandling:
+  onError:
+    action: quarantine_and_notify
+    fallback: manual_review
+    notification: slack
+    retry:
+      attempts: 2
+      backoff: exponential
+      maxDelay: 30000
+
+monitoring:
+  metrics:
+    - name: ingestion_rate
+      type: counter
+      labels: [content_type, source]
+    
+    - name: validation_success_rate
+      type: gauge
+      labels: [content_type]
+    
+    - name: enrichment_quality_score
+      type: gauge
+      labels: [enrichment_type]
+    
+    - name: pr_creation_time
+      type: histogram
+      labels: [content_type]
+  
+  alerts:
+    - name: High Validation Failure Rate
+      condition: validation_failure_rate > 0.2
+      severity: warning
+    
+    - name: Slow Content Ingestion
+      condition: p95_duration > 120000
+      severity: warning
+    
+    - name: Ingestion Pipeline Down
+      condition: success_rate < 0.9
+      severity: critical
+
+outputs:
+  prNumber: number
+  prUrl: string
+  contentId: string
+  validationScore: number
+  backupId: string
+  ragIndexed: boolean

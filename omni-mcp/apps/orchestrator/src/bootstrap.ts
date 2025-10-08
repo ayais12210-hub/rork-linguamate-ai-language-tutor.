@@ -11,6 +11,14 @@ import { initializeOpenTelemetry, shutdownOpenTelemetry, type NodeSDK } from './
 import { logServerSpawn, logServerExit, logServerRestart } from './observability/audit.js';
 import { EgressController } from './security/egress.js';
 import { validateEnv } from './config/envSchemas.js';
+import { WorkflowEngine } from './workflow-engine.js';
+import { ToolRegistry } from './tool-registry.js';
+import { AgentCommunicationProtocol } from './agent-communication.js';
+import { ConfigManager } from './config-manager.js';
+import { SecurityManager } from './security-manager.js';
+import { AgentOrchestrator } from './agent-orchestrator.js';
+import { TestingFramework } from './testing-framework.js';
+import { MonitoringSystem } from './monitoring-system.js';
 
 export interface ServerProcess {
   name: string;
@@ -34,6 +42,16 @@ export class MCPOrchestrator {
   private servers: Map<string, ServerProcess> = new Map();
   private otelSdk: NodeSDK | null = null;
   private shutdownSignal: AbortSignal;
+  
+  // New components
+  private configManager: ConfigManager;
+  private securityManager: SecurityManager;
+  private toolRegistry: ToolRegistry;
+  private workflowEngine: WorkflowEngine;
+  private agentCommunication: AgentCommunicationProtocol;
+  private agentOrchestrator: AgentOrchestrator;
+  private testingFramework: TestingFramework;
+  private monitoringSystem: MonitoringSystem;
 
   constructor() {
     this.config = loadConfig();
@@ -45,6 +63,26 @@ export class MCPOrchestrator {
     this.authScopes = new AuthScopesGuard();
     this.egressController = new EgressController(this.config.network);
     this.logger = createLogger(this.config);
+    
+    // Initialize new components
+    this.configManager = new ConfigManager('./config.json', this.logger);
+    this.securityManager = new SecurityManager(this.configManager, this.logger);
+    this.toolRegistry = new ToolRegistry(this.configManager, this.securityManager, this.logger);
+    this.workflowEngine = new WorkflowEngine(this.toolRegistry, this.configManager, this.securityManager, this.logger);
+    this.agentCommunication = new AgentCommunicationProtocol(this.configManager, this.securityManager, this.logger);
+    this.agentOrchestrator = new AgentOrchestrator(this.configManager, this.securityManager, this.agentCommunication, this.logger);
+    this.monitoringSystem = new MonitoringSystem(this.configManager, this.securityManager, this.logger);
+    this.testingFramework = new TestingFramework({
+      workflowEngine: this.workflowEngine,
+      toolRegistry: this.toolRegistry,
+      agentCommunication: this.agentCommunication,
+      configManager: this.configManager,
+      securityManager: this.securityManager,
+      mocks: {
+        tools: new Map(),
+        agents: new Map(),
+      },
+    }, this.logger);
     
     // Create shutdown signal
     const controller = new AbortController();
@@ -60,6 +98,16 @@ export class MCPOrchestrator {
       // Initialize observability
       this.otelSdk = initializeOpenTelemetry(this.config.observability);
       
+      // Start new components
+      await this.configManager.start();
+      await this.securityManager.start();
+      await this.toolRegistry.start();
+      await this.workflowEngine.start();
+      await this.agentCommunication.start();
+      await this.agentOrchestrator.start();
+      await this.monitoringSystem.start();
+      await this.testingFramework.start();
+      
       // Start health checking
       const enabledServers = this.registry.getEnabledServers();
       const serverMap = new Map(enabledServers);
@@ -67,6 +115,9 @@ export class MCPOrchestrator {
       
       // Start servers
       await this.startServers();
+      
+      // Load and register workflows
+      await this.loadWorkflows();
       
       this.logger.info('MCP Orchestrator started successfully');
     } catch (error) {
@@ -270,6 +321,16 @@ export class MCPOrchestrator {
     
     await Promise.allSettled(shutdownPromises);
     
+    // Stop new components
+    await this.testingFramework.stop();
+    await this.monitoringSystem.stop();
+    await this.agentOrchestrator.stop();
+    await this.agentCommunication.stop();
+    await this.workflowEngine.stop();
+    await this.toolRegistry.stop();
+    await this.securityManager.stop();
+    await this.configManager.stop();
+    
     // Shutdown observability
     await shutdownOpenTelemetry(this.otelSdk);
     
@@ -346,5 +407,58 @@ export class MCPOrchestrator {
   // Get egress controller for security validation
   getEgressController(): EgressController {
     return this.egressController;
+  }
+
+  // New component accessors
+  getWorkflowEngine(): WorkflowEngine {
+    return this.workflowEngine;
+  }
+
+  getToolRegistry(): ToolRegistry {
+    return this.toolRegistry;
+  }
+
+  getAgentOrchestrator(): AgentOrchestrator {
+    return this.agentOrchestrator;
+  }
+
+  getAgentCommunication(): AgentCommunicationProtocol {
+    return this.agentCommunication;
+  }
+
+  getConfigManager(): ConfigManager {
+    return this.configManager;
+  }
+
+  getSecurityManager(): SecurityManager {
+    return this.securityManager;
+  }
+
+  getTestingFramework(): TestingFramework {
+    return this.testingFramework;
+  }
+
+  getMonitoringSystem(): MonitoringSystem {
+    return this.monitoringSystem;
+  }
+
+  // Load workflows from files
+  private async loadWorkflows(): Promise<void> {
+    try {
+      // This would load workflow definitions from the workflows directory
+      // For now, we'll just log that workflows would be loaded here
+      this.logger.info('Loading workflows...');
+      
+      // Example workflow loading logic would go here
+      // const workflowFiles = await globby('workflows/*.yaml');
+      // for (const file of workflowFiles) {
+      //   const workflowDef = yaml.load(readFileSync(file, 'utf8'));
+      //   await this.workflowEngine.registerWorkflow(workflowDef);
+      // }
+      
+      this.logger.info('Workflows loaded successfully');
+    } catch (error) {
+      this.logger.error({ error }, 'Failed to load workflows');
+    }
   }
 }

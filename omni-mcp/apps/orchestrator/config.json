@@ -1,0 +1,390 @@
+{
+  "version": "1.0.0",
+  "environment": "development",
+  "featureFlags": [
+    {
+      "name": "LM_USE_LOCAL_STT",
+      "enabled": false,
+      "description": "Use local STT instead of cloud services",
+      "rolloutPercentage": 100,
+      "targetUsers": [],
+      "targetSessions": [],
+      "conditions": {},
+      "metadata": {
+        "category": "core",
+        "deprecated": false
+      }
+    },
+    {
+      "name": "LM_COACH_REASONING_MODEL",
+      "enabled": true,
+      "description": "Use advanced reasoning model for coach feedback",
+      "rolloutPercentage": 50,
+      "targetUsers": [],
+      "targetSessions": [],
+      "conditions": {},
+      "metadata": {
+        "category": "ai",
+        "deprecated": false
+      }
+    },
+    {
+      "name": "LM_TRANSLATE_PROVIDER",
+      "enabled": true,
+      "description": "Primary translation provider",
+      "rolloutPercentage": 100,
+      "targetUsers": [],
+      "targetSessions": [],
+      "conditions": {},
+      "metadata": {
+        "category": "ai",
+        "deprecated": false
+      }
+    },
+    {
+      "name": "LM_RAG_ENABLED",
+      "enabled": true,
+      "description": "Enable RAG-based content recommendations",
+      "rolloutPercentage": 100,
+      "targetUsers": [],
+      "targetSessions": [],
+      "conditions": {},
+      "metadata": {
+        "category": "content",
+        "deprecated": false
+      }
+    },
+    {
+      "name": "LM_CI_SMOKE_ENABLED",
+      "enabled": true,
+      "description": "Enable smoke tests in CI pipeline",
+      "rolloutPercentage": 100,
+      "targetUsers": [],
+      "targetSessions": [],
+      "conditions": {},
+      "metadata": {
+        "category": "ci",
+        "deprecated": false
+      }
+    }
+  ],
+  "sections": [
+    {
+      "name": "providers",
+      "description": "Provider configurations",
+      "values": [
+        {
+          "key": "openrouter",
+          "value": {
+            "apiKey": "${OPENROUTER_API_KEY}",
+            "baseUrl": "https://openrouter.ai/api/v1",
+            "timeout": 30000,
+            "retries": 3
+          },
+          "type": "object",
+          "description": "OpenRouter LLM gateway configuration",
+          "validation": {
+            "required": ["apiKey", "baseUrl"]
+          },
+          "metadata": {
+            "category": "ai",
+            "provider": "openrouter"
+          }
+        },
+        {
+          "key": "elevenlabs",
+          "value": {
+            "apiKey": "${ELEVENLABS_API_KEY}",
+            "baseUrl": "https://api.elevenlabs.io/v1",
+            "timeout": 45000,
+            "retries": 3
+          },
+          "type": "object",
+          "description": "ElevenLabs TTS configuration",
+          "validation": {
+            "required": ["apiKey", "baseUrl"]
+          },
+          "metadata": {
+            "category": "audio",
+            "provider": "elevenlabs"
+          }
+        },
+        {
+          "key": "neon",
+          "value": {
+            "databaseUrl": "${NEON_DATABASE_URL}",
+            "poolSize": 10,
+            "timeout": 30000
+          },
+          "type": "object",
+          "description": "Neon database configuration",
+          "validation": {
+            "required": ["databaseUrl"]
+          },
+          "metadata": {
+            "category": "database",
+            "provider": "neon"
+          }
+        },
+        {
+          "key": "supabase",
+          "value": {
+            "url": "${SUPABASE_URL}",
+            "anonKey": "${SUPABASE_ANON_KEY}",
+            "serviceRoleKey": "${SUPABASE_SERVICE_ROLE_KEY}"
+          },
+          "type": "object",
+          "description": "Supabase configuration",
+          "validation": {
+            "required": ["url", "anonKey"]
+          },
+          "metadata": {
+            "category": "database",
+            "provider": "supabase"
+          }
+        }
+      ],
+      "metadata": {
+        "category": "infrastructure"
+      }
+    },
+    {
+      "name": "workflows",
+      "description": "Workflow configurations",
+      "values": [
+        {
+          "key": "bilingual-coach",
+          "value": {
+            "maxConcurrency": 10,
+            "timeout": 300000,
+            "retries": 3,
+            "fallbacks": {
+              "stt": "integration-app",
+              "tts": "text-only"
+            }
+          },
+          "type": "object",
+          "description": "Bilingual coach workflow configuration",
+          "metadata": {
+            "category": "workflow",
+            "workflow": "bilingual-coach"
+          }
+        },
+        {
+          "key": "instant-translate",
+          "value": {
+            "maxConcurrency": 20,
+            "timeout": 15000,
+            "retries": 2,
+            "fallbacks": {
+              "translate": "gemini",
+              "tts": "text-only"
+            }
+          },
+          "type": "object",
+          "description": "Instant translate workflow configuration",
+          "metadata": {
+            "category": "workflow",
+            "workflow": "instant-translate"
+          }
+        }
+      ],
+      "metadata": {
+        "category": "workflows"
+      }
+    },
+    {
+      "name": "monitoring",
+      "description": "Monitoring and observability settings",
+      "values": [
+        {
+          "key": "metricsRetentionDays",
+          "value": 30,
+          "type": "number",
+          "description": "Number of days to retain metrics",
+          "metadata": {
+            "category": "monitoring"
+          }
+        },
+        {
+          "key": "alertRetentionDays",
+          "value": 90,
+          "type": "number",
+          "description": "Number of days to retain alert events",
+          "metadata": {
+            "category": "monitoring"
+          }
+        },
+        {
+          "key": "traceRetentionDays",
+          "value": 7,
+          "type": "number",
+          "description": "Number of days to retain traces",
+          "metadata": {
+            "category": "monitoring"
+          }
+        },
+        {
+          "key": "healthCheckInterval",
+          "value": 30000,
+          "type": "number",
+          "description": "Health check interval in milliseconds",
+          "metadata": {
+            "category": "monitoring"
+          }
+        }
+      ],
+      "metadata": {
+        "category": "monitoring"
+      }
+    },
+    {
+      "name": "security",
+      "description": "Security and authentication settings",
+      "values": [
+        {
+          "key": "sessionTimeout",
+          "value": 86400000,
+          "type": "number",
+          "description": "Session timeout in milliseconds (24 hours)",
+          "metadata": {
+            "category": "security"
+          }
+        },
+        {
+          "key": "maxLoginAttempts",
+          "value": 5,
+          "type": "number",
+          "description": "Maximum login attempts before lockout",
+          "metadata": {
+            "category": "security"
+          }
+        },
+        {
+          "key": "lockoutDuration",
+          "value": 900000,
+          "type": "number",
+          "description": "Account lockout duration in milliseconds (15 minutes)",
+          "metadata": {
+            "category": "security"
+          }
+        },
+        {
+          "key": "encryptionKey",
+          "value": "${ENCRYPTION_KEY}",
+          "type": "string",
+          "description": "Encryption key for sensitive data",
+          "validation": {
+            "required": true,
+            "minLength": 32
+          },
+          "metadata": {
+            "category": "security",
+            "sensitive": true
+          }
+        }
+      ],
+      "metadata": {
+        "category": "security"
+      }
+    },
+    {
+      "name": "agents",
+      "description": "Agent configuration and capabilities",
+      "values": [
+        {
+          "key": "maxConcurrency",
+          "value": 5,
+          "type": "number",
+          "description": "Maximum concurrent agent tasks",
+          "metadata": {
+            "category": "agents"
+          }
+        },
+        {
+          "key": "taskTimeout",
+          "value": 300000,
+          "type": "number",
+          "description": "Default task timeout in milliseconds",
+          "metadata": {
+            "category": "agents"
+          }
+        },
+        {
+          "key": "retryAttempts",
+          "value": 3,
+          "type": "number",
+          "description": "Default retry attempts for failed tasks",
+          "metadata": {
+            "category": "agents"
+          }
+        },
+        {
+          "key": "enabledAgents",
+          "value": ["manager", "engineer", "tester", "docs", "security"],
+          "type": "array",
+          "description": "List of enabled agent types",
+          "metadata": {
+            "category": "agents"
+          }
+        }
+      ],
+      "metadata": {
+        "category": "agents"
+      }
+    },
+    {
+      "name": "testing",
+      "description": "Testing framework configuration",
+      "values": [
+        {
+          "key": "defaultTimeout",
+          "value": 30000,
+          "type": "number",
+          "description": "Default test timeout in milliseconds",
+          "metadata": {
+            "category": "testing"
+          }
+        },
+        {
+          "key": "mockDelay",
+          "value": 100,
+          "type": "number",
+          "description": "Default delay for mock responses in milliseconds",
+          "metadata": {
+            "category": "testing"
+          }
+        },
+        {
+          "key": "retainResults",
+          "value": true,
+          "type": "boolean",
+          "description": "Whether to retain test results after completion",
+          "metadata": {
+            "category": "testing"
+          }
+        },
+        {
+          "key": "maxTestHistory",
+          "value": 1000,
+          "type": "number",
+          "description": "Maximum number of test results to retain",
+          "metadata": {
+            "category": "testing"
+          }
+        }
+      ],
+      "metadata": {
+        "category": "testing"
+      }
+    }
+  ],
+  "metadata": {
+    "createdAt": "2024-01-01T00:00:00Z",
+    "updatedAt": "2024-01-01T00:00:00Z",
+    "version": "1.0.0",
+    "environment": "development",
+    "description": "Linguamate.ai MCP Orchestrator Configuration",
+    "tags": ["linguamate", "mcp", "orchestrator", "ai", "language-learning"]
+  }
+}
