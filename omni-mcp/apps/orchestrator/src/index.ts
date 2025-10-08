@@ -65,7 +65,7 @@ async function main() {
   server.get('/servers', async (_request, _reply) => {
     return orchestrator.getAllServerStatuses();
   });
-  
+
   server.get('/servers/:name', async (request, reply) => {
     const { name } = request.params as { name: string };
     const status = orchestrator.getServerStatus(name);
@@ -76,6 +76,176 @@ async function main() {
     }
     
     return status;
+  });
+  
+  // Workflow endpoints
+  server.post('/workflows/:name/execute', async (request, reply) => {
+    const { name } = request.params as { name: string };
+    const { payload, context } = request.body as { payload: any; context?: any };
+    
+    try {
+      const result = await orchestrator.getWorkflowEngine().executeWorkflow(name, payload, context);
+      return result;
+    } catch (error) {
+      reply.code(500);
+      return { error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  });
+
+  server.get('/workflows', async (_request, _reply) => {
+    return orchestrator.getWorkflowEngine().getWorkflows();
+  });
+
+  server.get('/workflows/:name', async (request, reply) => {
+    const { name } = request.params as { name: string };
+    const workflow = orchestrator.getWorkflowEngine().getWorkflow(name);
+    
+    if (!workflow) {
+      reply.code(404);
+      return { error: 'Workflow not found' };
+    }
+    
+    return workflow;
+  });
+
+  // Tool registry endpoints
+  server.get('/tools', async (_request, _reply) => {
+    return orchestrator.getToolRegistry().getAllTools();
+  });
+
+  server.post('/tools/:name/:provider/execute', async (request, reply) => {
+    const { name, provider } = request.params as { name: string; provider: string };
+    const { input, context } = request.body as { input: any; context?: any };
+    
+    try {
+      const result = await orchestrator.getToolRegistry().executeTool(name, provider, input, context);
+      return result;
+    } catch (error) {
+      reply.code(500);
+      return { error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  });
+
+  // Agent endpoints
+  server.get('/agents', async (_request, _reply) => {
+    return orchestrator.getAgentOrchestrator().getAllAgents();
+  });
+
+  server.get('/agents/:id', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const agent = orchestrator.getAgentOrchestrator().getAgent(id);
+    
+    if (!agent) {
+      reply.code(404);
+      return { error: 'Agent not found' };
+    }
+    
+    return agent;
+  });
+
+  server.post('/agents/:id/status', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { status, metadata } = request.body as { status: string; metadata?: any };
+    
+    try {
+      await orchestrator.getAgentOrchestrator().updateAgentStatus(id, status as any, metadata);
+      return { success: true };
+    } catch (error) {
+      reply.code(500);
+      return { error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  });
+
+  // Configuration endpoints
+  server.get('/config/feature-flags', async (_request, _reply) => {
+    return orchestrator.getConfigManager().getFeatureFlags();
+  });
+
+  server.post('/config/feature-flags/:name', async (request, reply) => {
+    const { name } = request.params as { name: string };
+    const { enabled, options } = request.body as { enabled: boolean; options?: any };
+    
+    try {
+      orchestrator.getConfigManager().setFeatureFlag(name, enabled, options);
+      return { success: true };
+    } catch (error) {
+      reply.code(500);
+      return { error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  });
+
+  server.get('/config/sections', async (_request, _reply) => {
+    return orchestrator.getConfigManager().getConfigSections();
+  });
+
+  server.get('/config/sections/:section', async (request, reply) => {
+    const { section } = request.params as { section: string };
+    const sectionConfig = orchestrator.getConfigManager().getConfigSection(section);
+    
+    if (!sectionConfig) {
+      reply.code(404);
+      return { error: 'Section not found' };
+    }
+    
+    return sectionConfig;
+  });
+
+  // Monitoring endpoints
+  server.get('/monitoring/metrics', async (request, _reply) => {
+    const { name, startTime, endTime, labels, limit } = request.query as any;
+    return orchestrator.getMonitoringSystem().getMetrics(name, {
+      startTime: startTime ? new Date(startTime) : undefined,
+      endTime: endTime ? new Date(endTime) : undefined,
+      labels: labels ? JSON.parse(labels) : undefined,
+      limit: limit ? parseInt(limit) : undefined,
+    });
+  });
+
+  server.get('/monitoring/alerts', async (_request, _reply) => {
+    return orchestrator.getMonitoringSystem().getAlerts();
+  });
+
+  server.get('/monitoring/traces', async (request, _reply) => {
+    const { operationName, status, startTime, endTime, limit } = request.query as any;
+    return orchestrator.getMonitoringSystem().getTraces({
+      operationName,
+      status,
+      startTime: startTime ? new Date(startTime) : undefined,
+      endTime: endTime ? new Date(endTime) : undefined,
+      limit: limit ? parseInt(limit) : undefined,
+    });
+  });
+
+  server.get('/monitoring/dashboard', async (_request, _reply) => {
+    return orchestrator.getMonitoringSystem().getDashboardData();
+  });
+
+  // Testing endpoints
+  server.post('/testing/scenarios/:name/run', async (request, reply) => {
+    const { name } = request.params as { name: string };
+    const scenario = request.body as any;
+    
+    try {
+      const result = await orchestrator.getTestingFramework().runTestScenario(scenario);
+      return result;
+    } catch (error) {
+      reply.code(500);
+      return { error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  });
+
+  server.get('/testing/results', async (_request, _reply) => {
+    return orchestrator.getTestingFramework().getTestResults();
+  });
+
+  server.get('/testing/statistics', async (_request, _reply) => {
+    return orchestrator.getTestingFramework().getTestStatistics();
+  });
+
+  server.get('/testing/report', async (_request, _reply) => {
+    const report = orchestrator.getTestingFramework().generateTestReport();
+    reply.type('text/markdown');
+    return report;
   });
   
   // Start HTTP server
