@@ -24,6 +24,22 @@ Quick navigation guide to all README files in the Linguamate project.
 - Troubleshooting
 - **Read this first to understand the project**
 
+### [docs/PRD.md](docs/PRD.md)
+**Product Requirements Document**
+- Complete product vision and requirements
+- User stories and acceptance criteria
+- Technical specifications and SLOs
+- Success metrics and roadmap
+- **Read this for product understanding**
+
+### [docs/CONTENT_PIPELINE.md](docs/CONTENT_PIPELINE.md)
+**Content Pipeline Documentation**
+- Content ingestion and validation process
+- Embedding generation and vector storage
+- Publishing and distribution system
+- Quality assurance and monitoring
+- **Read this for content management**
+
 ---
 
 ## 🧪 Testing Documentation

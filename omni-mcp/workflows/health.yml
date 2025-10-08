@@ -1,0 +1,123 @@
+name: Health Check Workflow
+description: Comprehensive health checks for all Linguamate AI Tutor services
+version: 1.0.0
+
+services:
+  filesystem:
+    type: filesystem
+    path: /workspace
+    timeout: 5000
+    checks:
+      - read_permission: true
+      - write_permission: true
+      - disk_space: ">1GB"
+  
+  search:
+    type: http
+    url: "http://localhost:3000/api/search/health"
+    timeout: 3000
+    expected_status: 200
+    expected_response:
+      status: "healthy"
+  
+  api:
+    type: http
+    url: "http://localhost:3000/api/health"
+    timeout: 5000
+    expected_status: 200
+    expected_response:
+      status: "healthy"
+      services:
+        database: "up"
+        redis: "up"
+        vector_store: "up"
+  
+  tts:
+    type: http
+    url: "http://localhost:3000/api/tts/health"
+    timeout: 10000
+    expected_status: 200
+    expected_response:
+      status: "healthy"
+      provider: "elevenlabs"
+      voice_available: true
+  
+  stt:
+    type: http
+    url: "http://localhost:3000/api/stt/health"
+    timeout: 10000
+    expected_status: 200
+    expected_response:
+      status: "healthy"
+      provider: "whisper"
+      model_loaded: true
+  
+  vector_store:
+    type: http
+    url: "http://localhost:3000/api/vector/health"
+    timeout: 5000
+    expected_status: 200
+    expected_response:
+      status: "healthy"
+      embeddings_available: true
+  
+  storage:
+    type: filesystem
+    path: /workspace/storage
+    timeout: 3000
+    checks:
+      - read_permission: true
+      - write_permission: true
+      - disk_space: ">500MB"
+
+checks:
+  - name: "Database Connection"
+    type: "database"
+    query: "SELECT 1"
+    timeout: 5000
+  
+  - name: "Redis Connection"
+    type: "redis"
+    command: "PING"
+    timeout: 3000
+  
+  - name: "Vector Store Index"
+    type: "vector"
+    operation: "count"
+    timeout: 5000
+  
+  - name: "Audio Storage"
+    type: "filesystem"
+    path: "/workspace/storage/audio"
+    checks:
+      - exists: true
+      - writable: true
+  
+  - name: "Content Storage"
+    type: "filesystem"
+    path: "/workspace/storage/content"
+    checks:
+      - exists: true
+      - writable: true
+
+alerts:
+  - name: "Service Down"
+    condition: "service.status == 'down'"
+    severity: "critical"
+    channels: ["slack", "email"]
+  
+  - name: "High Response Time"
+    condition: "service.response_time > 5000"
+    severity: "warning"
+    channels: ["slack"]
+  
+  - name: "Low Disk Space"
+    condition: "filesystem.available_space < 1GB"
+    severity: "warning"
+    channels: ["slack", "email"]
+
+reporting:
+  format: "json"
+  output: "/workspace/reports/health-check.json"
+  include_metrics: true
+  include_logs: false
