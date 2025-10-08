@@ -157,7 +157,13 @@ test() {
         # Extract coverage percentage (simplified)
         COVERAGE=$(grep -o 'line-rate="[0-9.]*"' "$COVERAGE_FILE" | grep -o '[0-9.]*' | head -1)
         if [[ -n "$COVERAGE" ]]; then
-            COVERAGE_PERCENT=$(echo "$COVERAGE * 100" | bc -l | cut -d. -f1)
+            # Convert coverage (e.g., 0.85) to integer percent (e.g., 85)
+            COVERAGE_INT=${COVERAGE/./}
+            # Pad with zero if necessary (e.g., 0.9 -> 90)
+            if [[ "$COVERAGE" == 0.* && ${#COVERAGE_INT} -eq 1 ]]; then
+                COVERAGE_INT="${COVERAGE_INT}0"
+            fi
+            COVERAGE_PERCENT=$((10#$COVERAGE_INT))
             if [ "$COVERAGE_PERCENT" -lt "$COVERAGE_THRESHOLD" ]; then
                 log_error "Coverage $COVERAGE_PERCENT% is below threshold $COVERAGE_THRESHOLD%"
                 exit 1
