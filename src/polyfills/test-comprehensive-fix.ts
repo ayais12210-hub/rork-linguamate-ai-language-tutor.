@@ -115,15 +115,17 @@ export function testConsoleWarningSuppression() {
     console.warn = function(...args: any[]) {
       const message = args[0];
       if (typeof message === 'string' && 
-          message.includes("Can't perform a React state update on a component that hasn't mounted yet")) {
+          (message.includes("Can't perform a React state update on a component that hasn't mounted yet") ||
+           message.includes("Can't perform a React state update on an unmounted component"))) {
         warningSuppressed = true;
         return; // Suppress this warning
       }
       originalWarn.apply(console, args);
     };
     
-    // Test the warning suppression
+    // Test the warning suppression with both variations
     console.warn("Can't perform a React state update on a component that hasn't mounted yet");
+    console.warn("Can't perform a React state update on an unmounted component");
     
     // Restore original console.warn
     console.warn = originalWarn;
