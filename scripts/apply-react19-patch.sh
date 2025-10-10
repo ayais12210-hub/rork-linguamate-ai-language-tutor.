@@ -4,7 +4,7 @@
 # This fixes the "use is not a function" error by replacing the React 19 'use' hook
 # with the React 19 compatible 'useContext' hook
 
-PATCH_FILE="patches/expo-router-react18-compatibility.patch"
+PATCH_FILE="patches/expo-router-react19-compatibility.patch"
 TARGET_FILE="node_modules/expo-router/build/global-state/storeContext.js"
 
 echo "🔧 Applying React 19 compatibility patch for expo-router..."

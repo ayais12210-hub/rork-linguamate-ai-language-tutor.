@@ -90,6 +90,15 @@ export default [
       'react/react-in-jsx-scope': 'off',
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'error',
+      
+      // Prevent side-effects in render functions
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "CallExpression[callee.object.name='router'], CallExpression[callee.object.name='LogBox']",
+          message: 'Move router.* and LogBox.* calls into useEffect/useLayoutEffect — never call them during render.',
+        },
+      ],
     },
   },
   // Test files config

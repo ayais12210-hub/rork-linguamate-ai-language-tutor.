@@ -1,5 +1,5 @@
 import { Tabs, useRouter } from 'expo-router';
-import { MessageCircle, User, BookOpen, Layers, GraduationCap, Settings } from 'lucide-react-native';
+import { MessageCircle, User, BookOpen, Layers, GraduationCap, Settings, Database } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -100,6 +100,14 @@ export default function TabLayout() {
           title: 'Chat',
           headerTitle: 'AI Language Coach',
           tabBarIcon: ({ color, size }) => <MessageCircle size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="tutor-data"
+        options={{
+          title: 'Tutor Data',
+          headerTitle: 'Tutor Data Fetcher',
+          tabBarIcon: ({ color, size }) => <Database size={size} color={color} />,
         }}
       />
       <Tabs.Screen

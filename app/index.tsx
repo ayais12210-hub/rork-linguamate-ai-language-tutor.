@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,24 +12,26 @@ export default function IndexScreen() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { user, isLoading: userLoading } = useUser();
 
-  const checkOnboardingStatus = useCallback(async () => {
-    try {
-      if (!user.onboardingCompleted) {
-        setShowOnboarding(true);
-      } else if (!user.selectedLanguage || !user.nativeLanguage) {
-        setShowLanguageSetup(true);
-      }
-    } catch (error) {
-      console.error('Error checking onboarding status:', error);
-      setShowOnboarding(true);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user.onboardingCompleted, user.selectedLanguage, user.nativeLanguage]);
-
   useEffect(() => {
-    checkOnboardingStatus();
-  }, [checkOnboardingStatus]);
+    const checkOnboardingStatus = async () => {
+      try {
+        if (!user.onboardingCompleted) {
+          setShowOnboarding(true);
+        } else if (!user.selectedLanguage || !user.nativeLanguage) {
+          setShowLanguageSetup(true);
+        }
+      } catch (error) {
+        console.error('Error checking onboarding status:', error);
+        setShowOnboarding(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (!userLoading) {
+      checkOnboardingStatus();
+    }
+  }, [user.onboardingCompleted, user.selectedLanguage, user.nativeLanguage, userLoading]);
 
   useEffect(() => {
     if (!userLoading && !isLoading) {
