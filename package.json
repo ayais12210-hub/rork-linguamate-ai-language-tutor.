@@ -64,7 +64,8 @@
     "make:simulate-speech": "make simulate-speech",
     "make:scan": "make scan",
     "make:clean": "make clean",
-    "versions": "node -e \"const p=require('./package.json');console.log({expo:p.dependencies?.expo,'expo-router':p.dependencies?.['expo-router'],react:p.dependencies?.react,'react-dom':p.dependencies?.['react-dom']})\""
+    "versions": "node -e \"const p=require('./package.json');console.log({expo:p.dependencies?.expo,'expo-router':p.dependencies?.['expo-router'],react:p.dependencies?.react,'react-dom':p.dependencies?.['react-dom']})\"",
+    "postinstall": "bash scripts/fix-react19-compatibility.sh"
   },
   "dependencies": {
     "@axe-core/playwright": "^4.10.2",
