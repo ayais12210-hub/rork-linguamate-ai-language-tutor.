@@ -1,9 +1,19 @@
+// Import React patch first to fix the "use is not a function" error
+import '@/src/polyfills/react-patch';
+// Import global React.use polyfill
+import '@/src/polyfills/react-use-global';
+// Import expo-router fix
+import '@/src/polyfills/expo-router-fix';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createQueryClient, OnlineStatusSync } from '@/lib/react-query';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 // Import the compatibility layer for React 19
 import '@/lib/expo-router-compat';
+// Import React use polyfill to fix the "use is not a function" error
+import '@/src/polyfills/react-use-polyfill';
+// Import test to verify the fix is working
+import { runTests } from '@/src/polyfills/test-react-use';
 import React, { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { UserProvider, useUser } from '@/hooks/user-store';
@@ -76,6 +86,10 @@ function OfflineInitializer() {
 
 export default function RootLayout() {
   useEffect(() => {
+    // Run tests to verify React.use polyfill is working
+    console.log('[RootLayout] Running React.use compatibility tests...');
+    runTests();
+    
     // Hide splash screen after a short delay to ensure app is properly initialized
     const hideSplash = async () => {
       try {
