@@ -1,9 +1,7 @@
-// Import React patch first to fix the "use is not a function" error
-import '@/src/polyfills/react-patch';
-// Import global React.use polyfill
-import '@/src/polyfills/react-use-global';
-// Import expo-router fix
-import '@/src/polyfills/expo-router-fix';
+// Import robust React.use polyfill first to fix the "use is not a function" error
+import '@/src/polyfills/react-use-robust';
+// Import LogBox state update fix
+import '@/src/polyfills/logbox-state-fix';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createQueryClient, OnlineStatusSync } from '@/lib/react-query';
 import { Stack } from 'expo-router';
@@ -12,8 +10,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import '@/lib/expo-router-compat';
 // Import React use polyfill to fix the "use is not a function" error
 import '@/src/polyfills/react-use-polyfill';
-// Import test to verify the fix is working
-import { runTests } from '@/src/polyfills/test-react-use';
+// Import comprehensive test to verify all fixes are working
+import { runComprehensiveTests } from '@/src/polyfills/test-comprehensive-fix';
 import React, { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { UserProvider, useUser } from '@/hooks/user-store';
@@ -86,9 +84,9 @@ function OfflineInitializer() {
 
 export default function RootLayout() {
   useEffect(() => {
-    // Run tests to verify React.use polyfill is working
-    console.log('[RootLayout] Running React.use compatibility tests...');
-    runTests();
+    // Run comprehensive tests to verify all fixes are working
+    console.log('[RootLayout] Running comprehensive React 19 compatibility tests...');
+    runComprehensiveTests();
     
     // Hide splash screen after a short delay to ensure app is properly initialized
     const hideSplash = async () => {
