@@ -2,6 +2,8 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { createQueryClient, OnlineStatusSync } from '@/lib/react-query';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+// Import the compatibility layer for React 19
+import '@/lib/expo-router-compat';
 import React, { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { UserProvider, useUser } from '@/hooks/user-store';
