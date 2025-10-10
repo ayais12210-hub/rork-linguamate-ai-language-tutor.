@@ -13,6 +13,12 @@ export const API_ENDPOINTS = {
   // External APIs (examples)
   TRANSLATE: 'https://api.mymemory.translated.net/get',
   DICTIONARY: 'https://api.dictionaryapi.dev/api/v2/entries',
+  
+  // Tutor Data APIs
+  TUTOR_DATA_FETCH: '/api/trpc/tutorData.fetch',
+  TUTOR_DATA_FETCH_MULTIPLE: '/api/trpc/tutorData.fetchMultiple',
+  TUTOR_DATA_CLEAR_CACHE: '/api/trpc/tutorData.clearCache',
+  TUTOR_DATA_CACHE_STATS: '/api/trpc/tutorData.getCacheStats',
 } as const;
 
 // API response types
@@ -238,6 +244,53 @@ export class ApiClient {
       return null;
     }
   }
+
+  // Tutor Data Fetching
+  async fetchTutorData(url: string, options?: {
+    useCache?: boolean;
+    timeout?: number;
+    validate?: boolean;
+  }): Promise<any> {
+    const base = this.getBase();
+    const endpoint = `${base}${API_ENDPOINTS.TUTOR_DATA_FETCH}`;
+    
+    return this.request<any>(endpoint, {
+      method: 'POST',
+      body: JSON.stringify({ url, options }),
+    });
+  }
+
+  async fetchMultipleTutorData(urls: string[], options?: {
+    useCache?: boolean;
+    timeout?: number;
+    validate?: boolean;
+    concurrency?: number;
+  }): Promise<any> {
+    const base = this.getBase();
+    const endpoint = `${base}${API_ENDPOINTS.TUTOR_DATA_FETCH_MULTIPLE}`;
+    
+    return this.request<any>(endpoint, {
+      method: 'POST',
+      body: JSON.stringify({ urls, options }),
+    });
+  }
+
+  async clearTutorDataCache(url?: string): Promise<any> {
+    const base = this.getBase();
+    const endpoint = `${base}${API_ENDPOINTS.TUTOR_DATA_CLEAR_CACHE}`;
+    
+    return this.request<any>(endpoint, {
+      method: 'POST',
+      body: JSON.stringify({ url }),
+    });
+  }
+
+  async getTutorDataCacheStats(): Promise<any> {
+    const base = this.getBase();
+    const endpoint = `${base}${API_ENDPOINTS.TUTOR_DATA_CACHE_STATS}`;
+    
+    return this.request<any>(endpoint, { method: 'GET' });
+  }
 }
 
 // Export singleton instance
@@ -327,6 +380,38 @@ export const apiHelpers = {
 
     const response = await apiClient.generateText(messages);
     return response.completion;
+  },
+
+  // Tutor Data Operations
+  async fetchTutorDataFromUrl(
+    url: string,
+    options?: {
+      useCache?: boolean;
+      timeout?: number;
+      validate?: boolean;
+    }
+  ): Promise<any> {
+    return apiClient.fetchTutorData(url, options);
+  },
+
+  async fetchMultipleTutorDataSources(
+    urls: string[],
+    options?: {
+      useCache?: boolean;
+      timeout?: number;
+      validate?: boolean;
+      concurrency?: number;
+    }
+  ): Promise<any> {
+    return apiClient.fetchMultipleTutorData(urls, options);
+  },
+
+  async clearTutorDataCache(url?: string): Promise<any> {
+    return apiClient.clearTutorDataCache(url);
+  },
+
+  async getTutorDataCacheStats(): Promise<any> {
+    return apiClient.getTutorDataCacheStats();
   },
 };
 
