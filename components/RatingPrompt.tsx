@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { Platform, View, Text, StyleSheet, TouchableOpacity, Modal, Linking } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Star, X, ThumbsUp } from 'lucide-react-native';
@@ -16,6 +16,7 @@ function useRatingLogic() {
   const { user } = useUser();
   const [state, setState] = useState<RatingState>({ hasRated: false, dismissCount: 0, lastPromptAt: null });
   const [visible, setVisible] = useState<boolean>(false);
+  const isMountedRef = useRef<boolean>(true);
 
   const canPrompt = useMemo(() => {
     if (state.hasRated) return false;
@@ -46,10 +47,20 @@ function useRatingLogic() {
 
   useEffect(() => {
     if (canPrompt) {
-      const timer = setTimeout(() => setVisible(true), 1200);
+      const timer = setTimeout(() => {
+        if (isMountedRef.current) {
+          setVisible(true);
+        }
+      }, 1200);
       return () => clearTimeout(timer);
     }
   }, [canPrompt]);
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const persist = useCallback((next: Partial<RatingState>) => {
     setState((prev) => {

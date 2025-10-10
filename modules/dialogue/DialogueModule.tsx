@@ -60,6 +60,7 @@ export default function DialogueModule({ languageCode, onComplete, onBack }: Pro
   const [isLoading, setIsLoading] = useState(true);
   const [exerciseMode, setExerciseMode] = useState<'listen' | 'practice' | 'roleplay'>('listen');
   const [userRole, setUserRole] = useState<string>('');
+  const isMountedRef = useRef<boolean>(true);
   
   const { user, updateStats } = useUser();
   const { upsertSkill, recordResult } = useLearningProgress();
@@ -84,6 +85,12 @@ export default function DialogueModule({ languageCode, onComplete, onBack }: Pro
       }).start();
     }
   }, [currentDialogue, fadeAnimation]);
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
   
   useEffect(() => {
     if (isRecording) {
@@ -206,7 +213,14 @@ export default function DialogueModule({ languageCode, onComplete, onBack }: Pro
     }
     
     setIsPlaying(true);
-    setTimeout(() => setIsPlaying(false), 2000);
+    const timer = setTimeout(() => {
+      if (isMountedRef.current) {
+        setIsPlaying(false);
+      }
+    }, 2000);
+    
+    // Store timer reference for cleanup if needed
+    return () => clearTimeout(timer);
   };
   
   const startRecording = async () => {
