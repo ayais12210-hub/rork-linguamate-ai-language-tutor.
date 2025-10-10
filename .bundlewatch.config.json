@@ -1,0 +1,24 @@
+{
+  "files": [
+    {
+      "path": "./dist/**/*.js",
+      "maxSize": "500 kB",
+      "compression": "gzip"
+    },
+    {
+      "path": "./dist/**/*.css",
+      "maxSize": "50 kB",
+      "compression": "gzip"
+    },
+    {
+      "path": "./dist/**/*.wasm",
+      "maxSize": "1 MB",
+      "compression": "gzip"
+    }
+  ],
+  "ci": {
+    "trackBranches": ["main", "develop"],
+    "repoOwner": "ayais12210-hub",
+    "repoName": "Linguamate-ai-tutor"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "defaults": {
+    "timeout": 10000,
+    "wait": 2000,
+    "standard": "WCAG2AA",
+    "chromeLaunchConfig": {
+      "args": ["--no-sandbox", "--disable-dev-shm-usage"]
+    }
+  },
+  "urls": [
+    {
+      "url": "http://localhost:3000",
+      "screenCapture": "pa11y-screenshots/homepage.png"
+    },
+    {
+      "url": "http://localhost:3000/lessons",
+      "screenCapture": "pa11y-screenshots/lessons.png"
+    },
+    {
+      "url": "http://localhost:3000/game",
+      "screenCapture": "pa11y-screenshots/game.png"
+    },
+    {
+      "url": "http://localhost:3000/profile",
+      "screenCapture": "pa11y-screenshots/profile.png"
+    }
+  ]
+}

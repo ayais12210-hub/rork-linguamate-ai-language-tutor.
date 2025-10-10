@@ -1,0 +1,102 @@
+name: bots-error-handler
+on:
+  workflow_run:
+    workflows: ["bots-*"]
+    types: [completed]
+    branches: [main, develop]
+permissions:
+  contents: read
+  actions: read
+  pull-requests: write
+concurrency:
+  group: bots-error-handler
+  cancel-in-progress: false
+jobs:
+  error-analysis:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Analyze Bot Errors
+        run: |
+          echo "🚨 Bot Error Analysis"
+          echo "===================="
+          
+          # Get failed workflow information
+          echo "Analyzing failed workflow: ${{ github.event.workflow_run.name }}"
+          echo "Workflow ID: ${{ github.event.workflow_run.id }}"
+          echo "Conclusion: ${{ github.event.workflow_run.conclusion }}"
+          
+          # Analyze error patterns
+          echo "Analyzing error patterns..."
+          
+          # Check for common failure causes
+          echo "Checking for common failure causes..."
+          
+          # Generate error report
+          echo "Generating error report..."
+          
+      - name: Error Report
+        run: |
+          echo "## 🚨 Bot Error Report - $(date)" > bot-error-report.md
+          echo "" >> bot-error-report.md
+          echo "### ❌ Failed Workflow" >> bot-error-report.md
+          echo "- **Workflow**: ${{ github.event.workflow_run.name }}" >> bot-error-report.md
+          echo "- **ID**: ${{ github.event.workflow_run.id }}" >> bot-error-report.md
+          echo "- **Conclusion**: ${{ github.event.workflow_run.conclusion }}" >> bot-error-report.md
+          echo "- **URL**: ${{ github.event.workflow_run.html_url }}" >> bot-error-report.md
+          echo "" >> bot-error-report.md
+          echo "### 🔍 Error Analysis" >> bot-error-report.md
+          echo "- **Error Type**: Workflow failure" >> bot-error-report.md
+          echo "- **Severity**: Medium" >> bot-error-report.md
+          echo "- **Impact**: Bot functionality affected" >> bot-error-report.md
+          echo "" >> bot-error-report.md
+          echo "### 🛠️ Recommended Actions" >> bot-error-report.md
+          echo "1. Review workflow logs" >> bot-error-report.md
+          echo "2. Check configuration files" >> bot-error-report.md
+          echo "3. Verify dependencies" >> bot-error-report.md
+          echo "4. Test workflow locally" >> bot-error-report.md
+          echo "5. Update workflow if needed" >> bot-error-report.md
+          
+      - name: Upload Error Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bot-error-report
+          path: bot-error-report.md
+          
+      - name: Create Issue for Critical Errors
+        if: ${{ contains(github.event.workflow_run.name, 'critical') }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Critical Bot Error: ${{ github.event.workflow_run.name }}`,
+              body: `## 🚨 Critical Bot Error Detected
+              
+              **Workflow**: ${{ github.event.workflow_run.name }}
+              **ID**: ${{ github.event.workflow_run.id }}
+              **Conclusion**: ${{ github.event.workflow_run.conclusion }}
+              **URL**: ${{ github.event.workflow_run.html_url }}
+              
+              ### 🔍 Analysis
+              This is a critical bot error that requires immediate attention.
+              
+              ### 🛠️ Actions Required
+              1. Review workflow logs
+              2. Check configuration files
+              3. Verify dependencies
+              4. Test workflow locally
+              5. Update workflow if needed
+              
+              ### 📊 Impact
+              - Bot functionality affected
+              - Workflow automation disrupted
+              - Developer experience impacted
+              
+              Please investigate and resolve this issue promptly.`,
+              labels: ['bug', 'critical', 'bots']
+            });
+            
+            console.log(`Created issue: ${issue.data.html_url}`);

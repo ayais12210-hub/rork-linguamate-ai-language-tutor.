@@ -1,0 +1,46 @@
+name: bots-eas-update
+on:
+  pull_request:
+    paths:
+      - "app.json"
+      - "eas.json"
+      - "app/**"
+      - "expo/**"
+permissions:
+  contents: read
+  pull-requests: write
+concurrency:
+  group: bots-eas-update-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  eas-update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Check EAS configuration
+        run: |
+          if [ -f "eas.json" ] || [ -f "app.json" ]; then
+            echo "EAS configuration detected"
+            if command -v eas &> /dev/null; then
+              eas --version
+            else
+              npm install -g @expo/eas-cli
+              eas --version
+            fi
+          else
+            echo "EAS not configured, skipping"
+          fi
+      - name: Validate Expo configuration
+        run: |
+          if [ -f "app.json" ]; then
+            echo "Expo app.json found"
+            npx expo --version || echo "Expo CLI not available"
+          else
+            echo "No Expo configuration found"
+          fi

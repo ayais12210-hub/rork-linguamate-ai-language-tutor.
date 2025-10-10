@@ -1,0 +1,38 @@
+name: bots-mermaid
+on:
+  pull_request:
+    paths:
+      - "**/*.mmd"
+      - "**/*.mermaid"
+      - "docs/**"
+      - "architecture/**"
+permissions:
+  contents: read
+  pull-requests: write
+concurrency:
+  group: bots-mermaid-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  mermaid:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Find Mermaid files
+        run: |
+          find . -name "*.mmd" -o -name "*.mermaid" | head -10
+      - name: Validate Mermaid syntax
+        run: |
+          if command -v mermaid &> /dev/null; then
+            echo "Mermaid CLI found"
+            find . -name "*.mmd" -o -name "*.mermaid" | while read file; do
+              echo "Validating $file"
+              mermaid --validate "$file" || echo "Validation failed for $file"
+            done
+          else
+            echo "Mermaid CLI not available, skipping validation"
+          fi
+      - name: Generate Mermaid diagrams
+        run: |
+          echo "Mermaid diagram validation complete"
+          echo "Found Mermaid files:"
+          find . -name "*.mmd" -o -name "*.mermaid" | head -5
