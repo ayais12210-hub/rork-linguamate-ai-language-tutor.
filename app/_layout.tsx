@@ -2,6 +2,7 @@
 import '@/src/polyfills/react-use-robust';
 // Import LogBox state update fix
 import '@/src/polyfills/logbox-state-fix';
+import { applyLogBoxStateFix } from '@/src/polyfills/logbox-state-fix';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createQueryClient, OnlineStatusSync } from '@/lib/react-query';
 import { Stack } from 'expo-router';
@@ -84,6 +85,9 @@ function OfflineInitializer() {
 
 export default function RootLayout() {
   useEffect(() => {
+    // Apply the enhanced LogBox state fix
+    applyLogBoxStateFix();
+    
     // Run comprehensive tests to verify all fixes are working
     console.log('[RootLayout] Running comprehensive React 19 compatibility tests...');
     runComprehensiveTests();
