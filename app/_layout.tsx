@@ -2,6 +2,8 @@
 import '@/src/polyfills/react-use-robust';
 // Import LogBox state update fix
 import '@/src/polyfills/logbox-state-fix';
+// Import safe state wrapper
+import { SafeStateWrapper } from '@/src/polyfills/safe-state-wrapper';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createQueryClient, OnlineStatusSync } from '@/lib/react-query';
 import { Stack } from 'expo-router';
@@ -114,15 +116,17 @@ export default function RootLayout() {
                   <LearningProgressProvider>
                     <AppErrorBoundary>
                       <GestureHandlerRootView style={{ flex: 1 }} testID="root-gesture-container">
-                        <MonitoringInitializer />
-                        <OfflineInitializer />
-                        <OnlineStatusSync />
-                        <PreferenceProvider>
-                          <RootLayoutNav />
-                        </PreferenceProvider>
-                        <RatingPrompt />
-                        <NetworkStatusBanner />
-                        <OfflineBanner />
+                        <SafeStateWrapper>
+                          <MonitoringInitializer />
+                          <OfflineInitializer />
+                          <OnlineStatusSync />
+                          <PreferenceProvider>
+                            <RootLayoutNav />
+                          </PreferenceProvider>
+                          <RatingPrompt />
+                          <NetworkStatusBanner />
+                          <OfflineBanner />
+                        </SafeStateWrapper>
                       </GestureHandlerRootView>
                       <SplashCursor />
                     </AppErrorBoundary>

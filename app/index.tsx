@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import OnboardingScreen from '@/components/OnboardingScreen';
 import LanguageSetupScreen from '@/components/LanguageSetupScreen';
 import { useUser } from '@/hooks/user-store';
+import { SafeStateWrapper } from '@/src/polyfills/safe-state-wrapper';
 
 export default function IndexScreen() {
   const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
@@ -15,10 +16,16 @@ export default function IndexScreen() {
   useEffect(() => {
     const checkOnboardingStatus = async () => {
       try {
-        if (!user.onboardingCompleted) {
+        // Ensure user object is properly initialized before accessing properties
+        if (user && typeof user === 'object') {
+          if (!user.onboardingCompleted) {
+            setShowOnboarding(true);
+          } else if (!user.selectedLanguage || !user.nativeLanguage) {
+            setShowLanguageSetup(true);
+          }
+        } else {
+          // If user is not properly initialized, show onboarding
           setShowOnboarding(true);
-        } else if (!user.selectedLanguage || !user.nativeLanguage) {
-          setShowLanguageSetup(true);
         }
       } catch (error) {
         console.error('Error checking onboarding status:', error);
@@ -28,13 +35,13 @@ export default function IndexScreen() {
       }
     };
 
-    if (!userLoading) {
+    if (!userLoading && user) {
       checkOnboardingStatus();
     }
-  }, [user.onboardingCompleted, user.selectedLanguage, user.nativeLanguage, userLoading]);
+  }, [user?.onboardingCompleted, user?.selectedLanguage, user?.nativeLanguage, userLoading, user]);
 
   useEffect(() => {
-    if (!userLoading && !isLoading) {
+    if (!userLoading && !isLoading && user && typeof user === 'object') {
       if (
         user.onboardingCompleted &&
         user.selectedLanguage &&
@@ -43,11 +50,11 @@ export default function IndexScreen() {
         router.replace('/(tabs)/chat');
       }
     }
-  }, [user, userLoading, isLoading]);
+  }, [user?.onboardingCompleted, user?.selectedLanguage, user?.nativeLanguage, userLoading, isLoading, user]);
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
-    if (!user.selectedLanguage || !user.nativeLanguage) {
+    if (user && typeof user === 'object' && (!user.selectedLanguage || !user.nativeLanguage)) {
       setShowLanguageSetup(true);
     } else {
       router.replace('/(tabs)/chat');
@@ -62,22 +69,34 @@ export default function IndexScreen() {
   if (isLoading || userLoading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.container} />
+        <SafeStateWrapper>
+          <View style={styles.container} />
+        </SafeStateWrapper>
       </SafeAreaView>
     );
   }
 
   if (showOnboarding) {
-    return <OnboardingScreen onComplete={handleOnboardingComplete} />;
+    return (
+      <SafeStateWrapper>
+        <OnboardingScreen onComplete={handleOnboardingComplete} />
+      </SafeStateWrapper>
+    );
   }
 
   if (showLanguageSetup) {
-    return <LanguageSetupScreen onComplete={handleLanguageSetupComplete} />;
+    return (
+      <SafeStateWrapper>
+        <LanguageSetupScreen onComplete={handleLanguageSetupComplete} />
+      </SafeStateWrapper>
+    );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.container} />
+      <SafeStateWrapper>
+        <View style={styles.container} />
+      </SafeStateWrapper>
     </SafeAreaView>
   );
 }

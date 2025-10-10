@@ -115,7 +115,8 @@ export function testConsoleWarningSuppression() {
     console.warn = function(...args: any[]) {
       const message = args[0];
       if (typeof message === 'string' && 
-          message.includes("Can't perform a React state update on a component that hasn't mounted yet")) {
+          (message.includes("Can't perform a React state update on a component that hasn't mounted yet") ||
+           message.includes("Warning: Can't perform a React state update on a component that hasn't mounted yet"))) {
         warningSuppressed = true;
         return; // Suppress this warning
       }
@@ -124,6 +125,7 @@ export function testConsoleWarningSuppression() {
     
     // Test the warning suppression
     console.warn("Can't perform a React state update on a component that hasn't mounted yet");
+    console.warn("Warning: Can't perform a React state update on a component that hasn't mounted yet");
     
     // Restore original console.warn
     console.warn = originalWarn;
@@ -141,6 +143,27 @@ export function testConsoleWarningSuppression() {
   }
 }
 
+// Test safe state update hooks
+export function testSafeStateUpdateHooks() {
+  console.log('[Comprehensive Test] Testing safe state update hooks...');
+  
+  try {
+    // Test if the safe state hooks are available
+    const { useSafeStateUpdate, useSafeState } = require('./logbox-state-fix');
+    
+    if (typeof useSafeStateUpdate === 'function' && typeof useSafeState === 'function') {
+      console.log('✅ Safe state update hooks are available');
+      return true;
+    } else {
+      console.error('❌ Safe state update hooks are not available');
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ Safe state update hooks test failed:', error);
+    return false;
+  }
+}
+
 // Run all tests
 export function runComprehensiveTests() {
   console.log('[Comprehensive Test] Running all React 19 compatibility tests...');
@@ -151,7 +174,8 @@ export function runComprehensiveTests() {
     globalReactUse: testGlobalReactUse(),
     windowReactUse: testWindowReactUse(),
     moduleSystemPatching: testModuleSystemPatching(),
-    consoleWarningSuppression: testConsoleWarningSuppression()
+    consoleWarningSuppression: testConsoleWarningSuppression(),
+    safeStateUpdateHooks: testSafeStateUpdateHooks()
   };
   
   console.log('='.repeat(60));
@@ -161,6 +185,7 @@ export function runComprehensiveTests() {
   console.log(`  Window React.use: ${results.windowReactUse ? '✅ PASS' : '❌ FAIL'}`);
   console.log(`  Module System Patching: ${results.moduleSystemPatching ? '✅ PASS' : '❌ FAIL'}`);
   console.log(`  Console Warning Suppression: ${results.consoleWarningSuppression ? '✅ PASS' : '❌ FAIL'}`);
+  console.log(`  Safe State Update Hooks: ${results.safeStateUpdateHooks ? '✅ PASS' : '❌ FAIL'}`);
   
   const allPassed = Object.values(results).every(result => result);
   
