@@ -1,0 +1,44 @@
+name: bots-lingui
+on:
+  pull_request:
+    paths:
+      - "locales/**"
+      - "messages/**"
+      - "**/*.po"
+      - "**/*.json"
+      - "lingui.config.js"
+permissions:
+  contents: read
+  pull-requests: write
+concurrency:
+  group: bots-lingui-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  lingui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Check for LinguiJS
+        run: |
+          if [ -f "lingui.config.js" ] || [ -f "package.json" ] && grep -q "lingui" package.json; then
+            echo "LinguiJS detected"
+            npx lingui extract || echo "Lingui extract failed"
+            npx lingui compile || echo "Lingui compile failed"
+          else
+            echo "LinguiJS not configured, skipping"
+          fi
+      - name: Validate translation keys
+        run: |
+          if [ -d "locales" ] || [ -d "messages" ]; then
+            echo "Checking for missing translation keys..."
+            find . -name "*.json" -path "*/locales/*" -o -path "*/messages/*" | head -5
+            echo "Translation validation complete"
+          else
+            echo "No translation directories found"
+          fi

@@ -1,0 +1,30 @@
+name: bots-crowdin
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - "locales/**"
+      - "messages/**"
+      - "**/*.po"
+      - "**/*.json"
+permissions:
+  contents: read
+  pull-requests: write
+concurrency:
+  group: bots-crowdin-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  crowdin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Crowdin Sync
+        uses: crowdin/github-action@v1
+        with:
+          crowdin-api-token: ${{ secrets.CROWDIN_API_TOKEN }}
+          crowdin-project-id: ${{ secrets.CROWDIN_PROJECT_ID }}
+          crowdin-config-path: 'crowdin.yml'
+          crowdin-source-files: 'locales/en.json'
+          crowdin-translation-files: 'locales/%two_letters_code%.json'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

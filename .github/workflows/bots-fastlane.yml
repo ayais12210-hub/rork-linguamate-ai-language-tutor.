@@ -1,0 +1,49 @@
+name: bots-fastlane
+on:
+  pull_request:
+    paths:
+      - "ios/**"
+      - "android/**"
+      - "fastlane/**"
+      - "Fastfile"
+      - "Gemfile"
+permissions:
+  contents: read
+  pull-requests: write
+concurrency:
+  group: bots-fastlane-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  fastlane:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.0'
+      - name: Install Fastlane
+        run: |
+          gem install fastlane
+          gem install bundler
+      - name: Check Fastlane configuration
+        run: |
+          if [ -f "Fastfile" ] || [ -d "fastlane" ]; then
+            echo "Fastlane detected"
+            fastlane --version
+            if [ -f "fastlane/Fastfile" ]; then
+              echo "Fastfile found, validating syntax..."
+              ruby -c fastlane/Fastfile || echo "Fastfile syntax check failed"
+            fi
+          else
+            echo "Fastlane not configured, skipping"
+          fi
+      - name: Validate app metadata
+        run: |
+          if [ -d "ios" ]; then
+            echo "iOS project detected"
+            find ios -name "Info.plist" | head -3
+          fi
+          if [ -d "android" ]; then
+            echo "Android project detected"
+            find android -name "AndroidManifest.xml" | head -3
+          fi

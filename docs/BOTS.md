@@ -42,11 +42,17 @@ This document provides a comprehensive overview of all automated bots and workfl
 | Welcome Bot | GitHub Action | No | PR/Issue | ✅ Active | Built-in |
 | commitlint | GitHub Action | No | PR | ✅ Active | Built-in |
 | Auto-Assign | GitHub Action | No | PR | ✅ Active | Built-in |
-| **Utility Bots** |
-| WIP/Draft Gate | GitHub Action | No | PR | ✅ Active | Built-in |
-| Lock Threads | GitHub Action | No | Schedule | ✅ Active | Built-in |
-| Label Sync | GitHub Action | No | Manual | ✅ Active | Built-in |
-| Add-to-Project | GitHub Action | Project URL | Issue/PR | ✅ Active | Add DEFAULT_PROJECT_URL |
+| **Tier 5: Language Learning & App Store** |
+| Lighthouse CI | GitHub Action | LHCI Token | PR | ✅ Active | Add LHCI_GITHUB_APP_TOKEN |
+| Percy | GitHub Action | Percy Token | PR | ✅ Active | Add PERCY_TOKEN |
+| LinguiJS | GitHub Action | No | PR | ✅ Active | Built-in |
+| Fastlane | GitHub Action | No | PR | ✅ Active | Built-in |
+| Bundlewatch | GitHub Action | Optional | PR | ✅ Active | Built-in |
+| License Checker | GitHub Action | No | PR | ✅ Active | Built-in |
+| Crowdin | GitHub Action | Crowdin API | PR | ✅ Active | Add CROWDIN_API_TOKEN |
+| Pa11y CI | GitHub Action | No | PR | ✅ Active | Built-in |
+| EAS Update | GitHub Action | Optional | PR | ✅ Active | Built-in |
+| Mermaid | GitHub Action | No | PR | ✅ Active | Built-in |
 
 ## 🚀 Enablement Checklist (Post-Merge)
 
