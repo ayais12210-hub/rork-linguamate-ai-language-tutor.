@@ -1,6 +1,8 @@
 name: bots-syft-grype
 on: [pull_request]
-concurrency: { group: bots-syft-grype-${{ github.ref }}, cancel-in-progress: true }
+concurrency:
+  group: bots-syft-grype-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   sbom:
     runs-on: ubuntu-latest

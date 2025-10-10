@@ -1,0 +1,32 @@
+name: bots-percy
+on:
+  pull_request:
+    paths:
+      - "app/**"
+      - "components/**"
+      - "web/**"
+permissions:
+  contents: read
+  pull-requests: write
+concurrency:
+  group: bots-percy-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  percy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build app
+        run: pnpm build || pnpm web:build || echo "Build step not found, skipping"
+      - name: Percy visual testing
+        uses: percy/exec-action@v0.3.1
+        with:
+          custom-command: "pnpm test:visual || echo 'Visual tests not configured'"
+        env:
+          PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}

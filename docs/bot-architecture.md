@@ -4,27 +4,29 @@ This document provides a comprehensive overview of the multi-tier bot automation
 
 ## 🎯 Architecture Overview
 
-The bot automation stack is organized into **4 progressive tiers**, each building upon the previous to create a comprehensive, enterprise-grade automation system:
+The bot automation stack is organized into **5 progressive tiers**, each building upon the previous to create a comprehensive, enterprise-grade automation system:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Tier 4: AI-Powered                      │
-│  CodiumAI PR-Agent │ Sweep Bot │ Danger JS │ MegaLinter    │
-│  SLSA Generator    │ All-Contributors │ Welcome Bot        │
-│  commitlint        │ Auto-Assign                           │
+│  🌍 Tier 5: Language Learning & App Store (10 bots)        │
+│  Lighthouse │ Percy │ LinguiJS │ Fastlane │ Bundlewatch    │
+│  License Checker │ Crowdin │ Pa11y │ EAS Update │ Mermaid   │
 ├─────────────────────────────────────────────────────────────┤
-│                    Tier 3: Security & Quality              │
-│  Renovate │ Gitleaks │ Dependency Review │ Trivy          │
-│  reviewdog │ Changesets │ Codecov │ Vitest │ Semgrep       │
+│  🎯 Tier 4: AI-Powered & Advanced (9 bots)                 │
+│  CodiumAI │ Sweep │ Danger │ MegaLinter │ SLSA │ Welcome   │
 ├─────────────────────────────────────────────────────────────┤
-│                    Tier 2: Advanced Automation             │
+│  🛡️ Tier 3: Security & Quality (9 bots)                   │
+│  Renovate │ Gitleaks │ Trivy │ Semgrep │ Codecov │ Vitest  │
+├─────────────────────────────────────────────────────────────┤
+│  ⚙️ Tier 2: Advanced Automation (5 bots)                   │
 │  Mergify │ Reviewpad │ OSSF Scorecard │ Allstar │ ImgBot   │
 ├─────────────────────────────────────────────────────────────┤
-│                    Tier 1: Baseline                       │
-│  Dependabot │ CodeQL │ Super-Linter │ Semantic PRs         │
-│  Release Please │ Stale Bot │ MCP Guard                   │
+│  🚀 Tier 1: Baseline (8 bots)                              │
+│  Dependabot │ CodeQL │ Super-Linter │ Semantic PRs │ MCP   │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+**Total: 41 Enterprise-Grade Bots** across 5 progressive tiers!
 
 ## 📊 Tier Breakdown
 

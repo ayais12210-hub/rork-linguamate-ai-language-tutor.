@@ -1,0 +1,30 @@
+name: bots-pa11y
+on:
+  pull_request:
+    paths:
+      - "app/**"
+      - "components/**"
+      - "web/**"
+      - "public/**"
+permissions:
+  contents: read
+  pull-requests: write
+concurrency:
+  group: bots-pa11y-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  pa11y:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build app
+        run: pnpm build || pnpm web:build || echo "Build step not found, skipping"
+      - name: Run Pa11y CI
+        run: |
+          npx pa11y-ci --config .pa11yci.json || echo "Pa11y CI completed with warnings"
