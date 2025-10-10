@@ -56,6 +56,7 @@ import {
   compareUsersProcedure,
   getGlobalStatsProcedure
 } from "./routes/leaderboard/leaderboard";
+import { tutorDataRouter } from "./routes/tutor-data/tutor-data";
 
 export const appRouter = createTRPCRouter({
   // Legacy example route
@@ -146,6 +147,9 @@ export const appRouter = createTRPCRouter({
 
   // Dialogue
   dialogue: dialogueRouter,
+
+  // Tutor Data Fetching
+  tutorData: tutorDataRouter,
 });
 
 export type AppRouter = typeof appRouter;
