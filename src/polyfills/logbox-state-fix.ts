@@ -23,7 +23,37 @@ export function useSafeStateUpdate() {
     }
   };
   
-  return { safeSetState, isMounted: isMountedRef.current };
+  const safeAsyncSetState = async (setState: () => void | Promise<void>) => {
+    if (isMountedRef.current) {
+      await setState();
+    }
+  };
+  
+  return { safeSetState, safeAsyncSetState, isMounted: isMountedRef.current };
+}
+
+// Create a hook for safe navigation
+export function useSafeNavigation() {
+  const isMountedRef = useRef(true);
+  
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+  
+  const safeNavigate = (navigationFn: () => void) => {
+    if (isMountedRef.current) {
+      // Use setTimeout to ensure this runs after the current render cycle
+      setTimeout(() => {
+        if (isMountedRef.current) {
+          navigationFn();
+        }
+      }, 0);
+    }
+  };
+  
+  return { safeNavigate, isMounted: isMountedRef.current };
 }
 
 // Patch the global console to suppress the specific warning
@@ -34,7 +64,9 @@ if (typeof console !== 'undefined') {
     
     // Suppress the specific warning about state updates on unmounted components
     if (typeof message === 'string' && 
-        message.includes("Can't perform a React state update on a component that hasn't mounted yet")) {
+        (message.includes("Can't perform a React state update on a component that hasn't mounted yet") ||
+         message.includes("Warning: Can't perform a React state update on a component that hasn't mounted yet") ||
+         message.includes("LogBoxStateSubscription"))) {
       // Don't log this specific warning
       return;
     }

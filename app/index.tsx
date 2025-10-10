@@ -1,30 +1,47 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import OnboardingScreen from '@/components/OnboardingScreen';
 import LanguageSetupScreen from '@/components/LanguageSetupScreen';
 import { useUser } from '@/hooks/user-store';
+import { useSafeNavigation } from '@/src/polyfills/logbox-state-fix';
 
 export default function IndexScreen() {
   const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
   const [showLanguageSetup, setShowLanguageSetup] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { user, isLoading: userLoading } = useUser();
+  const isMountedRef = useRef<boolean>(true);
+  const { safeNavigate } = useSafeNavigation();
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     const checkOnboardingStatus = async () => {
       try {
         if (!user.onboardingCompleted) {
-          setShowOnboarding(true);
+          if (isMountedRef.current) {
+            setShowOnboarding(true);
+          }
         } else if (!user.selectedLanguage || !user.nativeLanguage) {
-          setShowLanguageSetup(true);
+          if (isMountedRef.current) {
+            setShowLanguageSetup(true);
+          }
         }
       } catch (error) {
         console.error('Error checking onboarding status:', error);
-        setShowOnboarding(true);
+        if (isMountedRef.current) {
+          setShowOnboarding(true);
+        }
       } finally {
-        setIsLoading(false);
+        if (isMountedRef.current) {
+          setIsLoading(false);
+        }
       }
     };
 
@@ -34,29 +51,33 @@ export default function IndexScreen() {
   }, [user.onboardingCompleted, user.selectedLanguage, user.nativeLanguage, userLoading]);
 
   useEffect(() => {
-    if (!userLoading && !isLoading) {
+    if (!userLoading && !isLoading && isMountedRef.current) {
       if (
         user.onboardingCompleted &&
         user.selectedLanguage &&
         user.nativeLanguage
       ) {
-        router.replace('/(tabs)/chat');
+        safeNavigate(() => router.replace('/(tabs)/chat'));
       }
     }
-  }, [user, userLoading, isLoading]);
+  }, [user, userLoading, isLoading, safeNavigate]);
 
   const handleOnboardingComplete = () => {
-    setShowOnboarding(false);
-    if (!user.selectedLanguage || !user.nativeLanguage) {
-      setShowLanguageSetup(true);
-    } else {
-      router.replace('/(tabs)/chat');
+    if (isMountedRef.current) {
+      setShowOnboarding(false);
+      if (!user.selectedLanguage || !user.nativeLanguage) {
+        setShowLanguageSetup(true);
+      } else {
+        safeNavigate(() => router.replace('/(tabs)/chat'));
+      }
     }
   };
 
   const handleLanguageSetupComplete = () => {
-    setShowLanguageSetup(false);
-    router.replace('/(tabs)/chat');
+    if (isMountedRef.current) {
+      setShowLanguageSetup(false);
+      safeNavigate(() => router.replace('/(tabs)/chat'));
+    }
   };
 
   if (isLoading || userLoading) {
